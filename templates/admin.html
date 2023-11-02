@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Admin</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Admin Panel</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+
+<div class="mx-5 row">
+<div class="col mx-2">
+<h3>Utenti</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Username</th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in utenti %}
+    <tr>
+      <th scope="row">{{ i["id"] }}</th>
+      <td>{{ i["username"] }}</td>
+      <td>Modifica</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="col-4 mx-2">
+  <form method="post">
+    <input type="hidden" id="id_form" name="id_form" value="nuovo_utente">
+
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" class="form-control" id="username" name="username">
+    </div>
+    <div class="mb-3">
+      <label for="passwd" class="form-label">Password</label>
+      <input type="password" class="form-control" id="passwd" name="passwd">
+    </div>
+    <button type="submit" class="btn btn-warning">Crea Account</button>
+  </form>
+</div>
+</div>
+
+{% endblock %}
