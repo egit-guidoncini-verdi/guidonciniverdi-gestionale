@@ -3,16 +3,16 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
-from secrets import token_hex
 import pandas as pd
 import datetime
+import secrets
 import json
+import os
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///gv_db.db"
-app.config["SECRET_KEY"] = token_hex(16)
+app.config["SECRET_KEY"] = secrets.token_hex()
 db = SQLAlchemy(app)
-
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
