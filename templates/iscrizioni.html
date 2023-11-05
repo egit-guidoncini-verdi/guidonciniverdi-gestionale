@@ -14,8 +14,8 @@
 
 {% block corpo %}
 
-<div class="mx-5 mb-2 row">
-<div class="col mx-2">
+<div class="mx-5 mb-2">
+<h5>Carica manualmente il file generato dal Form</h5>
   <form action="{{ url_for("upload_iscrizioni") }}" method="post" enctype="multipart/form-data">
       <div class="mb-3">
           <input type="file" class="form-control" id="file" name="file">
@@ -24,29 +24,27 @@
   </form>
 </div>
 
-<div class="col-4 mx-2">
-<p>Carica il file generato dal Form</p>
-</div>
-</div>
-
 <hr>
 
 <div class="mx-5">
-<h3>Nuove Iscrizioni</h3>
+<h5>Nuove Iscrizioni</h5>
 <table class="table">
   <thead>
     <tr>
       <th scope="col">#</th>
-      <th scope="col">Username</th>
+      <th scope="col">Zona</th>
+      <th scope="col">Gruppo - Reparto</th>
+      <th scope="col">Squadriglia</th>
+      <th scope="col">Ambito</th>
+      <th scope="col">Conquista/Conferma</th>
       <th scope="col"></th>
     </tr>
   </thead>
   <tbody>
-    {% for i in utenti %}
+    {% for i in iscrizioni %}
     <tr>
-      <th scope="row">{{ i["id"] }}</th>
-      <td>{{ i["username"] }}</td>
-      <td>Autorizza</td>
+      <th scope="row"></th>
+      <td></td>
     </tr>
     {% endfor %}
   </tbody>
