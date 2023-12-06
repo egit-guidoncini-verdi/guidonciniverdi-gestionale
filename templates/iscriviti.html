@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="it-IT">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,52 +13,123 @@
       </div>
     </header>
     <main>
-      <div class="shadow-sm p-3 mb-3 mx-5 bg-body-tertiary rounded">
-        <p>EI!<br>Sai che quest'anno ci sono state delle modifiche sostanziali al percorso per la specialità di squadriglia?<br>Vai a vedere sul <a href="https://guidonciniverdi.it">SITO</a></p>
+      <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
+        <p>EI!<br>Sai che quest'anno ci sono state delle modifiche sostanziali al percorso per la specialità di squadriglia?<br>Vai a vedere sul <a href="https://guidonciniverdi.it" target="_blank">SITO</a></p>
       </div>
-      <div class="accordion mx-5" id="accordionExample">
-        <div class="accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-              Dati gruppo
-            </button>
-          </h2>
-          <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-            <div class="accordion-body">
-              <select class="form-select" aria-label="Default select example">
+      <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
+        <form method="post">
+          <div class="mb-3">
+            <label for="nome_squadriglia" class="form-label">Nome Squadriglia</label>
+            <input type="text" class="form-control" id="nome_squadriglia" name="nome_squadriglia">
+          </div>
 
-                <option value="1">One</option>
-              </select>
-            </div>
+          <div class="mb-3">
+          <label for="zona" class="form-label">Zona</label>
+          <select class="form-select" id="zona" name="zona" onchange="updateGruppoOptions()">
+            {% for i in gruppi %}
+            <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+          </select>
           </div>
-        </div>
-        <div class="accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-              Accordion Item #2
-            </button>
-          </h2>
-          <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div class="accordion-body">
-              <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-            </div>
+
+          <div class="mb-3">
+          <label for="gruppo" class="form-label">Gruppo</label>
+          <select class="form-select" id="gruppo" name="gruppo">
+          </select>
           </div>
-        </div>
-        <div class="accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-              Accordion Item #3
-            </button>
-          </h2>
-          <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-            <div class="accordion-body">
-              <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-            </div>
+
+          <div class="mb-3">
+          <label for="specialita" class="form-label">Ambito di Specialità</label>
+          <select class="form-select" id="specialita" name="specialita">
+            {% for i in specialita %}
+            <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+          </select>
           </div>
-        </div>
+
+          <div class="mb-3">
+          <label for="conquista_conferma" class="form-label" aria-describedby="conquista_conferma_descr">Conquista o conferma?</label>
+          <div id="conquista_conferma_descr" class="form-text mb-2">Conquistano la specialità tutte le squadriglie che per la prima volta si avventurano lungo il percorso nell'ambito scelto.<br>Se la squadriglia avesse già preso lo stesso guidoncino verde lo scorso anno, la specialità di squadriglia può essere confermata ancora e solo più una volta.</div>
+          <div class="form-check">
+            <input class="form-check-input" value="conquista" type="radio" name="conquista_conferma" id="conquista" checked>
+            <label class="form-check-label" for="conquista">Conquista</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" value="conferma" type="radio" name="conquista_conferma" id="conferma">
+            <label class="form-check-label" for="conferma">Conferma</label>
+          </div>
+          </div>
+
+          <h5 class="text-center"><strong>Un pò di contatti!</strong></h5>
+
+          <div class="mb-3">
+            <label for="nome_capo_squadriglia" class="form-label">Nome e Cognome Capə squadriglia</label>
+            <input type="text" class="form-control" id="nome_capo_squadriglia" name="nome_capo_squadriglia">
+          </div>
+
+          <div class="mb-3">
+            <label for="mail_squadriglia" class="form-label" aria-describedby="mail_descr">Indirizzo mail</label>
+            <div id="conquista_conferma_descr" class="form-text mb-2">Vi manderemo a questa mail username e password per accedere al diario di bordo</div>
+            <input type="email" class="form-control" id="mail_squadriglia" name="mail_squadriglia">
+          </div>
+
+          <div class="mb-3">
+            <label for="nome_capo_rep1" class="form-label">Nome e Cognome Capə Reparto 1</label>
+            <input type="text" class="form-control" id="nome_capo_rep1" name="nome_capo_rep1">
+          </div>
+
+          <div class="mb-3">
+            <label for="mail_rep1" class="form-label">Indirizzo mail</label>
+            <input type="email" class="form-control" id="mail_rep1" name="mail_rep1">
+          </div>
+
+          <div class="mb-3">
+            <label for="numero_rep1" class="form-label">Numero di cellulare</label>
+            <input type="number" class="form-control" id="numero_rep1" name="numero_rep1">
+          </div>
+
+          <div class="mb-3">
+            <label for="nome_capo_rep2" class="form-label">Nome e Cognome Capə Reparto 2</label>
+            <input type="text" class="form-control" id="nome_capo_rep2" name="nome_capo_rep2">
+          </div>
+
+          <div class="mb-3">
+            <label for="mail_rep2" class="form-label">Indirizzo mail</label>
+            <input type="email" class="form-control" id="mail_rep2" name="mail_rep2">
+          </div>
+
+          <div class="mb-3">
+            <label for="numero_rep2" class="form-label">Numero di cellulare</label>
+            <input type="number" class="form-control" id="numero_rep2" name="numero_rep2">
+          </div>
+
+          <button type="submit" class="btn btn-primary">INVIA!</button>
+        </form>
       </div>
     </main>
     <footer></footer>
+    <script type="text/javascript">
+    var gruppi = {{ gruppi|tojson }}
+
+    function updateGruppoOptions() {
+        var zonaSelect = document.getElementById("zona");
+        var gruppoSelect = document.getElementById("gruppo");
+
+        // Rimuovi tutte le opzioni correnti nella dropdown Gruppo
+        gruppoSelect.innerHTML = "";
+
+        // Aggiungi solo le opzioni correlate alla scelta della Zona
+        var selectedZona = zonaSelect.options[zonaSelect.selectedIndex].value;
+        for (var i in gruppi[selectedZona]) {
+            var option = document.createElement("option");
+            option.value = gruppi[selectedZona][i];
+            option.text = gruppi[selectedZona][i];
+            gruppoSelect.add(option);
+        }
+    }
+
+    updateGruppoOptions();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
   </body>
 </html>

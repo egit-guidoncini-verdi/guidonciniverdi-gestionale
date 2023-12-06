@@ -3,8 +3,6 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
-import pprint
-import pickle
 import pandas as pd
 import datetime
 import requests
@@ -12,10 +10,35 @@ import secrets
 import base64
 import json
 
-pp = pprint.PrettyPrinter(indent=4)
-
 with open("credenziali.json", "r") as f:
     cr = json.load(f)
+
+# generazione dell'elenco gruppi
+gruppi = {}
+df = pd.read_csv("gruppi.csv")
+
+for i in list(set(df["zona"].tolist())):
+    gruppi[i] = []
+
+for i in df.index:
+    gruppi[df["zona"][i]].append(df["Denominazione Gruppo"][i])
+
+# costanti varie
+specialita = [
+    "Alpinismo",
+    "Artigianato",
+    "Campismo",
+    "Civitas",
+    "Esplorazione",
+    "Espressione",
+    "Giornalismo",
+    "Internazionale",
+    "Natura",
+    "Nautica",
+    "Olimpia",
+    "Pronto intervento"
+]
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///gv_db.db"
@@ -29,14 +52,21 @@ class User(db.Model, UserMixin):
 
 class IscrizioniEG(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    form_id = db.Column(db.Integer, nullable=False)
     nome = db.Column(db.String(128), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
     zona = db.Column(db.String(128), nullable=False)
     gruppo = db.Column(db.String(128), nullable=False)
     specialita = db.Column(db.String(128), nullable=False)
     # tipo indica se conquista o conferma => True se conferma
-    tipo = db.Column(db.Boolean, nullable=False)
+    tipo = db.Column(db.String(128), nullable=False)
+    # Contatti
+    nome_capo_sq = db.Column(db.String(128), nullable=False)
+    nome_capo1 = db.Column(db.String(128), nullable=False)
+    mail_capo1 = db.Column(db.String(128), nullable=False)
+    cell_capo1 = db.Column(db.String(128), nullable=False)
+    nome_capo2 = db.Column(db.String(128), nullable=False)
+    mail_capo2 = db.Column(db.String(128), nullable=False)
+    cell_capo2 = db.Column(db.String(128), nullable=False)
 
 class WordpressUser(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -134,9 +164,13 @@ def welcome():
         flash("Le password non coincidono!", "warning")
     return redirect(url_for("login"))
 
-@app.route("/iscriviti")
+@app.route("/iscriviti", methods=["GET", "POST"])
 def iscriviti():
-    return render_template("iscriviti.html")
+    if request.method == "POST":
+        iscrizione = IscrizioniEG(nome=request.form["nome_squadriglia"], mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+        db.session.add(iscrizione)
+        db.session.commit()
+    return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
 
 if __name__ == "__main__":
     app.run(port=8000, host="0.0.0.0")
