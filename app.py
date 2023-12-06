@@ -3,9 +3,6 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
-#from apiclient import discovery
-#from httplib2 import Http
-#from oauth2client import client, file, tools
 import pprint
 import pickle
 import pandas as pd
@@ -75,27 +72,6 @@ def index():
 @app.route("/iscrizioni")
 @login_required
 def iscrizioni():
-    '''
-    store = file.Storage("token.json")
-    creds = None
-    if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets("credentials.json", cr["form"]["scopes"])
-        creds = tools.run_flow(flow, store)
-
-    service = discovery.build(
-        "forms",
-        "v1",
-        http=creds.authorize(Http()),
-        discoveryServiceUrl=cr["form"]["discovery_doc"],
-        static_discovery=False,
-    )
-
-    # Prints the responses of your specified form:
-    #form_id = "1sWrdk6uWvrEKqo0ozD3TJQXi2XDTjdNDAEgCjgE0WyM"
-    # result = service.forms().responses().list(formId=form_id).execute()
-    result = service.forms().responses().list(formId=cr["form"]["form_id"]).execute()
-    pp.pprint(result)
-    '''
     return render_template("iscrizioni.html")
 
 @app.route("/upload_iscrizioni", methods=["POST"])
@@ -157,6 +133,10 @@ def welcome():
     else:
         flash("Le password non coincidono!", "warning")
     return redirect(url_for("login"))
+
+@app.route("/iscriviti")
+def iscriviti():
+    return render_template("iscriviti.html")
 
 if __name__ == "__main__":
     app.run(port=8000, host="0.0.0.0")
