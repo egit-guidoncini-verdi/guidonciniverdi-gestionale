@@ -75,7 +75,7 @@ def index():
 @app.route("/iscrizioni")
 @login_required
 def iscrizioni():
-'''
+    '''
     store = file.Storage("token.json")
     creds = None
     if not creds or creds.invalid:
@@ -95,7 +95,7 @@ def iscrizioni():
     # result = service.forms().responses().list(formId=form_id).execute()
     result = service.forms().responses().list(formId=cr["form"]["form_id"]).execute()
     pp.pprint(result)
-'''
+    '''
     return render_template("iscrizioni.html")
 
 @app.route("/upload_iscrizioni", methods=["POST"])
