@@ -16,6 +16,18 @@
       <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
         <p>EI!<br>Sai che quest'anno ci sono state delle modifiche sostanziali al percorso per la specialità di squadriglia?<br>Vai a vedere sul <a href="https://guidonciniverdi.it" target="_blank">SITO</a></p>
       </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="mx-5 my-2 alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
       <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
         <form method="post">
           <div class="mb-3">

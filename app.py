@@ -167,10 +167,19 @@ def welcome():
 @app.route("/iscriviti", methods=["GET", "POST"])
 def iscriviti():
     if request.method == "POST":
-        iscrizione = IscrizioniEG(nome=request.form["nome_squadriglia"], mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
-        db.session.add(iscrizione)
-        db.session.commit()
+        try:
+            iscrizione = IscrizioniEG(nome=request.form["nome_squadriglia"], mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+            db.session.add(iscrizione)
+            db.session.commit()
+        except:
+            flash("Iscrizione fallita.<br>Riprovaci!", "warning")
+            return redirect(url_for("iscriviti"))
+        return redirect(url_for("iscriviti_success"))
     return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
+
+@app.route("/iscriviti_success")
+def iscriviti_success():
+    return render_template("iscriviti_success.html")
 
 if __name__ == "__main__":
     app.run(port=8000, host="0.0.0.0")
