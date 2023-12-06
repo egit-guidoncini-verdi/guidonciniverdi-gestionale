@@ -3,9 +3,9 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
-from apiclient import discovery
-from httplib2 import Http
-from oauth2client import client, file, tools
+#from apiclient import discovery
+#from httplib2 import Http
+#from oauth2client import client, file, tools
 import pprint
 import pickle
 import pandas as pd
@@ -75,6 +75,7 @@ def index():
 @app.route("/iscrizioni")
 @login_required
 def iscrizioni():
+'''
     store = file.Storage("token.json")
     creds = None
     if not creds or creds.invalid:
@@ -94,6 +95,7 @@ def iscrizioni():
     # result = service.forms().responses().list(formId=form_id).execute()
     result = service.forms().responses().list(formId=cr["form"]["form_id"]).execute()
     pp.pprint(result)
+'''
     return render_template("iscrizioni.html")
 
 @app.route("/upload_iscrizioni", methods=["POST"])
