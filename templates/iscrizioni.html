@@ -13,74 +13,109 @@
 {% endblock %}
 
 {% block corpo %}
+<div class="mx-5">
 
-<div class="mx-5 mb-2">
-<h5>Carica manualmente il file generato dal Form</h5>
-  <form action="{{ url_for("upload_iscrizioni") }}" method="post" enctype="multipart/form-data">
-      <div class="mb-3">
-          <input type="file" class="form-control" id="file" name="file">
-      </div>
-      <button class="btn btn-success mb-3" type="submit">Aggiorna</button>
-  </form>
+
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="abilitare-tab" data-bs-toggle="tab" data-bs-target="#abilitare-tab-pane" type="button" role="tab" aria-controls="abilitare-tab-pane" aria-selected="true">Da Abilitare</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="tutti-tab" data-bs-toggle="tab" data-bs-target="#tutti-tab-pane" type="button" role="tab" aria-controls="tutti-tab-pane" aria-selected="false">Mostra Tutti</button>
+  </li>
+</ul>
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane fade show active" id="abilitare-tab-pane" role="tabpanel" aria-labelledby="abilitare-tab" tabindex="0">
+    <div class="table-responsive">
+    <table class="table" id="iscrizioni">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Zona</th>
+          <th scope="col">Gruppo</th>
+          <th scope="col">Squadriglia</th>
+          <th scope="col">Ambito</th>
+          <th scope="col">Conquista/Conferma</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in iscritti %}
+        {% if not i["utente_wp"] %}
+        <tr>
+          <th scope="row">{{ i["iscrizione"]["id"] }}</th>
+          <td>{{ i["iscrizione"]["zona"] }}</td>
+          <td>{{ i["iscrizione"]["gruppo"] }}</td>
+          <td>{{ i["iscrizione"]["nome"] }}</td>
+          <td>{{ i["iscrizione"]["specialita"] }}</td>
+          <td>{{ i["iscrizione"]["tipo"] }}</td>
+          <td>
+          <div class="btn-group" role="group" aria-label="Basic outline example">
+            <button type="button" class="btn btn-outline-primary">Abilita!</button>
+            <button type="button" class="btn btn-outline-primary">Dettagli</button>
+          </div>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+
+
+  <div class="tab-pane fade" id="tutti-tab-pane" role="tabpanel" aria-labelledby="tutti-tab" tabindex="0">
+    <div class="table-responsive">
+    <table class="table" id="iscrizioni">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Zona</th>
+          <th scope="col">Gruppo</th>
+          <th scope="col">Squadriglia</th>
+          <th scope="col">Ambito</th>
+          <th scope="col">Conquista/Conferma</th>
+          <th scope="col">Stato</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in iscritti %}
+        <tr>
+          <th scope="row">{{ i["iscrizione"]["id"] }}</th>
+          <td>{{ i["iscrizione"]["zona"] }}</td>
+          <td>{{ i["iscrizione"]["gruppo"] }}</td>
+          <td>{{ i["iscrizione"]["nome"] }}</td>
+          <td>{{ i["iscrizione"]["specialita"] }}</td>
+          <td>{{ i["iscrizione"]["tipo"] }}</td>
+          {% if i["utente_wp"] %}
+          <td><span class="badge bg-success">Abilitato</span></td>
+          <td>
+          <div class="btn-group" role="group" aria-label="Basic outline example">
+            <button type="button" class="btn btn-outline-primary">Pagina extra</button>
+            <button type="button" class="btn btn-outline-primary">Dettagli</button>
+          </div>
+          </td>
+          {% else %}
+
+          <td><span class="badge bg-warning">NON Abilitato</span></td>
+          <td>
+          <div class="btn-group" role="group" aria-label="Basic outline example">
+            <button type="button" class="btn btn-outline-primary">Abilita!</button>
+            <button type="button" class="btn btn-outline-primary">Dettagli</button>
+          </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
 </div>
 
-<hr>
-
-<div class="mx-5">
-<h5>Nuove Iscrizioni</h5>
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">Zona</th>
-      <th scope="col">Gruppo - Reparto</th>
-      <th scope="col">Squadriglia</th>
-      <th scope="col">Ambito</th>
-      <th scope="col">Conquista/Conferma</th>
-      <th scope="col"></th>
-      <th scope="col"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>dei Vini</td>
-      <td>Acqui 1 - Arkansas</td>
-      <td>Koala</td>
-      <td>Giornalismo</td>
-      <td>Conquista</td>
-      <td><span class="badge bg-success">Abilitato</span></td>
-      <td>
-      <div class="btn-group" role="group" aria-label="Basic outlined example">
-        <button type="button" class="btn btn-primary">Aggiungi Pagina</button>
-        <button type="button" class="btn btn-primary">Vedi dettagli</button>
-      </div>
-      </td>
-    </tr>
-    <tr>
-      <th scope="row">1</th>
-      <td>dei Vini</td>
-      <td>Acqui 1 - Arkansas</td>
-      <td>Pantere</td>
-      <td>Campismo</td>
-      <td>Conferma</td>
-      <td></td>
-      <td>
-      <div class="btn-group" role="group" aria-label="Basic outlined example">
-        <button type="button" class="btn btn-primary">Abilita</button>
-        <button type="button" class="btn btn-primary">Vedi dettagli</button>
-        <button type="button" class="btn btn-danger">Elimina</button>
-      </div>
-      </td>
-    </tr>
-    {% for i in iscrizioni %}
-    <tr>
-      <th scope="row"></th>
-      <td></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
 </div>
 
 {% endblock %}

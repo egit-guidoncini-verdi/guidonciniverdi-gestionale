@@ -95,22 +95,29 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 @app.route("/")
-@login_required
 def index():
-    return render_template("index.html")
+    return redirect(url_for("iscriviti"))
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html")
 
 @app.route("/iscrizioni")
 @login_required
 def iscrizioni():
-    return render_template("iscrizioni.html")
-
-@app.route("/upload_iscrizioni", methods=["POST"])
-@login_required
-def upload_iscrizioni():
-    soci = pd.read_excel(request.files["file"])
-    print(soci)
-    flash("File caricato con successo!", "success")
-    return redirect(url_for("iscrizioni"))
+    iscritti = []
+    tmp_iscritti=IscrizioniEG.query.all()
+    utenti_wp=WordpressUser.query.all()
+    for i in utenti_wp:
+        print(i.iscrizioni_id)
+    for i in tmp_iscritti:
+        abilitato = False
+        for y in utenti_wp:
+            if y.iscrizioni_id == i.id:
+                abilitato = y
+        iscritti.append({"iscrizione": i, "utente_wp": abilitato})
+    return render_template("iscrizioni.html", iscritti=iscritti)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -121,7 +128,7 @@ def login():
         if utente:
             if check_password_hash(utente.password, request.form["passwd"]):
                 login_user(utente)
-                return redirect(url_for("index"))
+                return redirect(url_for("dashboard"))
             else:
                 flash("Username o Password errati!", "warning")
         else:
