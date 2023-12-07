@@ -52,8 +52,8 @@
           <td>{{ i["iscrizione"]["tipo"] }}</td>
           <td>
           <div class="btn-group" role="group" aria-label="Basic outline example">
-            <button type="button" class="btn btn-outline-primary">Abilita!</button>
-            <button type="button" class="btn btn-outline-primary">Dettagli</button>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["iscrizione"]["id"]) }}">Abilita!</a>
+            <a type="button" class="btn btn-outline-primary">Dettagli</a>
           </div>
           </td>
         </tr>
@@ -103,8 +103,8 @@
           <td><span class="badge bg-warning">NON Abilitato</span></td>
           <td>
           <div class="btn-group" role="group" aria-label="Basic outline example">
-            <button type="button" class="btn btn-outline-primary">Abilita!</button>
-            <button type="button" class="btn btn-outline-primary">Dettagli</button>
+            <a type="button" class="btn btn-outline-primary href="{{ url_for("abilita", id_iscrizione=i["iscrizione"]["id"]) }}">Abilita!</a>
+            <a type="button" class="btn btn-outline-primary">Dettagli</a>
           </div>
           </td>
           {% endif %}

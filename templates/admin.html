@@ -22,6 +22,8 @@
     <tr>
       <th scope="col">#</th>
       <th scope="col">Username</th>
+      <th scope="col">Livello</th>
+      <th scope="col">Zona</th>
       <th scope="col"></th>
     </tr>
   </thead>
@@ -30,6 +32,12 @@
     <tr>
       <th scope="row">{{ i["id"] }}</th>
       <td>{{ i["username"] }}</td>
+      <td>{{ i["livello"] }}</td>
+      {% if i["zona"] %}
+      <td>{{ i["zona"] }}</td>
+      {% else %}
+      <td>REGIONE</td>
+      {% endif %}
       <td>Modifica</td>
     </tr>
     {% endfor %}
@@ -47,7 +55,28 @@
     </div>
     <div class="mb-3">
       <label for="passwd" class="form-label">Password</label>
-      <input type="password" class="form-control" id="passwd" name="passwd">
+      <input type="password" class="form-control" id="passwd" name="passwd" required>
+    </div>
+    <div class="mb-3">
+      <label for="conferma_passwd" class="form-label">Password</label>
+      <input type="password" class="form-control" id="conferma_passwd" name="conferma_passwd" required>
+    </div>
+    <div class="mb-3">
+      <label for="livello" class="form-label">Zona</label>
+      <select class="form-select" id="livello" name="livello">
+        <option value="iabz">IABZ</option>
+        <option value="pattuglia">Pattuglia GV</option>
+        <option value="iabr">IABR</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="zona" class="form-label" aria-describedby="zona_descr">Zona</label>
+      <div id="zona_descr" class="form-text mb-2">Campo necessario solo per account IABZ, in tutti gli altri casi verrà ignorato.</div>
+      <select class="form-select" id="zona" name="zona" onchange="updateGruppoOptions()" required>
+        {% for i in gruppi %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+      </select>
     </div>
     <button type="submit" class="btn btn-warning">Crea Account</button>
   </form>

@@ -39,7 +39,6 @@ specialita = [
     "Pronto intervento"
 ]
 
-
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///gv_db.db"
 app.config["SECRET_KEY"] = secrets.token_hex()
@@ -49,6 +48,8 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(128), nullable=False, unique=True)
     password = db.Column(db.String(128), nullable=False)
+    livello = db.Column(db.String(128), nullable=False)
+    zona = db.Column(db.String(128), nullable=True)
 
 class IscrizioniEG(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -106,6 +107,9 @@ def dashboard():
 @app.route("/iscrizioni")
 @login_required
 def iscrizioni():
+    limita = False
+    if current_user.livello == "iabz":
+        limita = True
     iscritti = []
     tmp_iscritti=IscrizioniEG.query.all()
     utenti_wp=WordpressUser.query.all()
@@ -116,8 +120,28 @@ def iscrizioni():
         for y in utenti_wp:
             if y.iscrizioni_id == i.id:
                 abilitato = y
+        if limita and i.zona != current_user.zona:
+            continue
         iscritti.append({"iscrizione": i, "utente_wp": abilitato})
     return render_template("iscrizioni.html", iscritti=iscritti)
+
+@app.route("/abilita/<id_iscrizione>")
+@login_required
+def abilita(id_iscrizione):
+    creds = cr["user"] + ":" + cr["passwd"]
+    token = base64.b64encode(creds.encode())
+    header = {"Authorization": "Basic" + token.decode("utf-8")}
+    tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
+    tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
+
+    dati = {
+        "username": tmp_username,
+        "email": tmp_iscrizione.mail,
+        "password": "",
+        "meta": []
+        }
+    print(dati)
+    return redirect(url_for("iscrizioni"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -139,23 +163,32 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("index"))
+    return redirect(url_for("dashboard"))
 
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
+    if current_user.livello != "admin":
+        return redirect(url_for("dashboard"))
     if request.method == "POST":
         if request.form["id_form"] == "nuovo_utente":
             utente = User.query.filter_by(username=request.form["username"]).first()
-            if utente is None:
-                password = generate_password_hash(request.form["passwd"])
-                utente = User(username=request.form["username"], password=password)
-                db.session.add(utente)
-                db.session.commit()
-                flash("Utente inserito con successo!", "success")
+            if request.form["passwd"] == request.form["conferma_passwd"]:
+                if utente is None:
+                    password = generate_password_hash(request.form["passwd"])
+                    if request.form["livello"] == "iabz":
+                        utente = User(username=request.form["username"], password=password, livello=request.form["livello"], zona=request.form["zona"])
+                    else:
+                        utente = User(username=request.form["username"], password=password, livello=request.form["livello"])
+                    db.session.add(utente)
+                    db.session.commit()
+                    flash("Utente inserito con successo!", "success")
+                else:
+                    flash(f"Esiste già l'utente {request.form['username']}!", "warning")
             else:
-                flash("Esiste già l'utente "+request.form["username!"], "warning")
-    return render_template("admin.html", utenti=User.query.all())
+                flash("Le password non coincidono!", "warning")
+        return redirect(url_for("admin"))
+    return render_template("admin.html", utenti=User.query.all(), gruppi=gruppi)
 
 @app.route("/welcome", methods=["POST"])
 def welcome():
@@ -163,7 +196,7 @@ def welcome():
         return redirect(url_for("login"))
     if request.form["passwd"] == request.form["conferma_passwd"]:
         password = generate_password_hash(request.form["passwd"])
-        utente = User(username=request.form["username"], password=password)
+        utente = User(username=request.form["username"], password=password, livello="admin")
         db.session.add(utente)
         db.session.commit()
         flash("Utente creato con successo!", "success")
