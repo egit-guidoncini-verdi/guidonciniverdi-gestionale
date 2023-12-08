@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Iscrizioni</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Dettaglio iscrizione {{ iscrizione.id }}</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+<div class="mx-5">
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for("iscrizioni") }}">Iscrizioni</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Dettaglio iscrizione {{ iscrizione.id }}</li>
+  </ol>
+</nav>
+
+<p>Zona: {{ iscrizione.zona }}</p>
+<p>Gruppo: {{ iscrizione.gruppo }}</p>
+<p>Ambito: {{ iscrizione.specialita }} - {{ iscrizione.tipo }}</p>
+<h5><strong>Dati</strong></h5>
+<p>Nome e Cognome Capə squadriglia: {{ iscrizione.nome_capo_sq }}</p>
+<p>Indirizzo mail: {{ iscrizione.mail }}</p>
+<p>Nome e Cognome Capə Reparto 1: {{ iscrizione.nome_capo1 }}</p>
+<p>Indirizzo mail: {{ iscrizione.mail_capo1 }}</p>
+<p>Numero di cellulare: {{ iscrizione.cell_capo1 }}</p>
+<p>Nome e Cognome Capə Reparto 1: {{ iscrizione.nome_capo2 }}</p>
+<p>Indirizzo mail: {{ iscrizione.mail_capo2 }}</p>
+<p>Numero di cellulare: {{ iscrizione.cell_capo2 }}</p>
+
+</div>
+
+{% endblock %}

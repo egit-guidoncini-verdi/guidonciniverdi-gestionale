@@ -156,6 +156,11 @@ def iscrizioni():
         iscritti.append({"iscrizione": i, "utente_wp": abilitato})
     return render_template("iscrizioni.html", iscritti=iscritti)
 
+@app.route("/dettagli/<id_iscrizione>")
+@login_required
+def dettagli(id_iscrizione):
+    return render_template("dettaglio_iscrizione.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
+
 @app.route("/abilita/<id_iscrizione>")
 @login_required
 def abilita(id_iscrizione):
@@ -220,6 +225,22 @@ def admin():
                 flash("Le password non coincidono!", "warning")
         return redirect(url_for("admin"))
     return render_template("admin.html", utenti=User.query.all(), gruppi=gruppi)
+
+@app.route("/utente", methods=["GET", "POST"])
+@login_required
+def utente():
+    if current_user.livello != "admin":
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        if request.form["id_form"] == "aggiorna_utente":
+            utente = User.query.filter_by(username=current_user.username).first()
+            if request.form["passwd"] == request.form["conferma_passwd"] and check_password_hash(utente.password, request.form["old_passwd"]):
+                utente.password = generate_password_hash(request.form["passwd"])
+                db.session.commit()
+            else:
+                flash("Le password non coincidono!", "warning")
+        return redirect(url_for("utente"))
+    return render_template("utente.html")
 
 @app.route("/welcome", methods=["POST"])
 def welcome():

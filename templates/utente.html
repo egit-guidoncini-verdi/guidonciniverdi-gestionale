@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Utente</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Utente</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+
+
+<div class="mx-5">
+  <form method="post">
+    <input type="hidden" id="id_form" name="id_form" value="aggiorna_utente">
+
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" class="form-control" id="username" name="username" value={{ current_user.username }} disabled>
+    </div>
+    <div class="mb-3">
+      <label for="old_passwd" class="form-label">Password</label>
+      <input type="password" class="form-control" id="old_passwd" name="old_passwd" required>
+    </div>
+    <div class="mb-3">
+      <label for="passwd" class="form-label">Nuova password</label>
+      <input type="password" class="form-control" id="passwd" name="passwd" required>
+    </div>
+    <div class="mb-3">
+      <label for="conferma_passwd" class="form-label">Conferma nuova password</label>
+      <input type="password" class="form-control" id="conferma_passwd" name="conferma_passwd" required>
+    </div>
+    <button type="submit" class="btn btn-warning">Aggiorna Password</button>
+  </form>
+</div>
+
+{% endblock %}
