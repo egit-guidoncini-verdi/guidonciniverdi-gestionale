@@ -98,9 +98,9 @@ login_manager.login_view = "login"
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def manda_mail(indirizzo, oggetto, titolo, testo):
+def manda_mail(indirizzo, titolo, testo):
     message = MIMEMultipart("alternative")
-    message["Subject"] = oggetto
+    message["Subject"] = f"Guidoncini Verdi 2024 - {titolo}"
     message["From"] = cr["mail"]["sender_email"]
     message["To"] = indirizzo
 
@@ -133,7 +133,6 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    manda_mail("", "Test", "Conferma iscrizione", "Ciao, queste sono le tue credenziali!<br>Username: admin<br>password: passwd")
     return render_template("dashboard.html")
 
 @app.route("/iscrizioni")
@@ -246,6 +245,16 @@ def iscriviti():
         except:
             flash("Iscrizione fallita.<br>Riprovaci!", "warning")
             return redirect(url_for("iscriviti"))
+
+        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
+        manda_mail(iscrizione.mail, "Iscrizione completata!", testo_mail_sq)
+
+        testo_mail_capo1 = f"Congratulazioni {iscrizione.nome_capo1},<br>la squadriglia {iscrizione.nome} si è correttamente iscritta al percorso Guidoncini Verdi 2024<br>Se ritieni si tratti di un errore contattaci.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
+        manda_mail(iscrizione.mail_capo1, "Nuova Iscrizione", testo_mail_capo1)
+        testo_mail_capo2 = f"Congratulazioni {iscrizione.nome_capo2},<br>la squadriglia {iscrizione.nome} si è correttamente iscritta al percorso Guidoncini Verdi 2024<br>Se ritieni si tratti di un errore contattaci.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
+        manda_mail(iscrizione.mail_capo2, "Nuova Iscrizione", testo_mail_capo2)
+
+
         return redirect(url_for("iscriviti_success"))
     return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
 
