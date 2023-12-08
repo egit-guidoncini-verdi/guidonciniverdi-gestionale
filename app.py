@@ -3,6 +3,9 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import pandas as pd
 import datetime
 import requests
@@ -95,6 +98,34 @@ login_manager.login_view = "login"
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+def manda_mail(indirizzo, oggetto, titolo, testo):
+    message = MIMEMultipart("alternative")
+    message["Subject"] = oggetto
+    message["From"] = cr["mail"]["sender_email"]
+    message["To"] = indirizzo
+
+    text = f"{titolo}\n{testo}"
+    html = render_template("mail_base.html", titolo=titolo, testo=testo)
+
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    message.attach(part1)
+    message.attach(part2)
+
+    context = ssl.create_default_context()
+    try:
+        with smtplib.SMTP(cr["mail"]["smtp_server"], cr["mail"]["port"]) as server:
+            server.ehlo()  # Can be omitted
+            server.starttls(context=context)
+            server.ehlo()  # Can be omitted
+            server.login(cr["mail"]["sender_email"], cr["mail"]["passwd"])
+            server.sendmail(cr["mail"]["sender_email"], indirizzo, message.as_string())
+        return True
+    except:
+        return False
+
+
 @app.route("/")
 def index():
     return redirect(url_for("iscriviti"))
@@ -102,6 +133,7 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    manda_mail("", "Test", "Conferma iscrizione", "Ciao, queste sono le tue credenziali!<br>Username: admin<br>password: passwd")
     return render_template("dashboard.html")
 
 @app.route("/iscrizioni")
@@ -128,7 +160,7 @@ def iscrizioni():
 @app.route("/abilita/<id_iscrizione>")
 @login_required
 def abilita(id_iscrizione):
-    creds = cr["user"] + ":" + cr["passwd"]
+    creds = cr["wordpress"]["user"] + ":" + cr["wordpress"]["passwd"]
     token = base64.b64encode(creds.encode())
     header = {"Authorization": "Basic" + token.decode("utf-8")}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()

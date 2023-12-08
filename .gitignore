@@ -1,7 +1,6 @@
-*.json
+credenziali.json
 *.db
 __pycache__
 .env
-*.pickle
-*.csv
+gruppi.csv
 genera_costanti.py
