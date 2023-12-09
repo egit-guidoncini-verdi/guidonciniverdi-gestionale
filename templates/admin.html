@@ -22,8 +22,9 @@
     <tr>
       <th scope="col">#</th>
       <th scope="col">Username</th>
-      <th scope="col">Livello</th>
+      <th scope="col">Mail</th>
       <th scope="col">Zona</th>
+      <th scope="col">Livello</th>
       <th scope="col"></th>
     </tr>
   </thead>
@@ -32,12 +33,13 @@
     <tr>
       <th scope="row">{{ i["id"] }}</th>
       <td>{{ i["username"] }}</td>
-      <td>{{ i["livello"] }}</td>
+      <td>{{ i["mail"] }}</td>
       {% if i["zona"] %}
       <td>{{ i["zona"] }}</td>
       {% else %}
       <td>REGIONE</td>
       {% endif %}
+      <td>{{ i["livello"] }}</td>
       <td>Modifica</td>
     </tr>
     {% endfor %}
@@ -52,6 +54,10 @@
     <div class="mb-3">
       <label for="username" class="form-label">Username</label>
       <input type="text" class="form-control" id="username" name="username">
+    </div>
+    <div class="mb-3">
+      <label for="mail" class="form-label">Username</label>
+      <input type="mail" class="form-control" id="mail" name="mail">
     </div>
     <div class="mb-3">
       <label for="passwd" class="form-label">Password</label>

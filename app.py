@@ -51,8 +51,9 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(128), nullable=False, unique=True)
     password = db.Column(db.String(128), nullable=False)
-    livello = db.Column(db.String(128), nullable=False)
+    mail = db.Column(db.String(128), nullable=False)
     zona = db.Column(db.String(128), nullable=True)
+    livello = db.Column(db.String(128), nullable=False)
 
 class IscrizioniEG(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,6 +83,7 @@ class WordpressUser(db.Model):
 class WordpressPost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     iscrizioni_id = db.Column(db.Integer, nullable=False)
+    wordpress_user_id = db.Column(db.Integer, nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     # campo di testo per indicare se "presentazione", "prima_impresa", "seconda_impresa", "missione", "extra"
     tipo = db.Column(db.String(128), nullable=False)
@@ -125,7 +127,6 @@ def manda_mail(indirizzo, titolo, testo):
     except:
         return False
 
-
 @app.route("/")
 def index():
     return redirect(url_for("iscriviti"))
@@ -164,20 +165,18 @@ def dettagli(id_iscrizione):
 @app.route("/abilita/<id_iscrizione>")
 @login_required
 def abilita(id_iscrizione):
-    creds = cr["wordpress"]["user"] + ":" + cr["wordpress"]["passwd"]
+    creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
     token = base64.b64encode(creds.encode())
-    header = {"Authorization": "Basic" + token.decode("utf-8")}
+    header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
     tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
 
-    dati = {
-        "username": tmp_username,
-        "email": tmp_iscrizione.mail,
-        "password": "",
-        "meta": []
-        }
-    print(dati)
-    return redirect(url_for("iscrizioni"))
+    response = requests.get(cr["wordpress"]["url"]+"/users", headers=header)
+    valid_username = True
+    for i in response.json():
+        if i["slug"] == tmp_username:
+            valid_username = False
+    return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username).first())
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -213,9 +212,9 @@ def admin():
                 if utente is None:
                     password = generate_password_hash(request.form["passwd"])
                     if request.form["livello"] == "iabz":
-                        utente = User(username=request.form["username"], password=password, livello=request.form["livello"], zona=request.form["zona"])
+                        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], zona=request.form["zona"])
                     else:
-                        utente = User(username=request.form["username"], password=password, livello=request.form["livello"])
+                        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"])
                     db.session.add(utente)
                     db.session.commit()
                     flash("Utente inserito con successo!", "success")
@@ -248,7 +247,7 @@ def welcome():
         return redirect(url_for("login"))
     if request.form["passwd"] == request.form["conferma_passwd"]:
         password = generate_password_hash(request.form["passwd"])
-        utente = User(username=request.form["username"], password=password, livello="admin")
+        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin")
         db.session.add(utente)
         db.session.commit()
         flash("Utente creato con successo!", "success")

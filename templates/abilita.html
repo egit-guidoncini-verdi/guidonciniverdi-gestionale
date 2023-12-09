@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Iscrizioni</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Abilita iscrizione {{ iscrizione.id }}</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+<div class="mx-5">
+
+  <p>Vuoi davvero abilitare la squadriglia {{ iscrizione.nome }} del Gruppo {{ iscrizione.gruppo }} - {{ iscrizione.zona }}?</p>
+
+  <div class="mb-3">
+    <label for="username" class="form-label">Nome</label>
+    <input type="text" class="form-control" id="nome" name="nome" value="{{ iscrizione.nome }} - {{ iscrizione.gruppo }}" disabled>
+  </div>
+  <div class="mb-3">
+    <label for="username" class="form-label">Username</label>
+    <input type="text" class="form-control" id="username" name="username" value="{{ username }}" disabled>
+  </div>
+
+  <p>Cliccando Abilita manderai le credenziali alla squadriglia e avviserai Capi Reparto e IABZ</p>
+
+</div>
+
+{% endblock %}

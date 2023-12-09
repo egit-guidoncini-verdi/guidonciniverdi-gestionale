@@ -2,13 +2,13 @@
 
 {% block head %}
 
-<title>GV Piemonte - Utente</title>
+<title>GV Piemonte - Account</title>
 
 {% endblock %}
 
 {% block titolo %}
 
-<h1 class="text-center my-2"><strong>Utente</strong></h1>
+<h1 class="text-center my-2"><strong>Account</strong></h1>
 
 {% endblock %}
 
@@ -21,7 +21,7 @@
 
     <div class="mb-3">
       <label for="username" class="form-label">Username</label>
-      <input type="text" class="form-control" id="username" name="username" value={{ current_user.username }} disabled>
+      <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" disabled>
     </div>
     <div class="mb-3">
       <label for="old_passwd" class="form-label">Password</label>
