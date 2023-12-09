@@ -131,7 +131,7 @@ def manda_mail(indirizzo, titolo, testo):
 
 def manda_telegram(chat_id, titolo, testo):
     text = f"{titolo}\n{testo}"
-    t_url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={text}"
+    t_url = f"https://api.telegram.org/bot{cr['telegram']['token']}/sendMessage?chat_id={chat_id}&text={text}"
     try:
         requests.get(t_url)
         return True
@@ -188,7 +188,7 @@ def abilita(id_iscrizione):
     for i in response.json():
         if i["slug"] == tmp_username:
             valid_username = False
-    return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username).first())
+    return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
