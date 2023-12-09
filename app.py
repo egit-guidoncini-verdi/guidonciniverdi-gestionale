@@ -10,6 +10,7 @@ import pandas as pd
 import datetime
 import requests
 import secrets
+import string
 import base64
 import json
 
@@ -54,6 +55,7 @@ class User(db.Model, UserMixin):
     mail = db.Column(db.String(128), nullable=False)
     zona = db.Column(db.String(128), nullable=True)
     livello = db.Column(db.String(128), nullable=False)
+    telegram_id = db.Column(db.String(128), nullable=True)
 
 class IscrizioniEG(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -127,6 +129,15 @@ def manda_mail(indirizzo, titolo, testo):
     except:
         return False
 
+def manda_telegram(chat_id, titolo, testo):
+    text = f"{titolo}\n{testo}"
+    t_url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={text}"
+    try:
+        requests.get(t_url)
+        return True
+    except:
+        return False
+
 @app.route("/")
 def index():
     return redirect(url_for("iscriviti"))
@@ -162,6 +173,7 @@ def iscrizioni():
 def dettagli(id_iscrizione):
     return render_template("dettaglio_iscrizione.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
 
+# Endpoint da terminare!
 @app.route("/abilita/<id_iscrizione>")
 @login_required
 def abilita(id_iscrizione):
@@ -208,20 +220,26 @@ def admin():
     if request.method == "POST":
         if request.form["id_form"] == "nuovo_utente":
             utente = User.query.filter_by(username=request.form["username"]).first()
-            if request.form["passwd"] == request.form["conferma_passwd"]:
-                if utente is None:
-                    password = generate_password_hash(request.form["passwd"])
-                    if request.form["livello"] == "iabz":
-                        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], zona=request.form["zona"])
-                    else:
-                        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"])
-                    db.session.add(utente)
-                    db.session.commit()
-                    flash("Utente inserito con successo!", "success")
+            if utente is None:
+                alphabet = string.ascii_letters + string.digits
+                tmp_password = ''.join(secrets.choice(alphabet) for i in range(12))
+                password = generate_password_hash(tmp_password)
+                if request.form["livello"] == "iabz":
+                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], zona=request.form["zona"], telegram_id=request.form["telegram_id"])
                 else:
-                    flash(f"Esiste già l'utente {request.form['username']}!", "warning")
+                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], telegram_id=request.form["telegram_id"])
+                db.session.add(utente)
+                db.session.commit()
+                flash("Utente inserito con successo!", "success")
+
+                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2024!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4><br>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
+
+                manda_mail(utente.mail, "Conferma Creazione Account", testo_mail)
+                if utente.telegram_id:
+                    testo_telegram = f"Benvenuto {utente.username},\nla presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2024!\nIl Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito guidonciniverdi.it.\n\nDettagli Iscrizione\nUsername: {utente.username}\nPassword provvisoria: {tmp_password}\nPer accedere al gestionale puoi cliccare a questo link: guidonciniverdi.pythonanywhere.com/dashboard"
+                    manda_telegram(utente.telegram_id, "Conferma Creazione Account", testo_telegram)
             else:
-                flash("Le password non coincidono!", "warning")
+                flash(f"Esiste già l'utente {request.form['username']}!", "warning")
         return redirect(url_for("admin"))
     return render_template("admin.html", utenti=User.query.all(), gruppi=gruppi)
 
@@ -247,7 +265,7 @@ def welcome():
         return redirect(url_for("login"))
     if request.form["passwd"] == request.form["conferma_passwd"]:
         password = generate_password_hash(request.form["passwd"])
-        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin")
+        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin", telegram_id=request.form["telegram_id"])
         db.session.add(utente)
         db.session.commit()
         flash("Utente creato con successo!", "success")
@@ -271,6 +289,7 @@ def iscriviti():
 
         testo_mail_capo1 = f"Congratulazioni {iscrizione.nome_capo1},<br>la squadriglia {iscrizione.nome} si è correttamente iscritta al percorso Guidoncini Verdi 2024<br>Se ritieni si tratti di un errore contattaci.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
         manda_mail(iscrizione.mail_capo1, "Nuova Iscrizione", testo_mail_capo1)
+
         testo_mail_capo2 = f"Congratulazioni {iscrizione.nome_capo2},<br>la squadriglia {iscrizione.nome} si è correttamente iscritta al percorso Guidoncini Verdi 2024<br>Se ritieni si tratti di un errore contattaci.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
         manda_mail(iscrizione.mail_capo2, "Nuova Iscrizione", testo_mail_capo2)
 
