@@ -136,6 +136,7 @@ def manda_mail(indirizzo, titolo, testo):
             server.ehlo()
             server.login(cr["mail"]["sender_email"], cr["mail"]["passwd"])
             server.sendmail(cr["mail"]["sender_email"], indirizzo, message.as_string())
+            server.quit()
         return True
     except:
         return False

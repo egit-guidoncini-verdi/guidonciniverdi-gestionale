@@ -17,8 +17,27 @@
 <div class="mx-5">
 
 <form method="post">
+    <div class="mb-3">
+        <label for="exampleInputEmail1" class="form-label">Destinatari</label>
+        <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+        <label class="form-check-label" for="flexCheckDefault">
+            Squadriglie Iscritte
+        </label>
+        </div>
+        <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked">
+        <label class="form-check-label" for="flexCheckChecked">
+            Capi Reparto
+        </label>
+        </div>
+    </div>
+    <div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Titolo</span>
+    <input type="text" class="form-control" placeholder="Aggiornamento" aria-label="Aggiornamento" aria-describedby="basic-addon1">
+    </div>
     {{ ckeditor.create(value=preset) }}
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary my-3">Invia!</button>
 </form>
 
 </div>
