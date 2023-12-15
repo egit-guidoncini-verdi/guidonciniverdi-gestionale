@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Mail</title>
+{{ ckeditor.load(pkg_type="basic") }}
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Mail</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+<div class="mx-5">
+
+<form method="post">
+    {{ ckeditor.create(value=preset) }}
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+</div>
+
+{% endblock %}
