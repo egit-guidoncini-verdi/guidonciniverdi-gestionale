@@ -21,6 +21,9 @@
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for("iscrizioni") }}">Iscrizioni</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for("crea_mail") }}">Manda mail</a>
+            </li>
             {% if current_user.livello == "admin" %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for("admin") }}">Admin Panel</a>

@@ -193,7 +193,7 @@ def dettagli(id_iscrizione):
     return render_template("dettaglio_iscrizione.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
 
 # Endpoint da terminare!
-@app.route("/abilita/<id_iscrizione>")
+@app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):
     creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
@@ -207,6 +207,12 @@ def abilita(id_iscrizione):
     for i in response.json():
         if i["slug"] == tmp_username:
             valid_username = False
+    if request.method == "POST":
+        try:
+            print(request.form["username"])
+        except KeyError:
+            print(tmp_username)
+        valid_username = False
     return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
 
 @app.route("/login", methods=["GET", "POST"])
@@ -292,7 +298,7 @@ def welcome():
         password = generate_password_hash(request.form["passwd"])
         utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin", telegram_id=request.form["telegram_id"])
         db.session.add(utente)
-        status = StatusPercorso(status=False, data_apertura="", data_chiusura="")
+        status = StatusPercorso(stato=False, data_apertura="", data_chiusura="")
         db.session.add(status)
         db.session.commit()
         flash("Utente creato con successo!", "success")
@@ -303,8 +309,11 @@ def welcome():
 @app.route("/iscriviti", methods=["GET", "POST"])
 def iscriviti():
     if request.method == "POST":
-        if not (isinstance(request.form["numero_rep1"], int) and isinstance(request.form["numero_rep2"], int)):
-            flash("Iscrizione fallita.<br>Riprovaci!", "warning")
+        try:
+            int(request.form["numero_rep1"])
+            int(request.form["numero_rep2"])
+        except ValueError:
+            flash("Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscriviti"))
         try:
 
@@ -312,7 +321,7 @@ def iscriviti():
             db.session.add(iscrizione)
             db.session.commit()
         except:
-            flash("Iscrizione fallita.<br>Riprovaci!", "warning")
+            flash("Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscriviti"))
 
         testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
