@@ -22,9 +22,11 @@
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for("iscrizioni") }}">Iscrizioni</a>
             </li>
+            {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for("crea_mail") }}">Manda mail</a>
+              <a class="nav-link" href="{{ url_for("mail") }}">Mail</a>
             </li>
+            {% endif %}
             {% if current_user.livello == "admin" %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for("admin") }}">Admin Panel</a>

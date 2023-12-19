@@ -95,6 +95,14 @@ class WordpressPost(db.Model):
     tipo = db.Column(db.String(128), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
 
+class TestiMail(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.String(128), nullable=False)
+    stato = db.Column(db.JSON, nullable=False)
+    destinatari = db.Column(db.JSON, nullable=False)
+    titolo = db.Column(db.String(128), nullable=False)
+    testo = db.Column(db.UnicodeText, nullable=False)
+
 class StatusPercorso(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     stato = db.Column(db.JSON, nullable=False)
@@ -162,11 +170,23 @@ def index():
 def dashboard():
     return render_template("dashboard.html")
 
+@app.route("/mail")
+@login_required
+def mail():
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        print(current_user.livello)
+        return redirect(url_for("dashboard"))
+    return render_template("testi_mail.html", testi_mail=TestiMail.query.all())
+
 @app.route("/crea_mail", methods=["GET", "POST"])
+@login_required
 def crea_mail():
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
     if request.method == 'POST':
-        data = request.form["ckeditor"]
-        print(data)
+        testo_mail = TestiMail(data=str(datetime.now()), stato=False, destinatari=False, titolo=request.form["titolo"], testo=request.form["ckeditor"])
+        db.session.add(testo_mail)
+        db.session.commit()
     return render_template("testo_mail.html")
 
 @app.route("/iscrizioni")

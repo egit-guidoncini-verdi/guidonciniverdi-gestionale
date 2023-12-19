@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Iscrizioni</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Iscrizioni</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+
+<a type="button" class="btn btn-outline-primary mx-5" href="{{ url_for("crea_mail") }}">Crea nuova Mail</a>
+
+<div class="mx-5">
+    <div class="table-responsive">
+    <table class="table" id="mail">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Data</th>
+          <th scope="col">Titolo</th>
+          <th scope="col">Destinatari</th>
+          <th scope="col">Stato</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in testi_mail %}
+        <tr>
+          <th scope="row">{{ i.id }}</th>
+          <td>{{ i.data[:10] }}</td>
+          <td>{{ i.titolo }}</td>
+          <td>{{ i.destinatari }}</td>
+          <td>{{ i.stato }}</td>
+          <td>
+          <div class="btn-group" role="group" aria-label="Basic outline example">
+            <a type="button" class="btn btn-outline-primary" href="">Invia!</a>
+            <a type="button" class="btn btn-outline-primary" href="">Modifica</a>
+            <a type="button" class="btn btn-outline-danger" href="">Elimina</a>
+          </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+</div>
+
+{% endblock %}
