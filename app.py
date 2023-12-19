@@ -113,11 +113,14 @@ ckeditor = CKEditor(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def manda_mail(indirizzo, titolo, testo):
+def manda_mail(indirizzi, copia, titolo, testo):
     message = MIMEMultipart("alternative")
     message["Subject"] = f"Guidoncini Verdi 2024 - {titolo}"
     message["From"] = cr["mail"]["sender_email"]
-    message["To"] = indirizzo
+    message["To"] = ", ".join(indirizzi)
+    if copia:
+        message["Cc"] = ", ".join(copia)
+        indirizzi.extend(copia)
 
     text = f"{titolo}\n{testo}"
     html = render_template("mail_base.html", titolo=titolo, testo=testo)
@@ -135,7 +138,7 @@ def manda_mail(indirizzo, titolo, testo):
             server.starttls(context=context)
             server.ehlo()
             server.login(cr["mail"]["sender_email"], cr["mail"]["passwd"])
-            server.sendmail(cr["mail"]["sender_email"], indirizzo, message.as_string())
+            server.sendmail(cr["mail"]["sender_email"], indirizzi, message.as_string())
             server.quit()
         return True
     except:
@@ -152,7 +155,7 @@ def manda_telegram(chat_id, titolo, testo):
 
 @app.route("/")
 def index():
-    return redirect(url_for("iscriviti"))
+    return render_template("index.html")
 
 @app.route("/dashboard")
 @login_required
@@ -259,7 +262,7 @@ def admin():
 
                 testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2024!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4><br>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
 
-                if manda_mail(utente.mail, "Conferma Creazione Account", testo_mail):
+                if manda_mail([utente.mail], [], "Conferma Creazione Account", testo_mail):
                     flash("Mail inviata!", "success")
                 else:
                     flash("Qualcosa è andato storto con la mail...", "warning")
@@ -325,14 +328,7 @@ def iscriviti():
             return redirect(url_for("iscriviti"))
 
         testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
-        manda_mail(iscrizione.mail, "Iscrizione completata!", testo_mail_sq)
-
-        testo_mail_capo1 = f"Congratulazioni {iscrizione.nome_capo1},<br>abbiamo correttamente registrato l'iscrizione della squadriglia {iscrizione.nome} al percorso Guidoncini Verdi 2024<br>Se ritieni si tratti di un errore contattaci.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
-        manda_mail(iscrizione.mail_capo1, "Nuova Iscrizione", testo_mail_capo1)
-
-        testo_mail_capo2 = f"Congratulazioni {iscrizione.nome_capo2},<br>abbiamo correttamente registrato l'iscrizione della squadriglia {iscrizione.nome} al percorso Guidoncini Verdi 2024<br>Se ritieni si tratti di un errore contattaci.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
-        manda_mail(iscrizione.mail_capo2, "Nuova Iscrizione", testo_mail_capo2)
-
+        manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq)
 
         return redirect(url_for("iscriviti_success"))
     return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
