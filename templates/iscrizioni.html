@@ -54,7 +54,9 @@
           <div class="btn-group" role="group" aria-label="Basic outline example">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["iscrizione"]["id"]) }}">Abilita!</a>
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Dettagli</a>
+            {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
             <a type="button" class="btn btn-outline-danger" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Elimina</a>
+            {% endif %}
           </div>
           </td>
         </tr>
@@ -106,7 +108,9 @@
           <div class="btn-group" role="group" aria-label="Basic outline example">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["iscrizione"]["id"]) }}">Abilita!</a>
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Dettagli</a>
+            {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
             <a type="button" class="btn btn-outline-danger" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Elimina</a>
+            {% endif %}
           </div>
           </td>
           {% endif %}
