@@ -224,7 +224,6 @@ def abilita(id_iscrizione):
     header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
     tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
-
     response = requests.get(cr["wordpress"]["url"]+"/users", headers=header)
     valid_username = True
     for i in response.json():

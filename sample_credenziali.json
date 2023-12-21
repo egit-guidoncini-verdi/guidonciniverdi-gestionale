@@ -1,1 +1,1 @@
-{"wordpress": {"url": "https://guidonciniverdi.it/wp-json/wp/v2", "user": "admin", "passwd": "kLxC sdD0 DyfF Matr K7rD rYqT"}, "mail": {"smtp_server": "smtp.gmail.com", "port": 587, "sender_email": "MAIL", "passwd": "PASSWD"}}
+{"wordpress": {"url": "https://guidonciniverdi.it/wp-json/wp/v2", "user": "USERNAME", "passwd": "PASSWD"}, "mail": {"smtp_server": "smtp.gmail.com", "port": 587, "sender_email": "MAIL", "passwd": "PASSWD"}}
