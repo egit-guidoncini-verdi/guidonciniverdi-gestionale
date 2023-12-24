@@ -62,6 +62,7 @@ class User(db.Model, UserMixin):
 class IscrizioniEG(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(128), nullable=False)
+    stato = db.Column(db.String(128), nullable=False)
     nome = db.Column(db.String(128), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
     zona = db.Column(db.String(128), nullable=False)
@@ -203,23 +204,23 @@ def iscrizioni():
         limita = True
     iscritti = []
     tmp_iscritti=IscrizioniEG.query.all()
-    utenti_wp=WordpressUser.query.all()
-    for i in utenti_wp:
-        print(i.iscrizioni_id)
     for i in tmp_iscritti:
-        abilitato = False
-        for y in utenti_wp:
-            if y.iscrizioni_id == i.id:
-                abilitato = y
         if limita and i.zona != current_user.zona:
             continue
-        iscritti.append({"iscrizione": i, "utente_wp": abilitato})
+        iscritti.append(i)
     return render_template("iscrizioni.html", iscritti=iscritti)
 
 @app.route("/dettagli/<id_iscrizione>")
 @login_required
 def dettagli(id_iscrizione):
     return render_template("dettaglio_iscrizione.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
+
+@app.route("/elimina/<id_iscrizione>", methods=["GET", "POST"])
+@login_required
+def elimina(id_iscrizione):
+    if request.method == "POST":
+        return redirect(url_for("iscrizioni"))
+    return render_template("elimina.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
 
 # Endpoint da terminare!
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
@@ -339,7 +340,7 @@ def welcome():
 def iscriviti():
     if request.method == "POST":
         try:
-            iscrizione = IscrizioniEG(data=str(datetime.now()), nome=request.form["nome_squadriglia"].capitalize(), mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+            iscrizione = IscrizioniEG(data=str(datetime.now()), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
             db.session.add(iscrizione)
             db.session.commit()
         except:

@@ -42,20 +42,20 @@
       </thead>
       <tbody>
         {% for i in iscritti %}
-        {% if not i["utente_wp"] %}
+        {% if i["stato"] == "da_abilitare" %}
         <tr>
-          <th scope="row">{{ i["iscrizione"]["id"] }}</th>
-          <td>{{ i["iscrizione"]["zona"] }}</td>
-          <td>{{ i["iscrizione"]["gruppo"] }}</td>
-          <td>{{ i["iscrizione"]["nome"] }}</td>
-          <td>{{ i["iscrizione"]["specialita"] }}</td>
-          <td>{{ i["iscrizione"]["tipo"] }}</td>
+          <th scope="row">{{ i["id"] }}</th>
+          <td>{{ i["zona"] }}</td>
+          <td>{{ i["gruppo"] }}</td>
+          <td>{{ i["nome"] }}</td>
+          <td>{{ i["specialita"] }}</td>
+          <td>{{ i["tipo"] }}</td>
           <td>
-          <div class="btn-group" role="group" aria-label="Basic outline example">
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["iscrizione"]["id"]) }}">Abilita!</a>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Dettagli</a>
+          <div class="btn-group" role="group">
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["id"]) }}">Abilita!</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
             {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Elimina</a>
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Elimina</a>
             {% endif %}
           </div>
           </td>
@@ -87,30 +87,35 @@
       <tbody>
         {% for i in iscritti %}
         <tr>
-          <th scope="row">{{ i["iscrizione"]["id"] }}</th>
-          <td>{{ i["iscrizione"]["zona"] }}</td>
-          <td>{{ i["iscrizione"]["gruppo"] }}</td>
-          <td>{{ i["iscrizione"]["nome"] }}</td>
-          <td>{{ i["iscrizione"]["specialita"] }}</td>
-          <td>{{ i["iscrizione"]["tipo"] }}</td>
-          {% if i["utente_wp"] %}
+          <th scope="row">{{ i["id"] }}</th>
+          <td>{{ i["zona"] }}</td>
+          <td>{{ i["gruppo"] }}</td>
+          <td>{{ i["nome"] }}</td>
+          <td>{{ i["specialita"] }}</td>
+          <td>{{ i["tipo"] }}</td>
+          {% if i["stato"] == "abilitato" %}
           <td><span class="badge bg-success">Abilitato</span></td>
           <td>
-          <div class="btn-group" role="group" aria-label="Basic outline example">
+          <div class="btn-group" role="group">
             <button type="button" class="btn btn-outline-primary">Pagina extra</button>
-            <button type="button" class="btn btn-outline-primary">Dettagli</button>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
           </div>
           </td>
-          {% else %}
-
+          {% elif i["stato"] == "da_abilitare" %}
           <td><span class="badge bg-warning">NON Abilitato</span></td>
           <td>
-          <div class="btn-group" role="group" aria-label="Basic outline example">
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["iscrizione"]["id"]) }}">Abilita!</a>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Dettagli</a>
-            {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("dettagli", id_iscrizione=i["iscrizione"]["id"]) }}">Elimina</a>
-            {% endif %}
+          <div class="btn-group" role="group">
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["id"]) }}">Abilita!</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Elimina</a>
+          </div>
+          </td>
+          {% elif i["stato"] == "eliminato" %}
+          <td><span class="badge bg-danger">Eliminato</span></td>
+          <td>
+          <div class="btn-group" role="group">
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
+            <a type="button" class="btn btn-outline-success" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Ripristina</a>
           </div>
           </td>
           {% endif %}

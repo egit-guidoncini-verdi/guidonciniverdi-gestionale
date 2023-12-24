@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Iscrizioni</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Elimina iscrizione {{ iscrizione.id }}</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+<div class="mx-5">
+
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for("iscrizioni") }}">Iscrizioni</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Elimina iscrizione {{ iscrizione.id }}</li>
+    </ol>
+  </nav>
+
+  <form method="post">
+    <p>Vuoi davvero eliminare la squadriglia {{ iscrizione.nome }} del Gruppo {{ iscrizione.gruppo }} - {{ iscrizione.zona }}?</p>
+    <button type="submit" class="btn btn-primary">ELIMINA!</button>
+  </form>
+
+
+</div>
+
+{% endblock %}

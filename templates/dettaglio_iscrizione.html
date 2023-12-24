@@ -22,7 +22,12 @@
     </ol>
   </nav>
 
+  {% if iscrizione.stato == "da_abilitare" %}
+  <div class="btn-group" role="group">
   <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=iscrizione.id) }}">Abilita!</a>
+  <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=iscrizione.id) }}">Elimina!</a>
+  </div>
+  {% endif %}
   <div class="table-responsive">
     <table class="table">
       <tbody>
@@ -41,6 +46,16 @@
         <tr>
           <th scope="row">Ambito</th>
           <td>{{ iscrizione.specialita }} - {{ iscrizione.tipo }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Stato</th>
+          {% if iscrizione.stato == "abilitato" %}
+          <td><span class="badge bg-success">Abilitato</span></td>
+          {% elif iscrizione.stato == "da_abilitare" %}
+          <td><span class="badge bg-warning">Da Abilitare</span></td>
+          {% elif iscrizione.stato == "eliminato" %}
+          <td><span class="badge bg-danger">Eliminato</span></td>
+          {% endif %}
         </tr>
       </tbody>
     </table>
