@@ -2,7 +2,11 @@
 
 Gestionale utilizzato per validare le iscrizioni al percorso Guidoncini Verdi di [AGESCI Piemonte](https://piemonte.agesci.it/).
 
+![](/home/calminaro/Documenti/gv_piemonte/static/pag_iscrizioni.png)
+
 La validazione iscrizioni genera delle richieste alle API di [guidonciniverdi.it](https://guidonciniverdi.it/) per la creazione dell'account utente e delle pagine del Diario di Bordo.
+
+![](/home/calminaro/Documenti/gv_piemonte/static/pag_iscriviti.png)
 
 Il gestionale si occupa inoltre dell'invio di mai a ragazzi e capi.
 
