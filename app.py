@@ -175,7 +175,7 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", stato=StatusPercorso.query.all()[0].stato)
 
 @app.route("/mail")
 @login_required
