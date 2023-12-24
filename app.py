@@ -13,6 +13,7 @@ import requests
 import secrets
 import string
 import base64
+import random
 import json
 
 with open("credenziali.json", "r") as f:
@@ -161,6 +162,11 @@ def manda_telegram(chat_id, titolo, testo):
     except:
         return False
 
+def genera_password_sq():
+    nomi = ["Akela", "Baloo", "Chil", "Kaa", "Raksha", "Arcanda", "Sciba", "Scoiattoli", "Mi", "Mowgli"]
+    colori = ["Rosso", "Blu", "Verde", "Giallo", "Arancione", "Viola", "Rosa", "Marrone", "Grigio", "Nero"]
+    return f"{random.choice(nomi)}{random.choice(colori)}"
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -224,6 +230,7 @@ def abilita(id_iscrizione):
     header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
     tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
+    tmp_passwd = genera_password_sq()
     response = requests.get(cr["wordpress"]["url"]+"/users", headers=header)
     valid_username = True
     for i in response.json():
@@ -332,13 +339,6 @@ def welcome():
 def iscriviti():
     if request.method == "POST":
         try:
-            int(request.form["numero_rep1"])
-            int(request.form["numero_rep2"])
-        except ValueError:
-            flash("Iscrizione fallita. Riprovaci!", "warning")
-            return redirect(url_for("iscriviti"))
-        try:
-
             iscrizione = IscrizioniEG(data=str(datetime.now()), nome=request.form["nome_squadriglia"].capitalize(), mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
             db.session.add(iscrizione)
             db.session.commit()
@@ -346,15 +346,41 @@ def iscriviti():
             flash("Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscriviti"))
 
-        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
+        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq)
 
         return redirect(url_for("iscriviti_success"))
+    if not StatusPercorso.query.all()[0].stato:
+        return redirect(url_for("iscriviti_chiuse"))
     return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
 
 @app.route("/iscriviti_success")
 def iscriviti_success():
     return render_template("iscriviti_success.html")
+
+@app.route("/iscriviti_chiuse")
+def iscriviti_chiuse():
+    status = StatusPercorso.query.all()[0]
+    msg = ""
+    if status.data_apertura == "":
+        msg = "Le iscrizioni apriranno nei prossimi giorni!"
+    elif status.data_chiusura == "":
+        msg = "Le iscrizioni sono momentaneamente chiuse per problemi tecnici, riapriranno a breve!"
+    else:
+        msg = "Ops, le iscrizioni sono già terminate!"
+    return render_template("iscriviti_chiuse.html", msg=msg)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("errore_generico.html"), 404
+
+@app.errorhandler(405)
+def internal_error(e):
+    return render_template("errore_generico.html"), 405
+
+@app.errorhandler(500)
+def internal_error(e):
+    return render_template("errore_generico.html"), 500
 
 if __name__ == "__main__":
     app.run(port=8000, host="0.0.0.0")
