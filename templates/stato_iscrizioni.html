@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Stato Iscrizioni</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Stato Iscrizioni</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+<div class="mx-5">
+
+  {% if stato %}
+  <form method="post">
+    <input type="hidden" class="form-control" name="stato" value="sospendi">
+    <button type="submit" class="btn btn-primary">SOSPENDI!</button>
+  </form>
+  {% else %}
+  <form method="post">
+    <input type="hidden" class="form-control" name="stato" value="apri">
+    <button type="submit" class="btn btn-primary">APRI!</button>
+  </form>
+  {% endif %}
+
+</div>
+
+{% endblock %}

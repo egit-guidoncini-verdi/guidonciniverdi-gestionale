@@ -45,11 +45,18 @@ specialita = [
     "Pronto intervento"
 ]
 
+# Inizializza app e servizi
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///gv_db.db"
 app.config["SECRET_KEY"] = secrets.token_hex()
 db = SQLAlchemy(app)
 
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
+
+ckeditor = CKEditor(app)
+
+# Classi Database
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(128), nullable=False, unique=True)
@@ -114,11 +121,6 @@ class StatusPercorso(db.Model):
 with app.app_context():
     db.create_all()
 
-login_manager = LoginManager(app)
-login_manager.login_view = "login"
-
-ckeditor = CKEditor(app)
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -177,24 +179,21 @@ def index():
 def dashboard():
     return render_template("dashboard.html", stato=StatusPercorso.query.all()[0].stato)
 
-@app.route("/mail")
+@app.route("/stato_iscrizioni", methods=["GET", "POST"])
 @login_required
-def mail():
-    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
-        print(current_user.livello)
+def stato_iscrizioni():
+    if current_user.livello == "iabz" or current_user.livello == "pattuglia":
         return redirect(url_for("dashboard"))
-    return render_template("testi_mail.html", testi_mail=TestiMail.query.all())
-
-@app.route("/crea_mail", methods=["GET", "POST"])
-@login_required
-def crea_mail():
-    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
-        return redirect(url_for("dashboard"))
-    if request.method == 'POST':
-        testo_mail = TestiMail(data=str(datetime.now()), stato=False, destinatari=False, titolo=request.form["titolo"], testo=request.form["ckeditor"])
-        db.session.add(testo_mail)
-        db.session.commit()
-    return render_template("testo_mail.html")
+    stato = StatusPercorso.query.all()[0]
+    if request.method == "POST":
+        if request.form["stato"] == "sospendi":
+            stato.stato = False
+            db.session.commit()
+        if request.form["stato"] == "apri":
+            stato.stato = True
+            db.session.commit()
+        return redirect(url_for("stato_iscrizioni"))
+    return render_template("stato_iscrizioni.html", stato=stato.stato)
 
 @app.route("/iscrizioni")
 @login_required
@@ -244,6 +243,25 @@ def abilita(id_iscrizione):
             print(tmp_username)
         valid_username = False
     return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
+
+@app.route("/mail")
+@login_required
+def mail():
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        print(current_user.livello)
+        return redirect(url_for("dashboard"))
+    return render_template("testi_mail.html", testi_mail=TestiMail.query.all())
+
+@app.route("/crea_mail", methods=["GET", "POST"])
+@login_required
+def crea_mail():
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    if request.method == 'POST':
+        testo_mail = TestiMail(data=str(datetime.now()), stato=False, destinatari=False, titolo=request.form["titolo"], testo=request.form["ckeditor"])
+        db.session.add(testo_mail)
+        db.session.commit()
+    return render_template("testo_mail.html")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -307,8 +325,6 @@ def admin():
 @app.route("/utente", methods=["GET", "POST"])
 @login_required
 def utente():
-    if current_user.livello != "admin":
-        return redirect(url_for("dashboard"))
     if request.method == "POST":
         if request.form["id_form"] == "aggiorna_utente":
             utente = User.query.filter_by(username=current_user.username).first()
@@ -352,24 +368,20 @@ def iscriviti():
 
         return redirect(url_for("iscriviti_success"))
     if not StatusPercorso.query.all()[0].stato:
-        return redirect(url_for("iscriviti_chiuse"))
+        stato = StatusPercorso.query.all()[0]
+        msg = ""
+        if stato.data_apertura == "":
+            msg = "Le iscrizioni apriranno nei prossimi giorni!"
+        elif stato.data_chiusura == "":
+            msg = "Le iscrizioni sono momentaneamente chiuse per problemi tecnici, riapriranno a breve!"
+        else:
+            msg = "Ops, le iscrizioni sono già terminate!"
+        return render_template("iscriviti_chiuse.html", msg=msg)
     return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
 
 @app.route("/iscriviti_success")
 def iscriviti_success():
     return render_template("iscriviti_success.html")
-
-@app.route("/iscriviti_chiuse")
-def iscriviti_chiuse():
-    status = StatusPercorso.query.all()[0]
-    msg = ""
-    if status.data_apertura == "":
-        msg = "Le iscrizioni apriranno nei prossimi giorni!"
-    elif status.data_chiusura == "":
-        msg = "Le iscrizioni sono momentaneamente chiuse per problemi tecnici, riapriranno a breve!"
-    else:
-        msg = "Ops, le iscrizioni sono già terminate!"
-    return render_template("iscriviti_chiuse.html", msg=msg)
 
 @app.errorhandler(404)
 def page_not_found(e):
