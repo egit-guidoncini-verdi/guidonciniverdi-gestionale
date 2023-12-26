@@ -366,6 +366,10 @@ def iscriviti():
         testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq)
 
+        # Avvisa Francesco
+        testo_telegram = f"Squadriglia {iscrizione.nome}\n{iscrizione.gruppo} - {iscrizione.zona}\nAmbito\n{iscrizione.specialita} - {iscrizione.tipo}"
+        manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Nuova Iscrizione", testo_telegram)
+
         return redirect(url_for("iscriviti_success"))
     if not StatusPercorso.query.all()[0].stato:
         stato = StatusPercorso.query.all()[0]
