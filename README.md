@@ -26,3 +26,7 @@ Sono presenti quattro livelli di utente.
 | IABR          | Può vedere e autorizzare le squadriglie di tutta la regione, eliminare eventuali risposte al form erronee, avviare il percorso a inizio anno e concludere l'anno eliminando tutti gli account wordpress (maggiori dettagli quando implementato) e mandare mail a squadriglie iscritte e/o capi reparto |
 | Pattuglia E/G | Può vedere e autorizzare le squadriglie di tutta la regione                                                                                                                                                                                                                                            |
 | IABZ          | Può vedere e autorizzare le squadriglie della sua zona                                                                                                                                                                                                                                                 |
+
+### Future
+
+Verrà implementata la possibilità di generare report in formato excel per tutti i livelli di utenza (nei limiti della stessa)
