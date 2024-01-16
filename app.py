@@ -8,6 +8,7 @@ import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import pandas as pd
+from openpyxl import Workbook
 from datetime import datetime
 import requests
 import secrets
@@ -208,6 +209,59 @@ def iscrizioni():
             continue
         iscritti.append(i)
     return render_template("iscrizioni.html", iscritti=iscritti)
+
+@app.route("/report")
+@login_required
+def report():
+    limita = False
+    if current_user.livello == "iabz":
+        limita = True
+    iscritti = []
+    tmp_iscritti=IscrizioniEG.query.all()
+    for i in tmp_iscritti:
+        if limita and i.zona != current_user.zona:
+            continue
+        iscritti.append(i)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "iscrizioni"
+    #titoli delle colonne
+    ws.cell(row=1, column=1).value = "Informazioni Cronologiche"
+    ws.cell(row=1, column=2).value = "Nome Sq"
+    ws.cell(row=1, column=3).value = "Gruppo"
+    ws.cell(row=1, column=4).value = "Zona"
+    ws.cell(row=1, column=5).value = "Specialità"
+    ws.cell(row=1, column=6).value = "Tipo"
+    ws.cell(row=1, column=7).value = "Nome Capo Sq"
+    ws.cell(row=1, column=8).value = "Mail Capo Sq"
+    ws.cell(row=1, column=9).value = "Nome Capo Rep 1"
+    ws.cell(row=1, column=10).value = "Mail Capo Rep 1"
+    ws.cell(row=1, column=11).value = "Cell Capo Rep 1"
+    ws.cell(row=1, column=12).value = "Nome Capo Rep 2"
+    ws.cell(row=1, column=13).value = "Mail Capo Rep 2"
+    ws.cell(row=1, column=14).value = "Cell Capo Rep 2"
+    ws.cell(row=1, column=15).value = "Stato Iscrizione"
+
+    for i, iscritto in enumerate(iscritti):
+        tmp_riga = i+2
+        ws.cell(row=tmp_riga, column=1).value = iscritto.data
+        ws.cell(row=tmp_riga, column=2).value = iscritto.nome
+        ws.cell(row=tmp_riga, column=3).value = iscritto.gruppo
+        ws.cell(row=tmp_riga, column=4).value = iscritto.zona
+        ws.cell(row=tmp_riga, column=5).value = iscritto.specialita
+        ws.cell(row=tmp_riga, column=6).value = iscritto.tipo
+        ws.cell(row=tmp_riga, column=7).value = iscritto.nome_capo_sq
+        ws.cell(row=tmp_riga, column=8).value = iscritto.mail
+        ws.cell(row=tmp_riga, column=9).value = iscritto.nome_capo1
+        ws.cell(row=tmp_riga, column=10).value = iscritto.mail_capo1
+        ws.cell(row=tmp_riga, column=11).value = iscritto.cell_capo1
+        ws.cell(row=tmp_riga, column=12).value = iscritto.nome_capo2
+        ws.cell(row=tmp_riga, column=13).value = iscritto.mail_capo2
+        ws.cell(row=tmp_riga, column=14).value = iscritto.cell_capo2
+        ws.cell(row=tmp_riga, column=15).value = iscritto.stato
+
+    wb.save("./static/riepilogo.xlsx")
+    return send_file("./static/riepilogo.xlsx", as_attachment=True, download_name="riepilogo.xlsx")
 
 @app.route("/dettagli/<id_iscrizione>")
 @login_required
