@@ -10,6 +10,8 @@ La validazione iscrizioni genera delle richieste alle API di [guidonciniverdi.it
 
 Il gestionale si occupa inoltre dell'invio di mai a ragazzi e capi.
 
+Generazione file excel delle iscrizioni per tutti i livelli di utenza (nei limiti della stessa)
+
 ### Scelte implementative
 
 Gestione del backend tramite Flask ([Documentazione qui](https://flask.palletsprojects.com/)).
@@ -29,4 +31,8 @@ Sono presenti quattro livelli di utente.
 
 ### Future
 
-Verrà implementata la possibilità di generare report in formato excel per tutti i livelli di utenza (nei limiti della stessa)
+- Reset password degli utenti wordpress
+
+- Possibilità di creare pagine extra su wordpress
+
+- Sistema di reset a fine anno
