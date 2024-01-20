@@ -77,7 +77,7 @@
           <th scope="col">#</th>
           <th scope="col">Zona</th>
           <th scope="col">Gruppo</th>
-          <th scope="col">Squadriglia</th>
+          <th scope="col">Squadriglia</th>dettagli
           <th scope="col">Ambito</th>
           <th scope="col">Conquista/Conferma</th>
           <th scope="col">Stato</th>
@@ -97,7 +97,7 @@
           <td><span class="badge bg-success">Abilitato</span></td>
           <td>
           <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-primary">Pagina extra</button>
+            <button type="button" class="btn btn-outline-primary" disabled>Pagina extra</button>
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
           </div>
           </td>
@@ -115,7 +115,7 @@
           <td>
           <div class="btn-group" role="group">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
-            <a type="button" class="btn btn-outline-success" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Ripristina</a>
+            <a type="button" class="btn btn-outline-success" href="{{ url_for("ripristina", id_iscrizione=i["id"]) }}">Ripristina</a>
           </div>
           </td>
           {% endif %}

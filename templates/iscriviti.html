@@ -73,6 +73,8 @@
           </div>
           </div>
 
+          <hr>
+
           <h5 class="text-center"><strong>Un pò di contatti!</strong></h5>
 
           <div class="mb-3">
@@ -82,7 +84,7 @@
 
           <div class="mb-3">
             <label for="mail_squadriglia" class="form-label" aria-describedby="mail_descr">Indirizzo mail</label>
-            <div id="conquista_conferma_descr" class="form-text mb-2">Vi manderemo a questa mail username e password per accedere al diario di bordo</div>
+            <div id="mail_descr" class="form-text mb-2">Vi manderemo a questa mail username e password per accedere al diario di bordo</div>
             <input type="email" class="form-control" id="mail_squadriglia" name="mail_squadriglia" required>
           </div>
 
@@ -116,7 +118,10 @@
             <input type="text" class="form-control" id="numero_rep2" name="numero_rep2" required>
           </div>
 
-          <button type="submit" class="btn btn-primary">INVIA!</button>
+          <hr>
+
+          <div id="send_descr" class="form-text mb-2">Aspetta qualche secondo dopo aver cliccato!<br>Stiamo registrando la tua iscrizione.</div>
+          <button type="submit" class="btn btn-primary" aria-describedby="send_descr">INVIA!</button>
         </form>
       </div>
     </main>

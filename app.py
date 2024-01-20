@@ -271,9 +271,20 @@ def dettagli(id_iscrizione):
 @app.route("/elimina/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def elimina(id_iscrizione):
+    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
     if request.method == "POST":
+        iscrizione.stato = "eliminato"
+        db.session.commit()
         return redirect(url_for("iscrizioni"))
-    return render_template("elimina.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
+    return render_template("elimina.html", iscrizione=iscrizione)
+
+@app.route("/ripristina/<id_iscrizione>", methods=["GET", "POST"])
+@login_required
+def ripristina(id_iscrizione):
+    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    iscrizione.stato = "da_abilitare"
+    db.session.commit()
+    return redirect(url_for("iscrizioni"))
 
 # Endpoint da terminare!
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
