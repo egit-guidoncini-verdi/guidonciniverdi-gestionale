@@ -268,17 +268,27 @@ def report():
 def dettagli(id_iscrizione):
     return render_template("dettaglio_iscrizione.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
 
-@app.route("/elimina/<id_iscrizione>", methods=["GET", "POST"])
+@app.route("/elimina/<id_iscrizione>")
 @login_required
 def elimina(id_iscrizione):
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    iscrizione.stato = "eliminato"
+    db.session.commit()
+    return redirect(url_for("iscrizioni"))
+
+@app.route("/elimina_def/<id_iscrizione>", methods=["GET", "POST"])
+@login_required
+def elimina_def(id_iscrizione):
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
     if request.method == "POST":
-        iscrizione.stato = "eliminato"
+        db.session.delete(iscrizione)
         db.session.commit()
         return redirect(url_for("iscrizioni"))
     return render_template("elimina.html", iscrizione=iscrizione)
 
-@app.route("/ripristina/<id_iscrizione>", methods=["GET", "POST"])
+@app.route("/ripristina/<id_iscrizione>")
 @login_required
 def ripristina(id_iscrizione):
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
@@ -313,7 +323,6 @@ def abilita(id_iscrizione):
 @login_required
 def mail():
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
-        print(current_user.livello)
         return redirect(url_for("dashboard"))
     return render_template("testi_mail.html", testi_mail=TestiMail.query.all())
 
