@@ -279,7 +279,7 @@ def elimina(id_iscrizione):
 @app.route("/elimina_def/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def elimina_def(id_iscrizione):
-    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+    if current_user.livello != "admin":
         return redirect(url_for("dashboard"))
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
     if request.method == "POST":
@@ -312,11 +312,27 @@ def abilita(id_iscrizione):
         if i["slug"] == tmp_username:
             valid_username = False
     if request.method == "POST":
-        try:
-            print(request.form["username"])
-        except KeyError:
-            print(tmp_username)
-        valid_username = False
+        if not valid_username:
+            return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
+        if tmp_iscrizione.tipo == "conquista":
+            tmp_rinnovo = False
+        else:
+            tmp_rinnovo = True
+        dati = {
+            "username": tmp_username,
+            "name": f"{tmp_iscrizione.nome.capitalize()} {tmp_iscrizione.gruppo.capitalize()}",
+            "email": tmp_iscrizione.mail,
+            "password": tmp_passwd,
+            "meta": {
+                "anno": "2024",
+                'gruppo': tmp_iscrizione.gruppo.capitalize(),
+                'rinnovo': tmp_rinnovo,
+                'specialita': tmp_iscrizione.specialita.lower(),
+                'squadriglia': tmp_iscrizione.nome.capitalize(),
+                'zona': tmp_iscrizione.zona.lower()},
+            }
+        print(dati)
+        return redirect(url_for("iscrizioni"))
     return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
 
 @app.route("/mail")
