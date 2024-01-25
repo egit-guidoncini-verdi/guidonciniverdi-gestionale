@@ -304,6 +304,7 @@ def edit_iscrizione(id_iscrizione):
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
     if request.method == "POST":
         iscrizione.nome = request.form["nome_squadriglia"].capitalize()
+        iscrizione.mail = request.form["mail_squadriglia"]
         iscrizione.zona = request.form["zona"]
         iscrizione.gruppo = request.form["gruppo"]
         iscrizione.specialita = request.form["specialita"]
@@ -317,7 +318,7 @@ def edit_iscrizione(id_iscrizione):
         iscrizione.cell_capo2 = request.form["numero_rep2"]
         db.session.commit()
 
-        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata modificata!<br>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
+        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata modificata come richiesto.<br>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq)
 
         # Avvisa Francesco e Admin
