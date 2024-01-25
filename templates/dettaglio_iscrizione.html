@@ -25,7 +25,10 @@
   {% if iscrizione.stato == "da_abilitare" %}
   <div class="btn-group" role="group">
   <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=iscrizione.id) }}">Abilita!</a>
-  <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=iscrizione.id) }}">Elimina!</a>
+  {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
+  <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=iscrizione.id) }}">Modifica</a>
+  <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=iscrizione.id) }}">Scarta</a>
+  {% endif %}
   </div>
   {% endif %}
   <div class="table-responsive">

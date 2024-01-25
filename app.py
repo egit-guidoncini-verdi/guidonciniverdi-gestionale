@@ -296,6 +296,41 @@ def ripristina(id_iscrizione):
     db.session.commit()
     return redirect(url_for("iscrizioni"))
 
+@app.route("/edit/<id_iscrizione>", methods=["GET", "POST"])
+@login_required
+def edit_iscrizione(id_iscrizione):
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    if request.method == "POST":
+        iscrizione.nome = request.form["nome_squadriglia"].capitalize()
+        iscrizione.zona = request.form["zona"]
+        iscrizione.gruppo = request.form["gruppo"]
+        iscrizione.specialita = request.form["specialita"]
+        iscrizione.tipo = request.form["conquista_conferma"]
+        iscrizione.nome_capo_sq = request.form["nome_capo_squadriglia"]
+        iscrizione.nome_capo1 = request.form["nome_capo_rep1"]
+        iscrizione.mail_capo1 = request.form["mail_rep1"]
+        iscrizione.cell_capo1 = request.form["numero_rep1"]
+        iscrizione.nome_capo2 = request.form["nome_capo_rep2"]
+        iscrizione.mail_capo2 = request.form["mail_rep2"]
+        iscrizione.cell_capo2 = request.form["numero_rep2"]
+        db.session.commit()
+
+        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata modificata!<br>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
+        manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq)
+
+        # Avvisa Francesco e Admin
+        try:
+            testo_telegram = f"Squadriglia {iscrizione.nome}\n{iscrizione.gruppo} - {iscrizione.zona}\nAmbito\n{iscrizione.specialita} - {iscrizione.tipo}"
+            #manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Modifica Iscrizione", testo_telegram)
+            manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Modifica Iscrizione", testo_telegram)
+        except:
+            print("Errore")
+
+        return redirect(url_for("iscrizioni"))
+    return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=gruppi, specialita=specialita)
+
 # Endpoint da terminare!
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
@@ -320,7 +355,7 @@ def abilita(id_iscrizione):
             tmp_rinnovo = True
         dati = {
             "username": tmp_username,
-            "name": f"{tmp_iscrizione.nome.capitalize()} {tmp_iscrizione.gruppo.capitalize()}",
+            "name": tmp_iscrizione.nome.capitalize(),
             "email": tmp_iscrizione.mail,
             "password": tmp_passwd,
             "meta": {
@@ -331,7 +366,7 @@ def abilita(id_iscrizione):
                 'squadriglia': tmp_iscrizione.nome.capitalize(),
                 'zona': tmp_iscrizione.zona.lower()},
             }
-        print(dati)
+        #print(dati)
         return redirect(url_for("iscrizioni"))
     return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
 
