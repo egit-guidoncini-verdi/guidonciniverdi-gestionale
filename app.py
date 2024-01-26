@@ -272,6 +272,13 @@ def dettagli(id_iscrizione):
 @login_required
 def elimina(id_iscrizione):
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    try:
+        if iscrizione.stato == "abilitato":
+            flash("L'utente è già stato abilitato!", "warning")
+            return redirect(url_for("iscrizioni"))
+    except:
+        flash("Non ho trovato l'iscrizione!", "warning")
+        return redirect(url_for("iscrizioni"))
     iscrizione.stato = "eliminato"
     db.session.commit()
     return redirect(url_for("iscrizioni"))
@@ -282,6 +289,13 @@ def elimina_def(id_iscrizione):
     if current_user.livello != "admin":
         return redirect(url_for("dashboard"))
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    try:
+        if iscrizione.stato == "abilitato":
+            flash("L'utente è già stato abilitato!", "warning")
+            return redirect(url_for("iscrizioni"))
+    except:
+        flash("Non ho trovato l'iscrizione!", "warning")
+        return redirect(url_for("iscrizioni"))
     if request.method == "POST":
         db.session.delete(iscrizione)
         db.session.commit()
@@ -292,6 +306,13 @@ def elimina_def(id_iscrizione):
 @login_required
 def ripristina(id_iscrizione):
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    try:
+        if iscrizione.stato == "abilitato":
+            flash("L'utente è già stato abilitato!", "warning")
+            return redirect(url_for("iscrizioni"))
+    except:
+        flash("Non ho trovato l'iscrizione!", "warning")
+        return redirect(url_for("iscrizioni"))
     iscrizione.stato = "da_abilitare"
     db.session.commit()
     return redirect(url_for("iscrizioni"))
@@ -302,33 +323,46 @@ def edit_iscrizione(id_iscrizione):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
     iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    try:
+        if iscrizione.stato == "abilitato":
+            flash("L'utente è già stato abilitato!", "warning")
+            return redirect(url_for("iscrizioni"))
+        elif iscrizione.stato == "eliminato":
+            flash("Utente eliminato. Ripristinalo per poterlo modificare.", "warning")
+            return redirect(url_for("iscrizioni"))
+    except:
+        flash("Non ho trovato l'iscrizione!", "warning")
+        return redirect(url_for("iscrizioni"))
     if request.method == "POST":
-        iscrizione.nome = request.form["nome_squadriglia"].capitalize()
-        iscrizione.mail = request.form["mail_squadriglia"]
-        iscrizione.zona = request.form["zona"]
-        iscrizione.gruppo = request.form["gruppo"]
-        iscrizione.specialita = request.form["specialita"]
-        iscrizione.tipo = request.form["conquista_conferma"]
-        iscrizione.nome_capo_sq = request.form["nome_capo_squadriglia"]
-        iscrizione.nome_capo1 = request.form["nome_capo_rep1"]
-        iscrizione.mail_capo1 = request.form["mail_rep1"]
-        iscrizione.cell_capo1 = request.form["numero_rep1"]
-        iscrizione.nome_capo2 = request.form["nome_capo_rep2"]
-        iscrizione.mail_capo2 = request.form["mail_rep2"]
-        iscrizione.cell_capo2 = request.form["numero_rep2"]
-        db.session.commit()
+        try:
+            iscrizione.nome = request.form["nome_squadriglia"].capitalize()
+            iscrizione.mail = request.form["mail_squadriglia"]
+            iscrizione.zona = request.form["zona"]
+            iscrizione.gruppo = request.form["gruppo"]
+            iscrizione.specialita = request.form["specialita"]
+            iscrizione.tipo = request.form["conquista_conferma"]
+            iscrizione.nome_capo_sq = request.form["nome_capo_squadriglia"]
+            iscrizione.nome_capo1 = request.form["nome_capo_rep1"]
+            iscrizione.mail_capo1 = request.form["mail_rep1"]
+            iscrizione.cell_capo1 = request.form["numero_rep1"]
+            iscrizione.nome_capo2 = request.form["nome_capo_rep2"]
+            iscrizione.mail_capo2 = request.form["mail_rep2"]
+            iscrizione.cell_capo2 = request.form["numero_rep2"]
+            db.session.commit()
+        except:
+            flash("Modifica Iscrizione fallita. Riprovaci!", "warning")
+            return redirect(url_for("iscrizioni"))
 
-        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata modificata come richiesto.<br>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
+        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq)
 
         # Avvisa Francesco e Admin
         try:
             testo_telegram = f"Squadriglia {iscrizione.nome}\n{iscrizione.gruppo} - {iscrizione.zona}\nAmbito\n{iscrizione.specialita} - {iscrizione.tipo}"
-            #manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Modifica Iscrizione", testo_telegram)
+            manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Modifica Iscrizione", testo_telegram)
             manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Modifica Iscrizione", testo_telegram)
         except:
-            print("Errore")
-
+            print("Errore Telegram")
         return redirect(url_for("iscrizioni"))
     return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=gruppi, specialita=specialita)
 
@@ -340,7 +374,11 @@ def abilita(id_iscrizione):
     token = base64.b64encode(creds.encode())
     header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
-    tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
+    try:
+        tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
+    except:
+        flash("Non ho trovato l'iscrizione!", "warning")
+        return redirect(url_for("iscrizioni"))
     tmp_passwd = genera_password_sq()
     response = requests.get(cr["wordpress"]["url"]+"/users", headers=header)
     valid_username = True
