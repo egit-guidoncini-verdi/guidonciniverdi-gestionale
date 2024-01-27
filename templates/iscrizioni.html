@@ -25,6 +25,7 @@
     <button class="nav-link" id="tutti-tab" data-bs-toggle="tab" data-bs-target="#tutti-tab-pane" type="button" role="tab" aria-controls="tutti-tab-pane" aria-selected="false">Mostra Tutti</button>
   </li>
 </ul>
+
 <div class="tab-content" id="myTabContent">
   <div class="tab-pane fade show active" id="abilitare-tab-pane" role="tabpanel" aria-labelledby="abilitare-tab" tabindex="0">
     <div class="table-responsive">
@@ -49,7 +50,7 @@
           <td>{{ i["gruppo"] }}</td>
           <td>{{ i["nome"] }}</td>
           <td>{{ i["specialita"] }}</td>
-          <td>{{ i["tipo"] }}</td>
+          <td>{{ i["tipo"].capitalize() }}</td>
           <td>
           <div class="btn-group" role="group">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["id"]) }}">Abilita!</a>
@@ -78,7 +79,7 @@
           <th scope="col">#</th>
           <th scope="col">Zona</th>
           <th scope="col">Gruppo</th>
-          <th scope="col">Squadriglia</th>dettagli
+          <th scope="col">Squadriglia</th>
           <th scope="col">Ambito</th>
           <th scope="col">Conquista/Conferma</th>
           <th scope="col">Stato</th>
@@ -93,7 +94,7 @@
           <td>{{ i["gruppo"] }}</td>
           <td>{{ i["nome"] }}</td>
           <td>{{ i["specialita"] }}</td>
-          <td>{{ i["tipo"] }}</td>
+          <td>{{ i["tipo"].capitalize() }}</td>
           {% if i["stato"] == "abilitato" %}
           <td><span class="badge bg-success">Abilitato</span></td>
           <td>
