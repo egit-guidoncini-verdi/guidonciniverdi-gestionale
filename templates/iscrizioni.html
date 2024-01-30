@@ -55,10 +55,10 @@
           <div class="btn-group" role="group">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["id"]) }}">Abilita!</a>
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
-            {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
+            {% if current_user.livello == "admin" %}
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i["id"]) }}">Modifica</a>
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Scarta</a>
             {% endif %}
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Scarta</a>
           </div>
           </td>
         </tr>
@@ -109,10 +109,10 @@
           <div class="btn-group" role="group">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["id"]) }}">Abilita!</a>
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
-            {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
+            {% if current_user.livello == "admin" %}
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i["id"]) }}">Modifica</a>
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Scarta</a>
             {% endif %}
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Scarta</a>
           </div>
           </td>
           {% elif i["stato"] == "eliminato" %}
@@ -121,7 +121,7 @@
           <div class="btn-group" role="group">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
             <a type="button" class="btn btn-outline-success" href="{{ url_for("ripristina", id_iscrizione=i["id"]) }}">Ripristina</a>
-            {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
+            {% if current_user.livello == "admin" %}
             <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina_def", id_iscrizione=i["id"]) }}">Elimina</a>
             {% endif %}
           </div>
