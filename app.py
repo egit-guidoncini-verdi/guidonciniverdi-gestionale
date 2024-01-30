@@ -178,7 +178,10 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html", stato=StatusPercorso.query.all()[0].stato)
+    non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
+    if current_user.livello == "iabz":
+        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
+    return render_template("dashboard.html", stato=StatusPercorso.query.all()[0].stato, non_abilitate=non_abilitate)
 
 @app.route("/stato_iscrizioni", methods=["GET", "POST"])
 @login_required

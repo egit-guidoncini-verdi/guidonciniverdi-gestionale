@@ -22,8 +22,12 @@ Benvenuto <strong>{{ current_user.username }}</strong>!
 <br>
 <strong>Stato Iscrizioni:</strong> {% if stato %}<span class="badge text-bg-success">APERTE</span>{% else %}<span class="badge text-bg-warning">CHIUSE</span>{% endif %}
 <br>
+<strong>Iscrizioni da abilitare:</strong> <span class="badge text-bg-success">{{ non_abilitate }}</span>
+<br>
 {% if current_user.livello == "iabr" or current_user.livello == "admin" %}
     <a type="button" class="btn btn-warning mt-2" href="{{ url_for("stato_iscrizioni") }}">Modifica Stato Iscrizioni</a>
+{% else %}
+    <a type="button" class="btn btn-warning mt-2" href="{{ url_for("iscrizioni") }}">Vai alle Iscrizioni</a>
 {% endif %}
 </p>
 </div>
