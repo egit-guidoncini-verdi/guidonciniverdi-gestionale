@@ -472,7 +472,7 @@ def admin():
                 db.session.commit()
                 flash("Utente inserito con successo!", "success")
 
-                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2024!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4><br>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
+                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2024!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
 
                 if manda_mail([utente.mail], [], "Conferma Creazione Account", testo_mail):
                     flash("Mail inviata!", "success")
