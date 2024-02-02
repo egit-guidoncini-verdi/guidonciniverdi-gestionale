@@ -489,6 +489,13 @@ def admin():
         return redirect(url_for("admin"))
     return render_template("admin.html", utenti=User.query.all(), gruppi=gruppi)
 
+@app.route("/crea_account", methods=["GET", "POST"])
+@login_required
+def crea_account():
+    if current_user.livello != "admin":
+        return redirect(url_for("dashboard"))
+    return render_template("crea_account.html", utenti=User.query.all(), gruppi=gruppi)
+
 @app.route("/utente", methods=["GET", "POST"])
 @login_required
 def utente():

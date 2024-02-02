@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Admin</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Crea Account</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+<div class="mx-4 mb-4">
+
+  <form method="post" action="/admin">
+    <input type="hidden" id="id_form" name="id_form" value="nuovo_utente">
+
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" class="form-control" id="username" name="username">
+    </div>
+    <div class="mb-3">
+      <label for="mail" class="form-label">Indirizzo Mail</label>
+      <input type="mail" class="form-control" id="mail" name="mail">
+    </div>
+    <div class="mb-3">
+      <label for="passwd" class="form-label">Telegram ID</label>
+      <input type="text" class="form-control" id="telegram_id" name="telegram_id" aria-describedby="telegram_descr">
+      <div id="telegram_descr" class="form-text mb-2">Campo facoltativo, permette di essere informati anche tramite il Bot Telegram.</div>
+    </div>
+    <div class="mb-3">
+      <label for="livello" class="form-label">Ruolo</label>
+      <select class="form-select" id="livello" name="livello">
+        <option value="iabz">IABZ</option>
+        <option value="pattuglia">Pattuglia GV</option>
+        <option value="iabr">IABR</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="zona" class="form-label" aria-describedby="zona_descr">Zona</label>
+      <div id="zona_descr" class="form-text mb-2">Campo necessario solo per account IABZ, in tutti gli altri casi verrà ignorato.</div>
+      <select class="form-select" id="zona" name="zona" onchange="updateGruppoOptions()" required>
+        {% for i in gruppi %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-warning">Crea Account</button>
+  </form>
+
+</div>
+
+{% endblock %}
