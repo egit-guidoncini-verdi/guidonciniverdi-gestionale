@@ -419,15 +419,36 @@ def mail():
         return redirect(url_for("dashboard"))
     return render_template("testi_mail.html", testi_mail=TestiMail.query.all())
 
+@app.route("/test_mail/<id_mail>")
+@login_required
+def test_mail(id_mail):
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
+    manda_mail([current_user.mail], [], testo_mail.titolo, testo_mail.testo)
+    return redirect(url_for("mail"))
+
 @app.route("/crea_mail", methods=["GET", "POST"])
 @login_required
 def crea_mail():
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
     if request.method == 'POST':
-        testo_mail = TestiMail(data=str(datetime.now()), stato=False, destinatari=False, titolo=request.form["titolo"], testo=request.form["ckeditor"])
+        destinatari = {"sq": False, "capi": False}
+        try:
+            request.form["squadriglie"]
+            destinatari["sq"] = True
+        except KeyError:
+            destinatari["sq"] = False
+        try:
+            request.form["capi_reparto"]
+            destinatari["capi"] = True
+        except KeyError:
+            destinatari["capi"] = False
+        testo_mail = TestiMail(data=str(datetime.now()), stato=False, destinatari=destinatari, titolo=request.form["titolo"], testo=request.form["ckeditor"])
         db.session.add(testo_mail)
         db.session.commit()
+        return redirect(url_for("mail"))
     return render_template("testo_mail.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -489,7 +510,7 @@ def admin():
         return redirect(url_for("admin"))
     return render_template("admin.html", utenti=User.query.all(), gruppi=gruppi)
 
-@app.route("/crea_account", methods=["GET", "POST"])
+@app.route("/crea_account")
 @login_required
 def crea_account():
     if current_user.livello != "admin":
