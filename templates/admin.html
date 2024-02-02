@@ -14,15 +14,15 @@
 
 {% block corpo %}
 
-<div class="mx-4 row">
+<div class="mx-2 mb-4 row">
 <div class="col mx-1">
-<h3>Utenti</h3>
 <table class="table">
   <thead>
     <tr>
       <th scope="col">#</th>
       <th scope="col">Username</th>
       <th scope="col">Mail</th>
+      <th scope="col">Telegram ID</th>
       <th scope="col">Zona</th>
       <th scope="col">Livello</th>
       <th scope="col"></th>
@@ -34,6 +34,7 @@
       <th scope="row">{{ i["id"] }}</th>
       <td>{{ i["username"] }}</td>
       <td>{{ i["mail"] }}</td>
+      <td>{{ i["telegram_id"] }}</td>
       {% if i["zona"] %}
       <td>{{ i["zona"] }}</td>
       {% else %}
