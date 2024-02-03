@@ -373,6 +373,8 @@ def edit_iscrizione(id_iscrizione):
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):
+    if current_user.livello == "iabz":
+        return render_template("gandalf.html")
     creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
     token = base64.b64encode(creds.encode())
     header = {"Authorization": f"Basic {token.decode('utf-8')}"}
