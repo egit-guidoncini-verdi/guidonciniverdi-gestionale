@@ -549,6 +549,11 @@ def welcome():
         flash("Le password non coincidono!", "warning")
     return redirect(url_for("login"))
 
+@app.route("/iscrivi")
+@login_required
+def iscrivi():
+    return render_template("iscrivi.html", gruppi=gruppi, specialita=specialita)
+
 @app.route("/iscriviti", methods=["GET", "POST"])
 def iscriviti():
     if request.method == "POST":
@@ -570,7 +575,6 @@ def iscriviti():
             manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Nuova Iscrizione", testo_telegram)
         except:
             print("Errore")
-
         return redirect(url_for("iscriviti_success"))
     if not StatusPercorso.query.all()[0].stato:
         stato = StatusPercorso.query.all()[0]
