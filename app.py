@@ -600,6 +600,8 @@ def notifica():
     tmp_utenti = User.query.filter_by(livello="admin").all()
     for i in tmp_utenti:
         manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
+    if request.args.get("filtri") == "admin":
+        return {"status": True}
 
     tmp_utenti = User.query.filter_by(livello="pattuglia").all()
     for i in tmp_utenti:
