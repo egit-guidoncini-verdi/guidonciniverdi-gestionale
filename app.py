@@ -599,24 +599,28 @@ def notifica():
     testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
     tmp_utenti = User.query.filter_by(livello="admin").all()
     for i in tmp_utenti:
-        manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
+        if non_abilitate > 0:
+            manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
     if request.args.get("filtri") == "admin":
         return {"status": True}
 
     tmp_utenti = User.query.filter_by(livello="pattuglia").all()
     for i in tmp_utenti:
-        manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
+        if non_abilitate > 0:
+            manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
 
     tmp_utenti = User.query.filter_by(livello="iabr").all()
     for i in tmp_utenti:
-        manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
+        if non_abilitate > 0:
+            manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
 
     tmp_utenti = User.query.filter_by(livello="iabz").all()
     for i in tmp_utenti:
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=i.zona).count()
         abilitate = IscrizioniEG.query.filter_by(stato="abilitato").filter_by(zona=i.zona).count()
         testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
-        manda_telegram(i.telegram_id, f"Report {i.zona}", testo_telegram)
+        if non_abilitate > 0:
+            manda_telegram(i.telegram_id, f"Report {i.zona}", testo_telegram)
     return {"status": True}
 
 @app.errorhandler(404)
