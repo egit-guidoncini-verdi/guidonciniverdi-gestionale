@@ -397,6 +397,14 @@ def abilita(id_iscrizione):
             tmp_rinnovo = False
         else:
             tmp_rinnovo = True
+        if tmp_iscrizione.zona == "ZONA DEI VINI":
+            tmp_zona = "dei Vini"
+        else:
+            tmp_zona = tmp_iscrizione.zona.removeprefix("ZONA ").capitalize()
+        if tmp_iscrizione.specialita.capitalize() == "Pronto intervento":
+            tmp_specialita = "Pronto Intervento"
+        else:
+            tmp_specialita = tmp_iscrizione.specialita.capitalize()
         dati = {
             "username": tmp_username,
             "name": tmp_iscrizione.nome.capitalize(),
@@ -406,11 +414,111 @@ def abilita(id_iscrizione):
                 "anno": "2024",
                 'gruppo': tmp_iscrizione.gruppo.capitalize(),
                 'rinnovo': tmp_rinnovo,
-                'specialita': tmp_iscrizione.specialita.lower(),
+                'specialita': tmp_specialita,
                 'squadriglia': tmp_iscrizione.nome.capitalize(),
-                'zona': tmp_iscrizione.zona.lower()},
+                'zona': tmp_zona},
             }
-        #print(dati)
+        print(dati)
+
+        dati = {
+            "author": 1,
+            "categories": [15],
+            "content": {
+                "protected": False,
+                "rendered": '\n<p>Articolo di prova</p>\n'
+                },
+            "meta": {
+                "anno": "2024",
+                'gruppo': tmp_iscrizione.gruppo.capitalize(),
+                'rinnovo': tmp_rinnovo,
+                'specialita': tmp_specialita,
+                'squadriglia': tmp_iscrizione.nome.capitalize(),
+                'zona': tmp_zona},
+            "specialita": [specialita.index(tmp_specialita)+3],
+            "title": {'rendered': 'Presentazione'},
+            "status": "publish"
+            }
+        print(dati)
+
+        dati = {
+            "author": 1,
+            "categories": [16],
+            "content": {
+                "protected": False,
+                "rendered": '\n<p>Articolo di prova</p>\n'
+                },
+            "meta": {
+                "anno": "2024",
+                'gruppo': tmp_iscrizione.gruppo.capitalize(),
+                'rinnovo': tmp_rinnovo,
+                'specialita': tmp_specialita,
+                'squadriglia': tmp_iscrizione.nome.capitalize(),
+                'zona': tmp_zona},
+            "specialita": [specialita.index(tmp_specialita)+3],
+            "title": {'rendered': 'Prima impresa'},
+            "status": "publish"
+            }
+        print(dati)
+
+        dati = {
+            "author": 1,
+            "categories": [17],
+            "content": {
+                "protected": False,
+                "rendered": '\n<p>Articolo di prova</p>\n'
+                },
+            "meta": {
+                "anno": "2024",
+                'gruppo': tmp_iscrizione.gruppo.capitalize(),
+                'rinnovo': tmp_rinnovo,
+                'specialita': tmp_specialita,
+                'squadriglia': tmp_iscrizione.nome.capitalize(),
+                'zona': tmp_zona},
+            "specialita": [specialita.index(tmp_specialita)+3],
+            "title": {'rendered': 'Seconda impresa'},
+            "status": "publish"
+            }
+        print(dati)
+
+        dati = {
+            "author": 1,
+            "categories": [18],
+            "content": {
+                "protected": False,
+                "rendered": '\n<p>Articolo di prova</p>\n'
+                },
+            "meta": {
+                "anno": "2024",
+                'gruppo': tmp_iscrizione.gruppo.capitalize(),
+                'rinnovo': tmp_rinnovo,
+                'specialita': tmp_specialita,
+                'squadriglia': tmp_iscrizione.nome.capitalize(),
+                'zona': tmp_zona},
+            "specialita": [specialita.index(tmp_specialita)+3],
+            "title": {'rendered': 'Missione'},
+            "status": "publish"
+            }
+        print(dati)
+
+        dati = {
+            "author": 1,
+            "content": {
+                "protected": False,
+                "rendered": ''
+                },
+            "meta": {
+                "anno": "2024",
+                'gruppo': tmp_iscrizione.gruppo.capitalize(),
+                'rinnovo': tmp_rinnovo,
+                'specialita': tmp_specialita,
+                'squadriglia': tmp_iscrizione.nome.capitalize(),
+                'zona': tmp_zona},
+            "specialita": [specialita.index(tmp_specialita)+3],
+            "title": {'rendered': tmp_iscrizione.nome.capitalize()},
+            "status": "publish"
+            }
+        print(dati)
+
         return redirect(url_for("iscrizioni"))
     return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
 
