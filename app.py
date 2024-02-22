@@ -171,6 +171,39 @@ def genera_password_sq():
     colori = ["Rosso", "Blu", "Verde", "Giallo", "Arancione", "Viola", "Rosa", "Marrone", "Grigio", "Nero"]
     return f"{random.choice(nomi)}{random.choice(colori)}"
 
+def crea_utente(id_iscrizione, header, dati):
+    try:
+        response = requests.post(cr["wordpress"]["url"]+"/users", headers=header, json=dati)
+    except:
+        return False
+    id_autore = response.json()["id"]
+    utente = WordpressUser(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_id=int(id_autore), username=dati["username"], meta=dati)
+    db.session.add(utente)
+    db.session.commit()
+    return id_autore
+
+def crea_post(id_iscrizione, wp_id, header, dati, tipo):
+    try:
+        response = requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+    except:
+        return False
+    id_post = response.json()["id"]
+    post = WordpressPost(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_user_id=wp_id, wordpress_id=int(id_post), tipo=tipo, meta=dati)
+    db.session.add(post)
+    db.session.commit()
+    return True
+
+def crea_navigazione(id_iscrizione, wp_id, header, dati, tipo):
+    try:
+        response = requests.post(cr["wordpress"]["url"]+"/navigazione", headers=header, json=dati)
+    except:
+        return False
+    id_post = response.json()["id"]
+    post = WordpressPost(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_user_id=wp_id, wordpress_id=int(id_post), tipo=tipo, meta=dati)
+    db.session.add(post)
+    db.session.commit()
+    return True
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -422,8 +455,14 @@ def abilita(id_iscrizione):
             "password": tmp_passwd,
             "meta": tmp_meta
             }
-        response = requests.post(cr["wordpress"]["url"]+"/users", headers=header, json=dati)
-        id_autore = response.json()["id"]
+
+        id_autore = crea_utente(id_iscrizione, header, dati)
+        if not id_autore:
+            flash("Qualcosa è andato storto con la creazione dell'utente", "warning")
+            return redirect(url_for("iscrizioni"))
+
+        tmp_iscrizione.stato = "abilitato"
+        db.session.commit()
 
         dati = {
             "author": int(id_autore),
@@ -434,7 +473,8 @@ def abilita(id_iscrizione):
             "title": 'Presentazione',
             "status": "publish"
             }
-        requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+        if not crea_post(id_iscrizione, id_autore, header, dati, "presentazione"):
+            flash("Qualcosa è andato storto con la creazione del post di presentazione", "warning")
 
         dati = {
             "author": int(id_autore),
@@ -445,7 +485,8 @@ def abilita(id_iscrizione):
             "title": 'Prima impresa',
             "status": "publish"
             }
-        requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+        if not crea_post(id_iscrizione, id_autore, header, dati, "prima-impresa"):
+            flash("Qualcosa è andato storto con la creazione del post della prima impresa", "warning")
 
         if not tmp_rinnovo:
             dati = {
@@ -457,7 +498,8 @@ def abilita(id_iscrizione):
                 "title": 'Seconda impresa',
                 "status": "publish"
                 }
-            requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+        if not crea_post(id_iscrizione, id_autore, header, dati, "seconda-impresa"):
+            flash("Qualcosa è andato storto con la creazione del post della seconda impresa", "warning")
 
         dati = {
             "author": int(id_autore),
@@ -468,7 +510,8 @@ def abilita(id_iscrizione):
             "title": 'Missione',
             "status": "publish"
             }
-        requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+        if not crea_post(id_iscrizione, id_autore, header, dati, "missione"):
+            flash("Qualcosa è andato storto con la creazione del post della missione", "warning")
 
         dati = {
             "author": int(id_autore),
@@ -477,7 +520,8 @@ def abilita(id_iscrizione):
             "title": tmp_iscrizione.nome.capitalize(),
             "status": "publish"
             }
-        requests.post(cr["wordpress"]["url"]+"/navigazione", headers=header, json=dati)
+        if not crea_navigazione(id_iscrizione, id_autore, header, dati, "navigazione"):
+            flash("Qualcosa è andato storto con la creazione della pagina di navigazione", "warning")
 
         testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere a questo link <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">guidonciniverdi.it/wp-login.php</a>.<hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
         manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq)
