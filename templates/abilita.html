@@ -29,7 +29,7 @@
   </div>
   {% endif %}
 
-  <form method="post">
+  <form method="post" id="form_abilita">
     <div class="mb-3">
       <label for="nome" class="form-label">Nome</label>
       <input type="text" class="form-control" id="nome" name="nome" value="{{ iscrizione.nome.capitalize() }}" disabled>
@@ -48,8 +48,15 @@
 
     <p>Vuoi davvero abilitare la squadriglia {{ iscrizione.nome }} del Gruppo {{ iscrizione.gruppo }} - {{ iscrizione.zona }}?</p>
 
-    <button type="submit" class="btn btn-primary">ABILITA!</button>
+    <button type="submit" class="btn btn-warning" onclick="inviaForm()">ABILITA!</button>
   </form>
+
+  <script type="text/javascript">
+  function inviaForm() {
+          document.getElementById("form_abilita").submit();
+          document.getElementById("form_abilita").querySelector("button").disabled = true;
+      }
+  </script>
 
 
 </div>
