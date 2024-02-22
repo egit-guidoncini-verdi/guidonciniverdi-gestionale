@@ -405,119 +405,82 @@ def abilita(id_iscrizione):
             tmp_specialita = "Pronto Intervento"
         else:
             tmp_specialita = tmp_iscrizione.specialita.capitalize()
+
+        tmp_meta = {
+            "anno": "2024",
+            "gruppo": tmp_iscrizione.gruppo.capitalize(),
+            "rinnovo": tmp_rinnovo,
+            "specialita": tmp_specialita,
+            "squadriglia": tmp_iscrizione.nome.capitalize(),
+            "zona": tmp_zona
+            }
+
         dati = {
             "username": tmp_username,
             "name": tmp_iscrizione.nome.capitalize(),
             "email": tmp_iscrizione.mail,
             "password": tmp_passwd,
-            "meta": {
-                "anno": "2024",
-                'gruppo': tmp_iscrizione.gruppo.capitalize(),
-                'rinnovo': tmp_rinnovo,
-                'specialita': tmp_specialita,
-                'squadriglia': tmp_iscrizione.nome.capitalize(),
-                'zona': tmp_zona},
+            "meta": tmp_meta
             }
-        print(dati)
+        response = requests.post(cr["wordpress"]["url"]+"/users", headers=header, json=dati)
+        id_autore = response.json()["id"]
 
         dati = {
-            "author": 1,
+            "author": int(id_autore),
             "categories": [15],
-            "content": {
-                "protected": False,
-                "rendered": '\n<p>Articolo di prova</p>\n'
-                },
-            "meta": {
-                "anno": "2024",
-                'gruppo': tmp_iscrizione.gruppo.capitalize(),
-                'rinnovo': tmp_rinnovo,
-                'specialita': tmp_specialita,
-                'squadriglia': tmp_iscrizione.nome.capitalize(),
-                'zona': tmp_zona},
-            "specialita": [specialita.index(tmp_specialita)+3],
-            "title": {'rendered': 'Presentazione'},
+            "content": '\n<p>Articolo di prova</p>\n',
+            "meta": tmp_meta,
+            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
+            "title": 'Presentazione',
             "status": "publish"
             }
-        print(dati)
+        requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
 
         dati = {
-            "author": 1,
+            "author": int(id_autore),
             "categories": [16],
-            "content": {
-                "protected": False,
-                "rendered": '\n<p>Articolo di prova</p>\n'
-                },
-            "meta": {
-                "anno": "2024",
-                'gruppo': tmp_iscrizione.gruppo.capitalize(),
-                'rinnovo': tmp_rinnovo,
-                'specialita': tmp_specialita,
-                'squadriglia': tmp_iscrizione.nome.capitalize(),
-                'zona': tmp_zona},
-            "specialita": [specialita.index(tmp_specialita)+3],
-            "title": {'rendered': 'Prima impresa'},
+            "content": '\n<p>Articolo di prova</p>\n',
+            "meta": tmp_meta,
+            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
+            "title": 'Prima impresa',
             "status": "publish"
             }
-        print(dati)
+        requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+
+        if not tmp_rinnovo:
+            dati = {
+                "author": int(id_autore),
+                "categories": [17],
+                "content": '\n<p>Articolo di prova</p>\n',
+                "meta": tmp_meta,
+                "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
+                "title": 'Seconda impresa',
+                "status": "publish"
+                }
+            requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
 
         dati = {
-            "author": 1,
-            "categories": [17],
-            "content": {
-                "protected": False,
-                "rendered": '\n<p>Articolo di prova</p>\n'
-                },
-            "meta": {
-                "anno": "2024",
-                'gruppo': tmp_iscrizione.gruppo.capitalize(),
-                'rinnovo': tmp_rinnovo,
-                'specialita': tmp_specialita,
-                'squadriglia': tmp_iscrizione.nome.capitalize(),
-                'zona': tmp_zona},
-            "specialita": [specialita.index(tmp_specialita)+3],
-            "title": {'rendered': 'Seconda impresa'},
-            "status": "publish"
-            }
-        print(dati)
-
-        dati = {
-            "author": 1,
+            "author": int(id_autore),
             "categories": [18],
-            "content": {
-                "protected": False,
-                "rendered": '\n<p>Articolo di prova</p>\n'
-                },
-            "meta": {
-                "anno": "2024",
-                'gruppo': tmp_iscrizione.gruppo.capitalize(),
-                'rinnovo': tmp_rinnovo,
-                'specialita': tmp_specialita,
-                'squadriglia': tmp_iscrizione.nome.capitalize(),
-                'zona': tmp_zona},
-            "specialita": [specialita.index(tmp_specialita)+3],
-            "title": {'rendered': 'Missione'},
+            "content": '\n<p>Articolo di prova</p>\n',
+            "meta": tmp_meta,
+            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
+            "title": 'Missione',
             "status": "publish"
             }
-        print(dati)
+        requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
 
         dati = {
-            "author": 1,
-            "content": {
-                "protected": False,
-                "rendered": ''
-                },
-            "meta": {
-                "anno": "2024",
-                'gruppo': tmp_iscrizione.gruppo.capitalize(),
-                'rinnovo': tmp_rinnovo,
-                'specialita': tmp_specialita,
-                'squadriglia': tmp_iscrizione.nome.capitalize(),
-                'zona': tmp_zona},
-            "specialita": [specialita.index(tmp_specialita)+3],
-            "title": {'rendered': tmp_iscrizione.nome.capitalize()},
+            "author": int(id_autore),
+            "meta": tmp_meta,
+            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
+            "title": tmp_iscrizione.nome.capitalize(),
             "status": "publish"
             }
-        print(dati)
+        requests.post(cr["wordpress"]["url"]+"/navigazione", headers=header, json=dati)
+
+        testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere a questo link <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">guidonciniverdi.it/wp-login.php</a>.<hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
+        manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq)
 
         return redirect(url_for("iscrizioni"))
     return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
