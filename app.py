@@ -464,6 +464,8 @@ def abilita(id_iscrizione):
         tmp_iscrizione.stato = "abilitato"
         db.session.commit()
 
+        tmp_ok = True
+
         dati = {
             "author": int(id_autore),
             "categories": [15],
@@ -474,7 +476,7 @@ def abilita(id_iscrizione):
             "status": "publish"
             }
         if not crea_post(id_iscrizione, id_autore, header, dati, "presentazione"):
-            flash("Qualcosa è andato storto con la creazione del post di presentazione", "warning")
+            tmp_ok = False
 
         dati = {
             "author": int(id_autore),
@@ -486,7 +488,7 @@ def abilita(id_iscrizione):
             "status": "publish"
             }
         if not crea_post(id_iscrizione, id_autore, header, dati, "prima-impresa"):
-            flash("Qualcosa è andato storto con la creazione del post della prima impresa", "warning")
+            tmp_ok = False
 
         if not tmp_rinnovo:
             dati = {
@@ -498,8 +500,8 @@ def abilita(id_iscrizione):
                 "title": 'Seconda impresa',
                 "status": "publish"
                 }
-        if not crea_post(id_iscrizione, id_autore, header, dati, "seconda-impresa"):
-            flash("Qualcosa è andato storto con la creazione del post della seconda impresa", "warning")
+            if not crea_post(id_iscrizione, id_autore, header, dati, "seconda-impresa"):
+                tmp_ok = False
 
         dati = {
             "author": int(id_autore),
@@ -511,7 +513,7 @@ def abilita(id_iscrizione):
             "status": "publish"
             }
         if not crea_post(id_iscrizione, id_autore, header, dati, "missione"):
-            flash("Qualcosa è andato storto con la creazione del post della missione", "warning")
+            tmp_ok = False
 
         dati = {
             "author": int(id_autore),
@@ -521,7 +523,16 @@ def abilita(id_iscrizione):
             "status": "publish"
             }
         if not crea_navigazione(id_iscrizione, id_autore, header, dati, "navigazione"):
-            flash("Qualcosa è andato storto con la creazione della pagina di navigazione", "warning")
+            tmp_ok = False
+
+        if not tmp_ok:
+            flash("Qualcosa è andato storto con la creazione dei post, abbiamo avvisato gli IABR", "warning")
+            try:
+                testo_telegram = f"Squadriglia {tmp_iscrizione.nome}\n{tmp_iscrizione.gruppo} - {tmp_iscrizione.zona}\nNon tutti i post sono stati correttamente creati"
+                manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Problema tecnico!!", testo_telegram)
+                manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Problema tecnico!!", testo_telegram)
+            except:
+                print("Errore")
 
         testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere a questo link <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">guidonciniverdi.it/wp-login.php</a>.<hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
         manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq)
