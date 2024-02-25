@@ -174,9 +174,9 @@ def genera_password_sq():
 def crea_utente(id_iscrizione, header, dati):
     try:
         response = requests.post(cr["wordpress"]["url"]+"/users", headers=header, json=dati)
+        id_autore = response.json()["id"]
     except:
         return False
-    id_autore = response.json()["id"]
     utente = WordpressUser(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_id=int(id_autore), username=dati["username"], meta=dati)
     db.session.add(utente)
     db.session.commit()
@@ -185,9 +185,9 @@ def crea_utente(id_iscrizione, header, dati):
 def crea_post(id_iscrizione, wp_id, header, dati, tipo):
     try:
         response = requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+        id_post = response.json()["id"]
     except:
         return False
-    id_post = response.json()["id"]
     post = WordpressPost(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_user_id=wp_id, wordpress_id=int(id_post), tipo=tipo, meta=dati)
     db.session.add(post)
     db.session.commit()
@@ -196,9 +196,9 @@ def crea_post(id_iscrizione, wp_id, header, dati, tipo):
 def crea_navigazione(id_iscrizione, wp_id, header, dati, tipo):
     try:
         response = requests.post(cr["wordpress"]["url"]+"/navigazione", headers=header, json=dati)
+        id_post = response.json()["id"]
     except:
         return False
-    id_post = response.json()["id"]
     post = WordpressPost(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_user_id=wp_id, wordpress_id=int(id_post), tipo=tipo, meta=dati)
     db.session.add(post)
     db.session.commit()
@@ -424,6 +424,11 @@ def abilita(id_iscrizione):
         if i["slug"] == tmp_username:
             valid_username = False
     if request.method == "POST":
+        tmp_username = request.form["username"]
+        valid_username = True
+        for i in response.json():
+            if i["slug"] == tmp_username:
+                valid_username = False
         if not valid_username:
             return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
         if tmp_iscrizione.tipo == "conquista":
