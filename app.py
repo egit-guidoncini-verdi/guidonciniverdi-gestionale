@@ -688,6 +688,9 @@ def iscrivi():
 @app.route("/iscriviti", methods=["GET", "POST"])
 def iscriviti():
     if request.method == "POST":
+        if request.form["nome_squadriglia"].replace(" ", "") == "" or request.form["mail_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_rep1"].replace(" ", "") == "" or request.form["mail_rep1"].replace(" ", "") == "" or request.form["numero_rep1"].replace(" ", "") == "":
+            flash("Non hai compilato i campi obbligatori. Riprovaci!", "warning")
+            return redirect(url_for("iscriviti"))
         try:
             iscrizione = IscrizioniEG(data=str(datetime.now()), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
             db.session.add(iscrizione)
