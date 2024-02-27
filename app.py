@@ -424,7 +424,10 @@ def abilita(id_iscrizione):
         if i["slug"] == tmp_username:
             valid_username = False
     if request.method == "POST":
-        tmp_username = request.form["username"]
+        try:
+            tmp_username = request.form["username"]
+        except KeyError:
+            tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
         valid_username = True
         for i in response.json():
             if i["slug"] == tmp_username:
