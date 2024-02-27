@@ -41,7 +41,7 @@
           <div class="btn-group" role="group" aria-label="Basic outline example">
             <a type="button" class="btn btn-outline-primary" href="">Invia!</a>
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("test_mail", id_mail=i.id) }}">Testa</a>
-            <a type="button" class="btn btn-outline-primary" href="">Modifica</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_mail", id_mail=i.id) }}">Modifica</a>
             <a type="button" class="btn btn-outline-danger" href="">Elimina</a>
           </div>
           </td>

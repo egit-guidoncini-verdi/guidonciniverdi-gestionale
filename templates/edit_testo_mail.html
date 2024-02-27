@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>GV Piemonte - Mail</title>
+{{ ckeditor.load(pkg_type="basic") }}
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Modifica Mail</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+<div class="mx-5">
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Destinatari</label>
+        <div class="form-check">
+        {% if testo_mail.destinatari["sq"] %}
+        <input class="form-check-input" type="checkbox" value="squadriglie" name="squadriglie" id="squadriglie" checked>
+        {% else %}
+        <input class="form-check-input" type="checkbox" value="squadriglie" name="squadriglie" id="squadriglie">
+        {% endif %}
+        <label class="form-check-label" for="squadriglie">
+            Squadriglie Iscritte
+        </label>
+        </div>
+        <div class="form-check">
+        {% if testo_mail.destinatari["capi"] %}
+        <input class="form-check-input" type="checkbox" value="capi_reparto" name="capi_reparto" id="capi_reparto" checked>
+        {% else %}
+        <input class="form-check-input" type="checkbox" value="capi_reparto" name="capi_reparto" id="capi_reparto">
+        {% endif %}
+        <label class="form-check-label" for="capi_reparto">
+            Capi Reparto
+        </label>
+        </div>
+    </div>
+    <div class="input-group mb-3">
+    <span class="input-group-text">Titolo</span>
+    <input type="text" class="form-control" placeholder="Aggiornamento" aria-label="Aggiornamento" id="titolo" name="titolo" value="{{ testo_mail.titolo }}">
+    </div>
+    {{ ckeditor.create(value=testo_mail.testo) }}
+    <button type="submit" class="btn btn-primary my-3">Salva</button>
+</form>
+
+</div>
+
+{% endblock %}

@@ -587,6 +587,32 @@ def crea_mail():
         return redirect(url_for("mail"))
     return render_template("testo_mail.html")
 
+@app.route("/edit_mail/<id_mail>", methods=["GET", "POST"])
+@login_required
+def edit_mail(id_mail):
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
+    if request.method == 'POST':
+        destinatari = {"sq": False, "capi": False}
+        try:
+            request.form["squadriglie"]
+            destinatari["sq"] = True
+        except KeyError:
+            destinatari["sq"] = False
+        try:
+            request.form["capi_reparto"]
+            destinatari["capi"] = True
+        except KeyError:
+            destinatari["capi"] = False
+        testo_mail.data = str(datetime.now())
+        testo_mail.destinatari = destinatari
+        testo_mail.titolo = request.form["titolo"]
+        testo_mail.testo = request.form["ckeditor"]
+        db.session.commit()
+        return redirect(url_for("mail"))
+    return render_template("edit_testo_mail.html", testo_mail=testo_mail)
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if len(User.query.all()) == 0:
