@@ -22,6 +22,9 @@
     <button class="nav-link active" id="abilitare-tab" data-bs-toggle="tab" data-bs-target="#abilitare-tab-pane" type="button" role="tab" aria-controls="abilitare-tab-pane" aria-selected="true">Da Abilitare</button>
   </li>
   <li class="nav-item" role="presentation">
+    <button class="nav-link" id="abilitati-tab" data-bs-toggle="tab" data-bs-target="#abilitati-tab-pane" type="button" role="tab" aria-controls="abilitati-tab-pane" aria-selected="false">Abilitati</button>
+  </li>
+  <li class="nav-item" role="presentation">
     <button class="nav-link" id="tutti-tab" data-bs-toggle="tab" data-bs-target="#tutti-tab-pane" type="button" role="tab" aria-controls="tutti-tab-pane" aria-selected="false">Mostra Tutti</button>
   </li>
 </ul>
@@ -67,6 +70,54 @@
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i["id"]) }}">Modifica</a>
             {% endif %}
             <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Scarta</a>
+          </div>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+
+
+  <div class="tab-pane fade show active" id="abilitati-tab-pane" role="tabpanel" aria-labelledby="abilitati-tab" tabindex="0">
+    <div class="row my-3">
+      <div class="col">
+      <input type="text" class="form-control" id="cerca_gruppo_abilitati" onkeyup="filtra_gruppo_abilitati()" placeholder="Cerca Gruppo...">
+      </div>
+      <div class="col">
+      <input type="text" class="form-control" id="cerca_nome_abilitati" onkeyup="filtra_nome_abilitati()" placeholder="Cerca Squadriglia...">
+      </div>
+    </div>
+    <div class="table-responsive">
+    <table class="table" id="iscrizioni_abilitati">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Zona</th>
+          <th scope="col">Gruppo</th>
+          <th scope="col">Squadriglia</th>
+          <th scope="col">Ambito</th>
+          <th scope="col">Conquista/Conferma</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in iscritti %}
+        {% if i["stato"] == "abilitato" %}
+        <tr>
+          <th scope="row">{{ i["id"] }}</th>
+          <td>{{ i["zona"] }}</td>
+          <td>{{ i["gruppo"] }}</td>
+          <td>{{ i["nome"] }}</td>
+          <td>{{ i["specialita"] }}</td>
+          <td>{{ i["tipo"].capitalize() }}</td>
+          <td>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary" disabled>Pagina extra</button>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
           </div>
           </td>
         </tr>
@@ -181,6 +232,48 @@ function filtra_gruppo() {
   input = document.getElementById("cerca_gruppo");
   filter = input.value.toUpperCase();
   table = document.getElementById("iscrizioni");
+  tr = table.getElementsByTagName("tr");
+
+  for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[1];
+    if (td) {
+      txtValue = td.textContent || td.innerText;
+      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }
+  }
+}
+
+function filtra_nome_abilitati() {
+  // Declare variables
+  var input, filter, table, tr, td, i, txtValue;
+  input = document.getElementById("cerca_nome_abilitati");
+  filter = input.value.toUpperCase();
+  table = document.getElementById("iscrizioni_abilitati");
+  tr = table.getElementsByTagName("tr");
+
+  for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[2];
+    if (td) {
+      txtValue = td.textContent || td.innerText;
+      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }
+  }
+}
+
+function filtra_gruppo_abilitati() {
+  // Declare variables
+  var input, filter, table, tr, td, i, txtValue;
+  input = document.getElementById("cerca_gruppo_abilitati");
+  filter = input.value.toUpperCase();
+  table = document.getElementById("iscrizioni_abilitati");
   tr = table.getElementsByTagName("tr");
 
   for (i = 0; i < tr.length; i++) {
