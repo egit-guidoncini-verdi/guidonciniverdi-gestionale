@@ -570,12 +570,17 @@ def crea_mail():
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
     if request.method == 'POST':
-        destinatari = {"sq": False, "capi": False}
+        destinatari = {"sq": False,"sq_abilitate": False, "capi": False}
         try:
             request.form["squadriglie"]
             destinatari["sq"] = True
         except KeyError:
             destinatari["sq"] = False
+        try:
+            request.form["squadriglie_abilitate"]
+            destinatari["sq_abilitate"] = True
+        except KeyError:
+            destinatari["sq_abilitate"] = False
         try:
             request.form["capi_reparto"]
             destinatari["capi"] = True
@@ -594,12 +599,17 @@ def edit_mail(id_mail):
         return redirect(url_for("dashboard"))
     testo_mail = TestiMail.query.filter_by(id=id_mail).first()
     if request.method == 'POST':
-        destinatari = {"sq": False, "capi": False}
+        destinatari = {"sq": False,"sq_abilitate": False, "capi": False}
         try:
             request.form["squadriglie"]
             destinatari["sq"] = True
         except KeyError:
             destinatari["sq"] = False
+        try:
+            request.form["squadriglie_abilitate"]
+            destinatari["sq_abilitate"] = True
+        except KeyError:
+            destinatari["sq_abilitate"] = False
         try:
             request.form["capi_reparto"]
             destinatari["capi"] = True
