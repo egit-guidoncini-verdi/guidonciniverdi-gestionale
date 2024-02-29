@@ -26,7 +26,17 @@
         <input class="form-check-input" type="checkbox" value="squadriglie" name="squadriglie" id="squadriglie">
         {% endif %}
         <label class="form-check-label" for="squadriglie">
-            Squadriglie Iscritte
+            Squadriglie Iscritte (non abilitate)
+        </label>
+        </div>
+        <div class="form-check">
+        {% if testo_mail.destinatari["sq_abilitate"] %}
+        <input class="form-check-input" type="checkbox" value="squadriglie_abilitate" name="squadriglie_abilitate" id="squadriglie_abilitate" checked>
+        {% else %}
+        <input class="form-check-input" type="checkbox" value="squadriglie_abilitate" name="squadriglie_abilitate" id="squadriglie_abilitate">
+        {% endif %}
+        <label class="form-check-label" for="squadriglie_abilitate">
+            Squadriglie Abilitate
         </label>
         </div>
         <div class="form-check">
