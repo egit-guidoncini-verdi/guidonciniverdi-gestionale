@@ -786,6 +786,8 @@ def notifica():
     for i in tmp_utenti:
         if non_abilitate > 0:
             manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
+    if request.args.get("filtri") == "regione":
+        return {"status": True}
 
     tmp_utenti = User.query.filter_by(livello="iabz").all()
     for i in tmp_utenti:
