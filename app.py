@@ -474,10 +474,12 @@ def abilita(id_iscrizione):
 
         tmp_ok = True
 
+        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/152", headers=header).json()["content"]["rendered"]
+
         dati = {
             "author": int(id_autore),
             "categories": [15],
-            "content": '\n<p>Articolo di prova</p>\n',
+            "content": tmp_content,
             "meta": tmp_meta,
             "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
             "title": 'Presentazione',
@@ -486,10 +488,12 @@ def abilita(id_iscrizione):
         if not crea_post(id_iscrizione, id_autore, header, dati, "presentazione"):
             tmp_ok = False
 
+        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/153", headers=header).json()["content"]["rendered"]
+
         dati = {
             "author": int(id_autore),
             "categories": [16],
-            "content": '\n<p>Articolo di prova</p>\n',
+            "content": tmp_content,
             "meta": tmp_meta,
             "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
             "title": 'Prima impresa',
@@ -498,11 +502,13 @@ def abilita(id_iscrizione):
         if not crea_post(id_iscrizione, id_autore, header, dati, "prima-impresa"):
             tmp_ok = False
 
+        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/154", headers=header).json()["content"]["rendered"]
+
         if not tmp_rinnovo:
             dati = {
                 "author": int(id_autore),
                 "categories": [17],
-                "content": '\n<p>Articolo di prova</p>\n',
+                "content": tmp_content,
                 "meta": tmp_meta,
                 "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
                 "title": 'Seconda impresa',
@@ -511,10 +517,12 @@ def abilita(id_iscrizione):
             if not crea_post(id_iscrizione, id_autore, header, dati, "seconda-impresa"):
                 tmp_ok = False
 
+        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/155", headers=header).json()["content"]["rendered"]
+
         dati = {
             "author": int(id_autore),
             "categories": [18],
-            "content": '\n<p>Articolo di prova</p>\n',
+            "content": tmp_content,
             "meta": tmp_meta,
             "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
             "title": 'Missione',
@@ -542,7 +550,7 @@ def abilita(id_iscrizione):
             except:
                 print("Errore")
 
-        testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere a questo link <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">guidonciniverdi.it/wp-login.php</a>.<hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
+        testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere a questo link <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">guidonciniverdi.it/wp-login.php</a> oppure scaricando la app.<br>Trovate tutte le info qui <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
         manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq)
 
         return redirect(url_for("iscrizioni"))
