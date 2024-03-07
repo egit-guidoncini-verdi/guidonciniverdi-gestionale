@@ -3,7 +3,7 @@
 import requests
 import json
 
-url = "http://127.0.0.1:5000/notifica"
+url = "https://guidonciniverdi.pythonanywhere.com/notifica"
 
 with open("credenziali_notifiche.json", "r") as f:
     dati = f.read()
