@@ -33,10 +33,26 @@
         {% for i in testi_mail %}
         <tr>
           <th scope="row">{{ i.id }}</th>
-          <td>{{ i.data[:10] }}</td>
+          <td>{{ i.data[8:10] }}/{{ i.data[5:7] }}/{{ i.data[0:4] }}</td>
           <td>{{ i.titolo }}</td>
-          <td>{{ i.destinatari }}</td>
-          <td>{{ i.stato }}</td>
+          <td>
+          {% if i.destinatari["sq"] %}
+          <span class="badge bg-primary">SQ ISCRITTE</span>
+          {% endif %}
+          {% if i.destinatari["sq_abilitate"] %}
+          <span class="badge bg-primary">SQ ABILITATE</span>
+          {% endif %}
+          {% if i.destinatari["capi"] %}
+          <span class="badge bg-primary">CAPI</span>
+          {% endif %}
+          </td>
+          <td>
+          {% if i.stato == False %}
+          <span class="badge bg-warning">DA INVIARE</span>
+          {% elif i.stato == True %}
+          <span class="badge bg-warning">INVIATA</span>
+          {% endif %}
+          </td>
           <td>
           <div class="btn-group" role="group" aria-label="Basic outline example">
             <a type="button" class="btn btn-outline-primary" href="">Invia!</a>
