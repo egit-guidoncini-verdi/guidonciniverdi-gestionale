@@ -765,8 +765,16 @@ def iscriviti():
 def iscriviti_success():
     return render_template("iscriviti_success.html")
 
-@app.route("/notifica")
+@app.route("/notifica", methods=["POST"])
 def notifica():
+    with open("credenziali_notifiche.json", "r") as f:
+        dati = f.read()
+    if request.form["api_key"] != json.loads(dati)["api_key"]:
+        return {"status": False}
+    try:
+        request.form["tipologia"]
+    except:
+        return {"status": False}
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
     abilitate = IscrizioniEG.query.filter_by(stato="abilitato").count()
     testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
@@ -774,7 +782,7 @@ def notifica():
     for i in tmp_utenti:
         if non_abilitate > 0:
             manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
-    if request.args.get("filtri") == "admin":
+    if request.form["tipologia"] == "admin":
         return {"status": True}
 
     tmp_utenti = User.query.filter_by(livello="pattuglia").all()
@@ -786,7 +794,7 @@ def notifica():
     for i in tmp_utenti:
         if non_abilitate > 0:
             manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
-    if request.args.get("filtri") == "regione":
+    if request.form["tipologia"] == "regione":
         return {"status": True}
 
     tmp_utenti = User.query.filter_by(livello="iabz").all()
