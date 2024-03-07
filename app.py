@@ -564,6 +564,46 @@ def test_mail(id_mail):
     manda_mail([current_user.mail], [], testo_mail.titolo, testo_mail.testo)
     return redirect(url_for("mail"))
 
+@app.route("/send_mail/<id_mail>")
+@login_required
+def send_mail(id_mail):
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
+    tmp_iscritti=IscrizioniEG.query.all()
+    tmp_destinatari = []
+    tmp_copia = []
+    for i in tmp_iscritti:
+        if i.stato == "eliminato":
+            continue
+        if testo_mail.destinatari["sq"] and i.stato == "da_abilitare":
+            tmp_destinatari.append(i.mail)
+            tmp_copia.append(i.mail_capo1)
+            tmp_copia.append(i.mail_capo2)
+        if testo_mail.destinatari["sq_abilitate"] and i.stato == "abilitato":
+            tmp_destinatari.append(i.mail)
+            tmp_copia.append(i.mail_capo1)
+            tmp_copia.append(i.mail_capo2)
+        if testo_mail.destinatari["capi"] and i.stato == "abilitato":
+            tmp_destinatari.append(i.mail_capo1)
+            tmp_destinatari.append(i.mail_capo2)
+    destinatari = list(set(tmp_destinatari))
+    destinatari_copia = list(set(tmp_copia))
+    manda_mail(destinatari, destinatari_copia, testo_mail.titolo, testo_mail.testo)
+    testo_mail.stato = True
+    db.session.commit()
+    return redirect(url_for("mail"))
+
+@app.route("/delete_mail/<id_mail>")
+@login_required
+def delete_mail(id_mail):
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
+    db.session.delete(testo_mail)
+    db.session.commit()
+    return redirect(url_for("mail"))
+
 @app.route("/crea_mail", methods=["GET", "POST"])
 @login_required
 def crea_mail():
@@ -617,6 +657,7 @@ def edit_mail(id_mail):
             destinatari["capi"] = False
         testo_mail.data = str(datetime.now())
         testo_mail.destinatari = destinatari
+        testo_mail.stato = False
         testo_mail.titolo = request.form["titolo"]
         testo_mail.testo = request.form["ckeditor"]
         db.session.commit()
