@@ -305,8 +305,7 @@ def dettagli(id_iscrizione):
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
     link_sq = ""
     if tmp_iscrizione.stato == "abilitato":
-        tmp_wp_user = WordpressUser.query.filter_by(iscrizioni_id=int(id_iscrizione)).first().username
-        link_sq = f"https://guidonciniverdi.it/navigazione/{tmp_wp_user}/"
+        link_sq = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="navigazione").first().wordpress_id
     return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq)
 
 @app.route("/elimina/<id_iscrizione>")
