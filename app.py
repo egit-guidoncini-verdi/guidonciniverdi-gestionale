@@ -302,10 +302,14 @@ def report():
 @app.route("/dettagli/<id_iscrizione>")
 @login_required
 def dettagli(id_iscrizione):
+    creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
+    token = base64.b64encode(creds.encode())
+    header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
     link_sq = ""
     if tmp_iscrizione.stato == "abilitato":
-        link_sq = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="navigazione").first().wordpress_id
+        tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="navigazione").first().wordpress_id
+        link_sq = requests.get(cr["wordpress"]["url"]+"/navigazione/"+str(tmp_wordpress_id), headers=header).json()["link"]
     return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq)
 
 @app.route("/elimina/<id_iscrizione>")
