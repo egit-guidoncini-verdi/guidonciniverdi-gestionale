@@ -302,7 +302,12 @@ def report():
 @app.route("/dettagli/<id_iscrizione>")
 @login_required
 def dettagli(id_iscrizione):
-    return render_template("dettaglio_iscrizione.html", iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first())
+    tmp_iscrizione = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    link_sq = ""
+    if tmp_iscrizione.stato == "abilitato":
+        tmp_wp_user = WordpressUser.query.filter_by(iscrizioni_id=int(id_iscrizione)).first().username
+        link_sq = f"https://guidonciniverdi.it/navigazione/{tmp_wp_user}/"
+    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq)
 
 @app.route("/elimina/<id_iscrizione>")
 @login_required
@@ -402,7 +407,7 @@ def edit_iscrizione(id_iscrizione):
         return redirect(url_for("iscrizioni"))
     return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=gruppi, specialita=specialita)
 
-# Endpoint da terminare!
+
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):

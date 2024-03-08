@@ -60,6 +60,12 @@
           <td><span class="badge bg-danger">Eliminato</span></td>
           {% endif %}
         </tr>
+        <tr>
+          <th scope="row">Stato</th>
+          {% if iscrizione.stato == "abilitato" %}
+          <td><a href="{{ link_sq }}">{{ link_sq }}</a></td>
+          {% endif %}
+        </tr>
       </tbody>
     </table>
   </div>
