@@ -556,7 +556,7 @@ def abilita(id_iscrizione):
             except:
                 print("Errore")
 
-        testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere a questo link <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">guidonciniverdi.it/wp-login.php</a> oppure scaricando la app.<br>Trovate tutte le info qui <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
+        testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">cliccando qui</a> oppure scaricando la app.<br><a href=\"https://play.google.com/store/apps/details?id=org.wordpress.android\" target=\"_blank\">Clicca qui per scaricare la app per Android</a><br><a href=\"https://apps.apple.com/it/app/wordpress-website-builder/id335703880\" target=\"_blank\">Clicca qui per scaricare la app per iOS</a><br>Trovate maggiori info qui: <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
         manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq)
 
         return redirect(url_for("iscrizioni"))
