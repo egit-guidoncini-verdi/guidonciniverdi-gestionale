@@ -308,8 +308,11 @@ def dettagli(id_iscrizione):
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
     link_sq = ""
     if tmp_iscrizione.stato == "abilitato":
-        tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="navigazione").first().wordpress_id
-        link_sq = requests.get(cr["wordpress"]["url"]+"/navigazione/"+str(tmp_wordpress_id), headers=header).json()["link"]
+        try:
+            tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="navigazione").first().wordpress_id
+            link_sq = requests.get(cr["wordpress"]["url"]+"/navigazione/"+str(tmp_wordpress_id), headers=header).json()["link"]
+        except:
+            link_sq = ""
     return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq)
 
 @app.route("/elimina/<id_iscrizione>")
@@ -410,7 +413,6 @@ def edit_iscrizione(id_iscrizione):
         return redirect(url_for("iscrizioni"))
     return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=gruppi, specialita=specialita)
 
-
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):
@@ -446,6 +448,8 @@ def abilita(id_iscrizione):
             tmp_rinnovo = True
         if tmp_iscrizione.zona == "ZONA DEI VINI":
             tmp_zona = "dei Vini"
+        elif tmp_iscrizione.zona == "REGIONE VALLE D’AOSTA":
+            tmp_zona = "Valle d'Aosta"
         else:
             tmp_zona = tmp_iscrizione.zona.removeprefix("ZONA ").capitalize()
         if tmp_iscrizione.specialita.capitalize() == "Pronto intervento":
