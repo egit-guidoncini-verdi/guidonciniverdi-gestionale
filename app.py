@@ -421,7 +421,7 @@ def abilita(id_iscrizione):
     header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
     try:
-        tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
+        tmp_username = f"{tmp_iscrizione.nome.strip(' ')}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
     except:
         flash("Non ho trovato l'iscrizione!", "warning")
         return redirect(url_for("iscrizioni"))
@@ -435,7 +435,7 @@ def abilita(id_iscrizione):
         try:
             tmp_username = request.form["username"]
         except KeyError:
-            tmp_username = f"{tmp_iscrizione.nome}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
+            tmp_username = f"{tmp_iscrizione.nome.strip(' ')}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
         valid_username = True
         for i in response.json():
             if i["slug"] == tmp_username:
