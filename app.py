@@ -16,6 +16,7 @@ import string
 import base64
 import random
 import json
+import io
 
 with open("credenziali.json", "r") as f:
     cr = json.load(f)
@@ -296,8 +297,10 @@ def report():
         ws.cell(row=tmp_riga, column=14).value = iscritto.cell_capo2
         ws.cell(row=tmp_riga, column=15).value = iscritto.stato
 
-    wb.save("./static/riepilogo.xlsx")
-    return send_file("./static/riepilogo.xlsx", as_attachment=True, download_name="riepilogo.xlsx")
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return send_file(out, as_attachment=True, download_name="riepilogo.xlsx")
 
 @app.route("/dettagli/<id_iscrizione>")
 @login_required
