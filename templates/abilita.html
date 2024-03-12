@@ -34,7 +34,12 @@
       <label for="nome" class="form-label">Nome</label>
       <input type="text" class="form-control" id="nome" name="nome" value="{{ iscrizione.nome.capitalize() }}" disabled>
     </div>
-    {% if valid_username %}
+    {% if current_user.livello != "iabz" %}
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" class="form-control" id="username" name="username" value="{{ username }}">
+    </div>
+    {% elif valid_username %}
     <div class="mb-3">
       <label for="username" class="form-label">Username</label>
       <input type="text" class="form-control" id="username" name="username" value="{{ username }}" disabled>
