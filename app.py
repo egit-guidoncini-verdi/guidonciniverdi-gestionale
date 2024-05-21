@@ -819,7 +819,7 @@ def iscriviti():
         elif stato.data_chiusura == "":
             msg = "Le iscrizioni sono momentaneamente chiuse per problemi tecnici, riapriranno a breve!"
         else:
-            msg = "Ops, le iscrizioni sono già terminate!"
+            msg = "Le iscrizioni sono chiuse!<br>Se vuoi registrare una iscrizione tardiva contattaci tramite mail qua sotto!"
         return render_template("iscriviti_chiuse.html", msg=msg)
     return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
 
