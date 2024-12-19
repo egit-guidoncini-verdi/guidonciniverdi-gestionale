@@ -3,6 +3,8 @@ credenziali.json
 __pycache__
 .env
 gruppi.csv
+gruppi_piemonte.csv
+gruppi_puglia.csv
 genera_costanti.py
 riepilogo.xlsx
 credenziali_notifiche.json

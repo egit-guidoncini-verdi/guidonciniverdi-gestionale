@@ -15,16 +15,45 @@
 {% block corpo %}
 <div class="mx-5">
 
-  {% if stato %}
-  <form method="post">
+  {% if stato.iscrizioni %}
+    {% if stato.abilitazioni %}
+    <form class="my-2" method="post">
+      <input type="hidden" class="form-control" name="stato" value="ferma">
+      <button type="submit" class="btn btn-primary">Ferma Abilitazioni!</button>
+    </form>
+    {% else %}
+    <form class="my-2" method="post">
+      <input type="hidden" class="form-control" name="stato" value="abilita">
+      <button type="submit" class="btn btn-primary">Apri Abilitazioni!</button>
+    </form>
+    {% endif %}
+  <form class="my-2" method="post">
     <input type="hidden" class="form-control" name="stato" value="sospendi">
-    <button type="submit" class="btn btn-primary">SOSPENDI!</button>
+    <button type="submit" class="btn btn-primary">SOSPENDI ISCRIZIONI!</button>
   </form>
   {% else %}
-  <form method="post">
-    <input type="hidden" class="form-control" name="stato" value="apri">
-    <button type="submit" class="btn btn-primary">APRI!</button>
-  </form>
+    {% if stato.data_apertura != "" %}
+    <form class="my-2" method="post">
+      <input type="hidden" class="form-control" name="stato" value="apri">
+      <button type="submit" class="btn btn-primary">RIAPRI LE ISCRIZIONI!</button>
+    </form>
+      {% if stato.data_chiusura == "" %}
+      <form class="my-2" method="post">
+        <input type="hidden" class="form-control" name="stato" value="chiudi">
+        <button type="submit" class="btn btn-danger">CHIUDI LE ISCRIZIONI!</button>
+      </form>
+      {% endif %}
+    {% elif stato.data_chiusura != "" %}
+    <form class="my-2" method="post">
+      <input type="hidden" class="form-control" name="stato" value="apri">
+      <button type="submit" class="btn btn-primary">RIAPRI LE ISCRIZIONI!</button>
+    </form>
+    {% else %}
+    <form class="my-2" method="post">
+      <input type="hidden" class="form-control" name="stato" value="apri">
+      <button type="submit" class="btn btn-primary">APRI LE ISCRIZIONI!</button>
+    </form>
+    {% endif %}
   {% endif %}
 
 </div>

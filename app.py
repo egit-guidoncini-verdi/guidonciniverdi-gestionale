@@ -21,14 +21,22 @@ with open("credenziali.json", "r") as f:
     cr = json.load(f)
 
 # generazione dell'elenco gruppi
-gruppi = {}
-df = pd.read_csv("gruppi.csv")
+gruppi = {"piemonte": {}, "puglia": {}}
+df = pd.read_csv("gruppi_piemonte.csv")
 
 for i in list(set(df["zona"].tolist())):
-    gruppi[i] = []
+    gruppi["piemonte"][i] = []
 
 for i in df.index:
-    gruppi[df["zona"][i]].append(df["Denominazione Gruppo"][i])
+    gruppi["piemonte"][df["zona"][i]].append(df["Denominazione Gruppo"][i])
+
+df = pd.read_csv("gruppi_puglia.csv")
+
+for i in list(set(df["zona"].tolist())):
+    gruppi["puglia"][i] = []
+
+for i in df.index:
+    gruppi["puglia"][df["zona"][i]].append(df["Denominazione Gruppo"][i])
 
 # costanti varie
 specialita = [
@@ -122,7 +130,8 @@ class TestiMail(db.Model):
 class StatusPercorso(db.Model):
     __tablename__ = "status_percorso"
     id = db.Column(db.Integer, primary_key=True)
-    stato = db.Column(db.JSON, nullable=False)
+    iscrizioni = db.Column(db.JSON, nullable=False)
+    abilitazioni = db.Column(db.JSON, nullable=False)
     regione = db.Column(db.String(128), nullable=True)
     data_apertura = db.Column(db.String(128), nullable=False)
     data_chiusura = db.Column(db.String(128), nullable=False)
@@ -222,7 +231,7 @@ def dashboard():
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
     if current_user.livello == "iabz" or current_user.livello == "iabr":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first().stato
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first().iscrizioni
     if current_user.livello == "admin":
         stato = False
     return render_template("dashboard.html", stato=stato, non_abilitate=non_abilitate)
@@ -234,17 +243,27 @@ def stato_iscrizioni():
         return redirect(url_for("dashboard"))
     if current_user.livello == "iabr":
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).first()
-    else:
-        pass #Questo genera ecezione, devo gestirlo cambiando la logica dello stato!!
     if request.method == "POST":
         if request.form["stato"] == "sospendi":
-            stato.stato = False
+            stato.iscrizioni = False
             db.session.commit()
         if request.form["stato"] == "apri":
-            stato.stato = True
+            stato.iscrizioni = True
+            stato.data_apertura = str(datetime.now())
+            stato.data_chiusura = ""
+            db.session.commit()
+        if request.form["stato"] == "chiudi":
+            stato.iscrizioni = False
+            stato.data_chiusura = str(datetime.now())
+            db.session.commit()
+        if request.form["stato"] == "abilita":
+            stato.abilitazioni = True
+            db.session.commit()
+        if request.form["stato"] == "ferma":
+            stato.abilitazioni = False
             db.session.commit()
         return redirect(url_for("stato_iscrizioni"))
-    return render_template("stato_iscrizioni.html", stato=stato.stato)
+    return render_template("stato_iscrizioni.html", stato=stato)
 
 @app.route("/iscrizioni")
 @login_required
@@ -253,7 +272,7 @@ def iscrizioni():
     if current_user.livello == "iabz":
         limita = True
     iscritti = []
-    tmp_iscritti=IscrizioniEG.query.all()
+    tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione)
     for i in tmp_iscritti:
         if limita and i.zona != current_user.zona:
             continue
@@ -267,7 +286,7 @@ def report():
     if current_user.livello == "iabz":
         limita = True
     iscritti = []
-    tmp_iscritti=IscrizioniEG.query.all()
+    tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione)
     for i in tmp_iscritti:
         if limita and i.zona != current_user.zona:
             continue
@@ -432,6 +451,8 @@ def edit_iscrizione(id_iscrizione):
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):
+    if not StatusPercorso.query.filter_by(regione=current_user.regione).first().abilitazioni:
+        return redirect(url_for("iscrizioni"))
     creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
     token = base64.b64encode(creds.encode())
     header = {"Authorization": f"Basic {token.decode('utf-8')}"}
@@ -732,10 +753,14 @@ def admin():
                 alphabet = string.ascii_letters + string.digits
                 tmp_password = ''.join(secrets.choice(alphabet) for i in range(12))
                 password = generate_password_hash(tmp_password)
-                if request.form["livello"] == "iabz":
-                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=request.form["regione"], zona=request.form["zona"], telegram_id=request.form["telegram_id"])
+                if current_user.livello == "admin":
+                    regione = request.form["regione"]
                 else:
-                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=request.form["regione"], telegram_id=request.form["telegram_id"])
+                    regione = current_user.regione
+                if request.form["livello"] == "iabz":
+                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=regione, zona=request.form["zona"], telegram_id=request.form["telegram_id"])
+                else:
+                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=regione, telegram_id=request.form["telegram_id"])
                 db.session.add(utente)
                 db.session.commit()
                 flash("Utente inserito con successo!", "success")
@@ -758,14 +783,17 @@ def admin():
     utenti=User.query.filter_by(regione=current_user.regione)
     if current_user.livello == "admin":
         utenti=User.query.all()
-    return render_template("admin.html", utenti=utenti, gruppi=gruppi)
+    return render_template("admin.html", utenti=utenti, gruppi=gruppi[current_user.regione])
 
 @app.route("/crea_account")
 @login_required
 def crea_account():
-    if current_user.livello != "admin":
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    return render_template("crea_account.html", utenti=User.query.all(), gruppi=gruppi)
+    utenti=User.query.filter_by(regione=current_user.regione)
+    if current_user.livello == "admin":
+        utenti=User.query.all()
+    return render_template("crea_account.html", utenti=utenti, gruppi=gruppi[current_user.regione])
 
 @app.route("/utente", methods=["GET", "POST"])
 @login_required
@@ -802,7 +830,7 @@ def welcome():
 @app.route("/iscrivi")
 @login_required
 def iscrivi():
-    return render_template("iscrivi.html", gruppi=gruppi, specialita=specialita)
+    return render_template("iscrivi.html", gruppi=gruppi[current_user.regione], specialita=specialita)
 
 @app.route("/iscriviti/<regione>", methods=["GET", "POST"])
 def iscriviti(regione):
@@ -829,8 +857,8 @@ def iscriviti(regione):
         except:
             print("Errore")
         return redirect(url_for("iscriviti_success"))
-    if not StatusPercorso.query.all()[0].stato:
-        stato = StatusPercorso.query.all()[0]
+    if not StatusPercorso.query.filter_by(regione=regione).first().iscrizioni:
+        stato = StatusPercorso.query.filter_by(regione=regione).first()
         msg = ""
         if stato.data_apertura == "":
             msg = "Le iscrizioni apriranno nei prossimi giorni!"
@@ -838,8 +866,8 @@ def iscriviti(regione):
             msg = "Le iscrizioni sono momentaneamente chiuse per problemi tecnici, riapriranno a breve!"
         else:
             msg = "Le iscrizioni sono chiuse!<br>Se vuoi registrare una iscrizione tardiva contattaci tramite mail qua sotto!"
-        return render_template("iscriviti_chiuse.html", msg=msg)
-    return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita, regione=regione)
+        return render_template("iscriviti_chiuse.html", msg=msg, regione=regione)
+    return render_template("iscriviti.html", gruppi=gruppi[regione], specialita=specialita, regione=regione)
 
 @app.route("/iscriviti_success")
 def iscriviti_success():

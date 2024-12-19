@@ -38,6 +38,7 @@
         <option value="iabr">IABR</option>
       </select>
     </div>
+    {% if current_user.livello == "admin" %}
     <div class="mb-3">
       <label for="regione" class="form-label" aria-describedby="regione_descr">Regione</label>
       <select class="form-select" id="regione" name="regione" required>
@@ -46,6 +47,7 @@
         {% endfor %}
       </select>
     </div>
+    {% endif %}
     <div class="mb-3">
       <label for="zona" class="form-label" aria-describedby="zona_descr">Zona</label>
       <div id="zona_descr" class="form-text mb-2">Campo necessario solo per account IABZ, in tutti gli altri casi verrà ignorato.</div>

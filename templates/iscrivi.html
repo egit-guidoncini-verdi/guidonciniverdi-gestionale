@@ -29,7 +29,7 @@
 {% endwith %}
 
 <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
-  <form method="post" id="form_iscriviti" action="/iscriviti">
+  <form method="post" id="form_iscriviti" action="/iscriviti/{{ current_user.regione }}">
     <div class="mb-3">
       <label for="nome_squadriglia" class="form-label">Nome Squadriglia</label>
       <input type="text" class="form-control" id="nome_squadriglia" name="nome_squadriglia" required>
