@@ -3,7 +3,6 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
-from flask_ckeditor import CKEditor
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -55,25 +54,28 @@ db = SQLAlchemy(app)
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
-
-ckeditor = CKEditor(app)
+login_manager.login_message = u"Sessione scaduta!"
 
 # Classi Database
 class User(db.Model, UserMixin):
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(128), nullable=False, unique=True)
     password = db.Column(db.String(128), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
+    regione = db.Column(db.String(128), nullable=True)
     zona = db.Column(db.String(128), nullable=True)
     livello = db.Column(db.String(128), nullable=False)
     telegram_id = db.Column(db.String(128), nullable=True)
 
 class IscrizioniEG(db.Model):
+    __tablename__ = "iscrizioniEG"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(128), nullable=False)
     stato = db.Column(db.String(128), nullable=False)
     nome = db.Column(db.String(128), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
+    regione = db.Column(db.String(128), nullable=False)
     zona = db.Column(db.String(128), nullable=False)
     gruppo = db.Column(db.String(128), nullable=False)
     specialita = db.Column(db.String(128), nullable=False)
@@ -89,6 +91,7 @@ class IscrizioniEG(db.Model):
     cell_capo2 = db.Column(db.String(128), nullable=False)
 
 class WordpressUser(db.Model):
+    __tablename__ = "wordpress_user"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(128), nullable=False)
     iscrizioni_id = db.Column(db.Integer, nullable=False)
@@ -97,6 +100,7 @@ class WordpressUser(db.Model):
     meta = db.Column(db.JSON, nullable=False)
 
 class WordpressPost(db.Model):
+    __tablename__ = "wordpress_post"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(128), nullable=False)
     iscrizioni_id = db.Column(db.Integer, nullable=False)
@@ -107,6 +111,7 @@ class WordpressPost(db.Model):
     meta = db.Column(db.JSON, nullable=False)
 
 class TestiMail(db.Model):
+    __tablename__ = "testi_mail"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(128), nullable=False)
     stato = db.Column(db.JSON, nullable=False)
@@ -115,8 +120,10 @@ class TestiMail(db.Model):
     testo = db.Column(db.UnicodeText, nullable=False)
 
 class StatusPercorso(db.Model):
+    __tablename__ = "status_percorso"
     id = db.Column(db.Integer, primary_key=True)
     stato = db.Column(db.JSON, nullable=False)
+    regione = db.Column(db.String(128), nullable=True)
     data_apertura = db.Column(db.String(128), nullable=False)
     data_chiusura = db.Column(db.String(128), nullable=False)
 
@@ -129,7 +136,7 @@ def load_user(user_id):
 
 def manda_mail(indirizzi, copia, titolo, testo):
     message = MIMEMultipart("alternative")
-    message["Subject"] = f"Guidoncini Verdi 2024 - {titolo}"
+    message["Subject"] = f"Guidoncini Verdi 2025 - {titolo}"
     message["From"] = cr["mail"]["sender_email"]
     message["To"] = ", ".join(indirizzi)
     if copia:
@@ -213,16 +220,22 @@ def index():
 @login_required
 def dashboard():
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
-    if current_user.livello == "iabz":
+    if current_user.livello == "iabz" or current_user.livello == "iabr":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
-    return render_template("dashboard.html", stato=StatusPercorso.query.all()[0].stato, non_abilitate=non_abilitate)
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first().stato
+    if current_user.livello == "admin":
+        stato = False
+    return render_template("dashboard.html", stato=stato, non_abilitate=non_abilitate)
 
 @app.route("/stato_iscrizioni", methods=["GET", "POST"])
 @login_required
 def stato_iscrizioni():
     if current_user.livello == "iabz" or current_user.livello == "pattuglia":
         return redirect(url_for("dashboard"))
-    stato = StatusPercorso.query.all()[0]
+    if current_user.livello == "iabr":
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first()
+    else:
+        pass #Questo genera ecezione, devo gestirlo cambiando la logica dello stato!!
     if request.method == "POST":
         if request.form["stato"] == "sospendi":
             stato.stato = False
@@ -403,7 +416,7 @@ def edit_iscrizione(id_iscrizione):
             flash("Modifica Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscrizioni"))
 
-        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2025 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq)
 
         # Avvisa Francesco e Admin
@@ -461,7 +474,7 @@ def abilita(id_iscrizione):
             tmp_specialita = tmp_iscrizione.specialita.capitalize()
 
         tmp_meta = {
-            "anno": "2024",
+            "anno": "2025",
             "gruppo": tmp_iscrizione.gruppo.capitalize(),
             "rinnovo": tmp_rinnovo,
             "specialita": tmp_specialita,
@@ -710,7 +723,7 @@ def logout():
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
-    if current_user.livello != "admin":
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
     if request.method == "POST":
         if request.form["id_form"] == "nuovo_utente":
@@ -720,21 +733,21 @@ def admin():
                 tmp_password = ''.join(secrets.choice(alphabet) for i in range(12))
                 password = generate_password_hash(tmp_password)
                 if request.form["livello"] == "iabz":
-                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], zona=request.form["zona"], telegram_id=request.form["telegram_id"])
+                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=request.form["regione"], zona=request.form["zona"], telegram_id=request.form["telegram_id"])
                 else:
-                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], telegram_id=request.form["telegram_id"])
+                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=request.form["regione"], telegram_id=request.form["telegram_id"])
                 db.session.add(utente)
                 db.session.commit()
                 flash("Utente inserito con successo!", "success")
 
-                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2024!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
+                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2025 Regione {utente.regione.capitalize()}!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
 
                 if manda_mail([utente.mail], [], "Conferma Creazione Account", testo_mail):
                     flash("Mail inviata!", "success")
                 else:
                     flash("Qualcosa è andato storto con la mail...", "warning")
                 if utente.telegram_id:
-                    testo_telegram = f"Benvenuto {utente.username},\nla presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2024!\nIl Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito guidonciniverdi.it.\n\nDettagli Iscrizione\nUsername: {utente.username}\nPassword provvisoria: {tmp_password}\nPer accedere al gestionale puoi cliccare a questo link: guidonciniverdi.pythonanywhere.com/dashboard"
+                    testo_telegram = f"Benvenuto {utente.username},\nla presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2025!\nIl Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito guidonciniverdi.it.\n\nDettagli Iscrizione\nUsername: {utente.username}\nPassword provvisoria: {tmp_password}\nPer accedere al gestionale puoi cliccare a questo link: guidonciniverdi.pythonanywhere.com/dashboard"
                     if manda_telegram(utente.telegram_id, "Conferma Creazione Account", testo_telegram):
                         flash("Notifica telegram inviata!", "success")
                     else:
@@ -742,7 +755,10 @@ def admin():
             else:
                 flash(f"Esiste già l'utente {request.form['username']}!", "warning")
         return redirect(url_for("admin"))
-    return render_template("admin.html", utenti=User.query.all(), gruppi=gruppi)
+    utenti=User.query.filter_by(regione=current_user.regione)
+    if current_user.livello == "admin":
+        utenti=User.query.all()
+    return render_template("admin.html", utenti=utenti, gruppi=gruppi)
 
 @app.route("/crea_account")
 @login_required
@@ -773,7 +789,9 @@ def welcome():
         password = generate_password_hash(request.form["passwd"])
         utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin", telegram_id=request.form["telegram_id"])
         db.session.add(utente)
-        status = StatusPercorso(stato=False, data_apertura="", data_chiusura="")
+        status = StatusPercorso(stato=False, regione="piemonte", data_apertura="", data_chiusura="")
+        db.session.add(status)
+        status = StatusPercorso(stato=False, regione="puglia", data_apertura="", data_chiusura="")
         db.session.add(status)
         db.session.commit()
         flash("Utente creato con successo!", "success")
@@ -786,21 +804,21 @@ def welcome():
 def iscrivi():
     return render_template("iscrivi.html", gruppi=gruppi, specialita=specialita)
 
-@app.route("/iscriviti", methods=["GET", "POST"])
-def iscriviti():
+@app.route("/iscriviti/<regione>", methods=["GET", "POST"])
+def iscriviti(regione):
     if request.method == "POST":
         if request.form["nome_squadriglia"].replace(" ", "") == "" or request.form["mail_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_rep1"].replace(" ", "") == "" or request.form["mail_rep1"].replace(" ", "") == "" or request.form["numero_rep1"].replace(" ", "") == "":
             flash("Non hai compilato i campi obbligatori. Riprovaci!", "warning")
             return redirect(url_for("iscriviti"))
         try:
-            iscrizione = IscrizioniEG(data=str(datetime.now()), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), mail=request.form["mail_squadriglia"], zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+            iscrizione = IscrizioniEG(data=str(datetime.now()), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), mail=request.form["mail_squadriglia"], regione=regione, zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
             db.session.add(iscrizione)
             db.session.commit()
         except:
             flash("Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscriviti"))
 
-        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2024 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accedere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2025 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accedere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq)
 
         # Avvisa Francesco e Admin
@@ -821,7 +839,7 @@ def iscriviti():
         else:
             msg = "Le iscrizioni sono chiuse!<br>Se vuoi registrare una iscrizione tardiva contattaci tramite mail qua sotto!"
         return render_template("iscriviti_chiuse.html", msg=msg)
-    return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita)
+    return render_template("iscriviti.html", gruppi=gruppi, specialita=specialita, regione=regione)
 
 @app.route("/iscriviti_success")
 def iscriviti_success():

@@ -25,6 +25,7 @@
         <th scope="col">Username</th>
         <th scope="col">Mail</th>
         <th scope="col">Telegram ID</th>
+        <th scope="col">Regione</th>
         <th scope="col">Zona</th>
         <th scope="col">Livello</th>
         <th scope="col"></th>
@@ -37,10 +38,15 @@
         <td>{{ i["username"] }}</td>
         <td>{{ i["mail"] }}</td>
         <td>{{ i["telegram_id"] }}</td>
+        {% if i["regione"] %}
+        <td>{{ i["regione"] }}</td>
+        {% else %}
+        <td>--</td>
+        {% endif %}
         {% if i["zona"] %}
         <td>{{ i["zona"] }}</td>
         {% else %}
-        <td>REGIONE</td>
+        <td>--</td>
         {% endif %}
         <td>{{ i["livello"] }}</td>
         <td>Modifica</td>

@@ -35,8 +35,15 @@
       <label for="livello" class="form-label">Ruolo</label>
       <select class="form-select" id="livello" name="livello">
         <option value="iabz">IABZ</option>
-        <option value="pattuglia">Pattuglia GV</option>
         <option value="iabr">IABR</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="regione" class="form-label" aria-describedby="regione_descr">Regione</label>
+      <select class="form-select" id="regione" name="regione" required>
+        {% for i in ["piemonte", "puglia"] %}
+        <option value="{{ i }}">{{ i.upper() }}</option>
+        {% endfor %}
       </select>
     </div>
     <div class="mb-3">
