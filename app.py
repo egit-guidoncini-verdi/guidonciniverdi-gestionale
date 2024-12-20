@@ -97,6 +97,7 @@ class IscrizioniEG(db.Model):
     nome_capo2 = db.Column(db.String(128), nullable=False)
     mail_capo2 = db.Column(db.String(128), nullable=False)
     cell_capo2 = db.Column(db.String(128), nullable=False)
+    sesso = db.Column(db.String(128))
 
 class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
@@ -446,7 +447,7 @@ def edit_iscrizione(id_iscrizione):
         except:
             print("Errore Telegram")
         return redirect(url_for("iscrizioni"))
-    return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=gruppi, specialita=specialita)
+    return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=gruppi[current_user.regione], specialita=specialita)
 
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
@@ -780,20 +781,26 @@ def admin():
             else:
                 flash(f"Esiste già l'utente {request.form['username']}!", "warning")
         return redirect(url_for("admin"))
-    utenti=User.query.filter_by(regione=current_user.regione)
     if current_user.livello == "admin":
         utenti=User.query.all()
-    return render_template("admin.html", utenti=utenti, gruppi=gruppi[current_user.regione])
+        tmp_gruppi = gruppi["piemonte"]
+    else:
+        utenti=User.query.filter_by(regione=current_user.regione)
+        tmp_gruppi = gruppi[current_user.regione]
+    return render_template("admin.html", utenti=utenti, gruppi=tmp_gruppi)
 
 @app.route("/crea_account")
 @login_required
 def crea_account():
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    utenti=User.query.filter_by(regione=current_user.regione)
     if current_user.livello == "admin":
         utenti=User.query.all()
-    return render_template("crea_account.html", utenti=utenti, gruppi=gruppi[current_user.regione])
+        tmp_gruppi = gruppi["piemonte"]
+    else:
+        utenti=User.query.filter_by(regione=current_user.regione)
+        tmp_gruppi = gruppi[current_user.regione]
+    return render_template("crea_account.html", utenti=utenti, gruppi=tmp_gruppi)
 
 @app.route("/utente", methods=["GET", "POST"])
 @login_required
@@ -817,9 +824,9 @@ def welcome():
         password = generate_password_hash(request.form["passwd"])
         utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin", telegram_id=request.form["telegram_id"])
         db.session.add(utente)
-        status = StatusPercorso(stato=False, regione="piemonte", data_apertura="", data_chiusura="")
+        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="piemonte", data_apertura="", data_chiusura="")
         db.session.add(status)
-        status = StatusPercorso(stato=False, regione="puglia", data_apertura="", data_chiusura="")
+        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="puglia", data_apertura="", data_chiusura="")
         db.session.add(status)
         db.session.commit()
         flash("Utente creato con successo!", "success")
@@ -839,7 +846,7 @@ def iscriviti(regione):
             flash("Non hai compilato i campi obbligatori. Riprovaci!", "warning")
             return redirect(url_for("iscriviti"))
         try:
-            iscrizione = IscrizioniEG(data=str(datetime.now()), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), mail=request.form["mail_squadriglia"], regione=regione, zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+            iscrizione = IscrizioniEG(data=str(datetime.now()), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=regione, zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
             db.session.add(iscrizione)
             db.session.commit()
         except:
@@ -852,7 +859,7 @@ def iscriviti(regione):
         # Avvisa Francesco e Admin
         try:
             testo_telegram = f"Squadriglia {iscrizione.nome}\n{iscrizione.gruppo} - {iscrizione.zona}\nAmbito\n{iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
-            manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Nuova Iscrizione", testo_telegram)
+            manda_telegram(User.query.filter_by(username="iabr_piemonte").first().telegram_id, "Nuova Iscrizione", testo_telegram)
             manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Nuova Iscrizione", testo_telegram)
         except:
             print("Errore")

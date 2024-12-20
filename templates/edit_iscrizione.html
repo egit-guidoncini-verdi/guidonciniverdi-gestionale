@@ -29,6 +29,13 @@
           </div>
 
           <div class="mb-3">
+          <select class="form-select" id="tipo_sq" name="tipo_sq" required>
+            <option value="m">Maschile</option>
+            <option value="f">Femminile</option>
+          </select>
+          </div>
+
+          <div class="mb-3">
           <label for="zona" class="form-label">Zona</label>
           <select class="form-select" id="zona" name="zona" onchange="updateGruppoOptions()" required>
             {% for i in gruppi %}

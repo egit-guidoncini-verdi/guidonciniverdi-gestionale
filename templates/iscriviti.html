@@ -32,8 +32,15 @@
       <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
         <form method="post" id="form_iscriviti">
           <div class="mb-3">
-            <label for="nome_squadriglia" class="form-label">Nome Squadriglia</label>
-            <input type="text" class="form-control" id="nome_squadriglia" name="nome_squadriglia" required>
+            <label for="nome_squadriglia" class="form-label">Squadriglia</label>
+            <input type="text" class="form-control" id="nome_squadriglia" name="nome_squadriglia" placeholder="Nome Squadriglia" required>
+          </div>
+
+          <div class="mb-3">
+          <select class="form-select" id="tipo_sq" name="tipo_sq" required>
+            <option value="m">Maschile</option>
+            <option value="f">Femminile</option>
+          </select>
           </div>
 
           <div class="mb-3">
@@ -78,7 +85,7 @@
           <h5 class="text-center"><strong>Un pò di contatti!</strong></h5>
 
           <div class="mb-3">
-            <label for="nome_capo_squadriglia" class="form-label">Nome e Cognome Capə squadriglia</label>
+            <label for="nome_capo_squadriglia" class="form-label">Nome e Cognome Capo squadriglia</label>
             <input type="text" class="form-control" id="nome_capo_squadriglia" name="nome_capo_squadriglia" required>
           </div>
 
@@ -89,7 +96,7 @@
           </div>
 
           <div class="mb-3">
-            <label for="nome_capo_rep1" class="form-label">Nome e Cognome Capə Reparto 1</label>
+            <label for="nome_capo_rep1" class="form-label">Nome e Cognome Capo Reparto 1</label>
             <input type="text" class="form-control" id="nome_capo_rep1" name="nome_capo_rep1" required>
           </div>
 
@@ -104,7 +111,7 @@
           </div>
 
           <div class="mb-3">
-            <label for="nome_capo_rep2" class="form-label">Nome e Cognome Capə Reparto 2</label>
+            <label for="nome_capo_rep2" class="form-label">Nome e Cognome Capo Reparto 2</label>
             <input type="text" class="form-control" id="nome_capo_rep2" name="nome_capo_rep2" required>
           </div>
 
