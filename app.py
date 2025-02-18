@@ -144,10 +144,12 @@ with app.app_context():
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def manda_mail(indirizzi, copia, titolo, testo):
+def manda_mail(indirizzi, copia, titolo, testo, regione="piemonte"):
     message = MIMEMultipart("alternative")
     message["Subject"] = f"Guidoncini Verdi 2025 - {titolo}"
     message["From"] = cr["mail"]["sender_email"]
+    if regione == "puglia":
+        message["From"] = cr["mail_puglia"]["sender_email"]
     message["To"] = ", ".join(indirizzi)
     if copia:
         message["Cc"] = ", ".join(copia)
@@ -164,13 +166,22 @@ def manda_mail(indirizzi, copia, titolo, testo):
 
     context = ssl.create_default_context()
     try:
-        with smtplib.SMTP(cr["mail"]["smtp_server"], cr["mail"]["port"]) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
-            server.login(cr["mail"]["sender_email"], cr["mail"]["passwd"])
-            server.sendmail(cr["mail"]["sender_email"], indirizzi, message.as_string())
-            server.quit()
+        if regione == "piemonte":
+            with smtplib.SMTP(cr["mail"]["smtp_server"], cr["mail"]["port"]) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                server.login(cr["mail"]["sender_email"], cr["mail"]["passwd"])
+                server.sendmail(cr["mail"]["sender_email"], indirizzi, message.as_string())
+                server.quit()
+        elif regione == "puglia":
+            with smtplib.SMTP(cr["mail_puglia"]["smtp_server"], cr["mail_puglia"]["port"]) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                server.login(cr["mail_puglia"]["sender_email"], cr["mail_puglia"]["passwd"])
+                server.sendmail(cr["mail_puglia"]["sender_email"], indirizzi, message.as_string())
+                server.quit()
         return True
     except:
         return False
@@ -193,7 +204,8 @@ def crea_utente(id_iscrizione, header, dati):
     try:
         response = requests.post(cr["wordpress"]["url"]+"/users", headers=header, json=dati)
         id_autore = response.json()["id"]
-    except:
+    except Exception as e:
+        print(e)
         return False
     utente = WordpressUser(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_id=int(id_autore), username=dati["username"], meta=dati)
     db.session.add(utente)
@@ -202,7 +214,7 @@ def crea_utente(id_iscrizione, header, dati):
 
 def crea_post(id_iscrizione, wp_id, header, dati, tipo):
     try:
-        response = requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
+        response = requests.post(cr["wordpress"]["url"]+"/squadriglia_v2", headers=header, json=dati)
         id_post = response.json()["id"]
     except:
         return False
@@ -230,8 +242,11 @@ def index():
 @login_required
 def dashboard():
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
-    if current_user.livello == "iabz" or current_user.livello == "iabr":
+    if current_user.livello == "iabz":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first().iscrizioni
+    if current_user.livello == "iabr":
+        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=current_user.regione).count()
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).first().iscrizioni
     if current_user.livello == "admin":
         stato = False
@@ -278,6 +293,11 @@ def iscrizioni():
         if limita and i.zona != current_user.zona:
             continue
         iscritti.append(i)
+    if current_user.livello == "admin":
+        iscritti = []
+        tmp_iscritti=IscrizioniEG.query.all()
+        for i in tmp_iscritti:
+            iscritti.append(i)
     return render_template("iscrizioni.html", iscritti=iscritti)
 
 @app.route("/report")
@@ -345,8 +365,8 @@ def dettagli(id_iscrizione):
     link_sq = ""
     if tmp_iscrizione.stato == "abilitato":
         try:
-            tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="navigazione").first().wordpress_id
-            link_sq = requests.get(cr["wordpress"]["url"]+"/navigazione/"+str(tmp_wordpress_id), headers=header).json()["link"]
+            tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="squadriglia_v2").first().wordpress_id
+            link_sq = requests.get(cr["wordpress"]["url"]+"/squadriglia_v2/"+str(tmp_wordpress_id), headers=header).json()["link"]
         except:
             link_sq = ""
     return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq)
@@ -421,6 +441,7 @@ def edit_iscrizione(id_iscrizione):
             iscrizione.nome = request.form["nome_squadriglia"].capitalize()
             iscrizione.mail = request.form["mail_squadriglia"]
             iscrizione.zona = request.form["zona"]
+            iscrizione.sesso = request.form["tipo_sq"]
             iscrizione.gruppo = request.form["gruppo"]
             iscrizione.specialita = request.form["specialita"]
             iscrizione.tipo = request.form["conquista_conferma"]
@@ -501,6 +522,7 @@ def abilita(id_iscrizione):
             "rinnovo": tmp_rinnovo,
             "specialita": tmp_specialita,
             "squadriglia": tmp_iscrizione.nome.capitalize(),
+            "regione": tmp_iscrizione.regione.capitalize(),
             "zona": tmp_zona
             }
 
@@ -522,71 +544,17 @@ def abilita(id_iscrizione):
 
         tmp_ok = True
 
-        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/152", headers=header).json()["content"]["rendered"]
+        tmp_content = requests.get(cr["wordpress"]["url"]+"/squadriglia_v2/7282", headers=header).json()["content"]["rendered"]
 
         dati = {
             "author": int(id_autore),
-            "categories": [15],
             "content": tmp_content,
             "meta": tmp_meta,
             "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-            "title": 'Presentazione',
+            "title": f"Specialità della Squadriglia {tmp_meta['squadriglia']}",
             "status": "publish"
             }
-        if not crea_post(id_iscrizione, id_autore, header, dati, "presentazione"):
-            tmp_ok = False
-
-        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/153", headers=header).json()["content"]["rendered"]
-
-        dati = {
-            "author": int(id_autore),
-            "categories": [16],
-            "content": tmp_content,
-            "meta": tmp_meta,
-            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-            "title": 'Prima impresa',
-            "status": "publish"
-            }
-        if not crea_post(id_iscrizione, id_autore, header, dati, "prima-impresa"):
-            tmp_ok = False
-
-        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/154", headers=header).json()["content"]["rendered"]
-
-        if not tmp_rinnovo:
-            dati = {
-                "author": int(id_autore),
-                "categories": [17],
-                "content": tmp_content,
-                "meta": tmp_meta,
-                "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-                "title": 'Seconda impresa',
-                "status": "publish"
-                }
-            if not crea_post(id_iscrizione, id_autore, header, dati, "seconda-impresa"):
-                tmp_ok = False
-
-        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/155", headers=header).json()["content"]["rendered"]
-
-        dati = {
-            "author": int(id_autore),
-            "categories": [18],
-            "content": tmp_content,
-            "meta": tmp_meta,
-            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-            "title": 'Missione',
-            "status": "publish"
-            }
-        if not crea_post(id_iscrizione, id_autore, header, dati, "missione"):
-            tmp_ok = False
-
-        dati = {
-            "author": int(id_autore),
-            "meta": tmp_meta,
-            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-            "title": tmp_iscrizione.nome.capitalize(),
-            "status": "publish"
-            }
-        if not crea_navigazione(id_iscrizione, id_autore, header, dati, "navigazione"):
+        if not crea_post(id_iscrizione, id_autore, header, dati, "squadriglia_v2"):
             tmp_ok = False
 
         if not tmp_ok:
@@ -599,7 +567,7 @@ def abilita(id_iscrizione):
                 print("Errore")
 
         testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">cliccando qui</a> oppure scaricando la app.<br><a href=\"https://play.google.com/store/apps/details?id=org.wordpress.android\" target=\"_blank\">Clicca qui per scaricare la app per Android</a><br><a href=\"https://apps.apple.com/it/app/wordpress-website-builder/id335703880\" target=\"_blank\">Clicca qui per scaricare la app per iOS</a><br>Trovate maggiori info qui: <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
-        manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq)
+        manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq, tmp_iscrizione.regione)
 
         return redirect(url_for("iscrizioni"))
     return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
@@ -768,7 +736,7 @@ def admin():
 
                 testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi 2025 Regione {utente.regione.capitalize()}!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
 
-                if manda_mail([utente.mail], [], "Conferma Creazione Account", testo_mail):
+                if manda_mail([utente.mail], [], "Conferma Creazione Account", testo_mail, utente.regione):
                     flash("Mail inviata!", "success")
                 else:
                     flash("Qualcosa è andato storto con la mail...", "warning")
@@ -854,7 +822,7 @@ def iscriviti(regione):
             return redirect(url_for("iscriviti"))
 
         testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2025 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accedere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
-        manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq)
+        manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq, iscrizione.regione)
 
         # Avvisa Francesco e Admin
         try:
