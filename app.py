@@ -214,7 +214,7 @@ def crea_utente(id_iscrizione, header, dati):
 
 def crea_post(id_iscrizione, wp_id, header, dati, tipo):
     try:
-        response = requests.post(cr["wordpress"]["url"]+"/squadriglia_v2", headers=header, json=dati)
+        response = requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
         id_post = response.json()["id"]
     except:
         return False
@@ -365,8 +365,8 @@ def dettagli(id_iscrizione):
     link_sq = ""
     if tmp_iscrizione.stato == "abilitato":
         try:
-            tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="squadriglia_v2").first().wordpress_id
-            link_sq = requests.get(cr["wordpress"]["url"]+"/squadriglia_v2/"+str(tmp_wordpress_id), headers=header).json()["link"]
+            tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="posts").first().wordpress_id
+            link_sq = requests.get(cr["wordpress"]["url"]+"/posts/"+str(tmp_wordpress_id), headers=header).json()["link"]
         except:
             link_sq = ""
     return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq)
@@ -544,17 +544,18 @@ def abilita(id_iscrizione):
 
         tmp_ok = True
 
-        tmp_content = requests.get(cr["wordpress"]["url"]+"/squadriglia_v2/7282", headers=header).json()["content"]["rendered"]
+        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/8183?context=edit", headers=header).json()["content"]["raw"]
 
         dati = {
             "author": int(id_autore),
+            "categories": [22],
             "content": tmp_content,
             "meta": tmp_meta,
             "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-            "title": f"Specialità della Squadriglia {tmp_meta['squadriglia']}",
+            "title": f"{tmp_meta['squadriglia']}",
             "status": "publish"
             }
-        if not crea_post(id_iscrizione, id_autore, header, dati, "squadriglia_v2"):
+        if not crea_post(id_iscrizione, id_autore, header, dati, "posts"):
             tmp_ok = False
 
         if not tmp_ok:
@@ -861,22 +862,30 @@ def notifica():
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
     abilitate = IscrizioniEG.query.filter_by(stato="abilitato").count()
     testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
+    """
     tmp_utenti = User.query.filter_by(livello="admin").all()
     for i in tmp_utenti:
         if non_abilitate > 0:
             manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
     if request.form["tipologia"] == "admin":
         return {"status": True}
+    """
 
     tmp_utenti = User.query.filter_by(livello="pattuglia").all()
     for i in tmp_utenti:
+        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=request.form["regione"]).count()
+        abilitate = IscrizioniEG.query.filter_by(stato="abilitato").filter_by(regione=request.form["regione"]).count()
+        testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
         if non_abilitate > 0:
-            manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
+            manda_telegram(i.telegram_id, f"Report {request.form['regione'].capitalize()}", testo_telegram)
 
     tmp_utenti = User.query.filter_by(livello="iabr").all()
     for i in tmp_utenti:
+        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=request.form["regione"]).count()
+        abilitate = IscrizioniEG.query.filter_by(stato="abilitato").filter_by(regione=request.form["regione"]).count()
+        testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
         if non_abilitate > 0:
-            manda_telegram(i.telegram_id, "Report REGIONE", testo_telegram)
+            manda_telegram(i.telegram_id, f"Report {request.form['regione'].capitalize()}", testo_telegram)
     if request.form["tipologia"] == "regione":
         return {"status": True}
 
