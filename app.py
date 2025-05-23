@@ -119,6 +119,14 @@ class WordpressPost(db.Model):
     tipo = db.Column(db.String(128), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
 
+class RelazioniPuglia(db.Model):
+    __tablename__ = "relazioni_puglia"
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.String(128), nullable=False)
+    stato = db.Column(db.JSON, nullable=False)
+    iscrizioni_id = db.Column(db.Integer, nullable=False)
+    dati = db.Column(db.JSON, nullable=False)
+
 class TestiMail(db.Model):
     __tablename__ = "testi_mail"
     id = db.Column(db.Integer, primary_key=True)
@@ -369,7 +377,11 @@ def dettagli(id_iscrizione):
             link_sq = requests.get(cr["wordpress"]["url"]+"/posts/"+str(tmp_wordpress_id), headers=header).json()["link"]
         except:
             link_sq = ""
-    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq)
+    try:
+        relazione = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_iscrizione)).first()
+    except:
+        relazione = False
+    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq, relazione=relazione)
 
 @app.route("/elimina/<id_iscrizione>")
 @login_required
@@ -848,6 +860,109 @@ def iscriviti(regione):
 @app.route("/iscriviti_success")
 def iscriviti_success():
     return render_template("iscriviti_success.html")
+
+@app.route("/rel_puglia_rep")
+@login_required
+def rel_puglia_rep():
+    limita = False
+    if current_user.livello == "iabz":
+        limita = True
+    iscritti = []
+    tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
+    for i in tmp_iscritti:
+        try:
+            stato_rel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(i.id)).first().stato
+            if stato_rel == False:
+                iscritti.append(i)
+        except:
+            iscritti.append(i)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "sq_abilitate"
+    #titoli delle colonne
+    ws.cell(row=1, column=1).value = "Nome Sq"
+    ws.cell(row=1, column=2).value = "Gruppo"
+    ws.cell(row=1, column=3).value = "Zona"
+    ws.cell(row=1, column=4).value = "Specialità"
+    ws.cell(row=1, column=5).value = "Tipo"
+    ws.cell(row=1, column=6).value = "Mail Capo Sq"
+    ws.cell(row=1, column=7).value = "Mail Capo Rep 1"
+    ws.cell(row=1, column=8).value = "Mail Capo Rep 2"
+    ws.cell(row=1, column=9).value = "Link"
+
+    for i, iscritto in enumerate(iscritti):
+        tmp_riga = i+2
+        ws.cell(row=tmp_riga, column=1).value = iscritto.nome
+        ws.cell(row=tmp_riga, column=2).value = iscritto.gruppo
+        ws.cell(row=tmp_riga, column=3).value = iscritto.zona
+        ws.cell(row=tmp_riga, column=4).value = iscritto.specialita
+        ws.cell(row=tmp_riga, column=5).value = iscritto.tipo
+        ws.cell(row=tmp_riga, column=6).value = iscritto.mail
+        ws.cell(row=tmp_riga, column=7).value = iscritto.mail_capo1
+        ws.cell(row=tmp_riga, column=8).value = iscritto.mail_capo2
+        ws.cell(row=tmp_riga, column=9).value = f"https://guidonciniverdi.pythonanywhere.com/relazione_puglia/{iscritto.id}"
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return send_file(out, as_attachment=True, download_name="riepilogo.xlsx")
+
+@app.route("/relazione_puglia/<id_sq>", methods=["GET", "POST"])
+def relazione_puglia(id_sq):
+    sq = IscrizioniEG.query.filter_by(id=int(id_sq)).first()
+    try:
+        tryrel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_sq)).first()
+        if tryrel.iscrizioni_id == sq.id and tryrel.stato:
+            return render_template("relazione_error.html", nome_sq=sq.nome, gruppo=sq.gruppo)
+    except:
+        pass
+    if request.method == "POST":
+        try:
+            tryrel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_sq)).first()
+            print(tryrel)
+            if tryrel.iscrizioni_id == sq.id:
+                print(tryrel)
+                db.session.delete(tryrel)
+                db.session.commit()
+        except Exception as e:
+            print("Errore durante l'eliminazione della relazione:", e)
+        try:
+            tmp_dati = {
+                "specialita": request.form["specialita"],
+                "tipo": request.form["conquista_conferma"],
+                "quest1": request.form["quest1"],
+                "quest2": request.form["quest2"],
+                "quest3": request.form["quest3"],
+                "quest4": request.form["quest4"],
+                "quest5": request.form["quest5"],
+                "quest6": request.form["quest6"],
+                "quest7": request.form["quest7"],
+                "quest8": request.form["quest8"],
+                "quest9": request.form["quest9"],
+                "quest10": request.form["quest10"]
+                }
+
+            relazione = RelazioniPuglia(data=str(datetime.now()), stato=True, iscrizioni_id=int(id_sq), dati=tmp_dati)
+            db.session.add(relazione)
+            db.session.commit()
+        except:
+            flash("Invio relazione fallito. Riprovaci!", "warning")
+            return redirect(url_for("relazione_puglia", id_sq=id_sq))
+
+        return redirect(url_for("relazione_success"))
+    return render_template("relazione_puglia.html", specialita=specialita, nome_sq=sq.nome, gruppo=sq.gruppo)
+
+@app.route("/relazione_success")
+def relazione_success():
+    return render_template("relazione_success.html")
+
+@app.route("/relazione_delete/<id_sq>")
+@login_required
+def relazione_delete(id_sq):
+    relazione = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_sq)).first()
+    relazione.stato = False
+    db.session.commit()
+    return redirect(url_for("dettagli", id_iscrizione=id_sq))
 
 @app.route("/notifica", methods=["POST"])
 def notifica():

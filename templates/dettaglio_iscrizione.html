@@ -74,6 +74,16 @@
           <td><a href="{{ link_sq }}">{{ link_sq }}</a></td>
           {% endif %}
         </tr>
+        {% if iscrizione.regione == "puglia" %}
+          <tr>
+            <th scope="row">Relazione</th>
+            {% if relazione.stato %}
+            <td><span class="badge bg-success">Ricevuta!</span> <a type="button" class="btn btn-sm bg-danger btn-disabled" href="">Elimina Relazione</a></td>
+            {% else %}
+            <td><span class="badge bg-warning">...manca...</span></td>
+            {% endif %}
+          </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>

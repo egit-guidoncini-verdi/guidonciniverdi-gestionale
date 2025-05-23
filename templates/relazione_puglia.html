@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="it-IT">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="icon" href="/static/EMBLEMA-PIEMONTE-copia-piccola.jpg" sizes="192x192" />
+    <title>Guidoncini Verdi - Relazione della Squadriglia {{ nome_sq }}!</title>
+  </head>
+  <body>
+    <header>
+      <div class="shadow-sm p-3 mb-3 bg-body-tertiary rounded">
+        <h1 class="text-center"><strong>Guidoncini Verdi 2025 - Relazione della Squadriglia {{ nome_sq }} ({{ gruppo }})</strong></h1>
+      </div>
+    </header>
+    <main>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="mx-5 my-2 alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
+        <form method="post" id="form_iscriviti">
+
+          <div class="mb-3">
+          <label for="specialita" class="form-label">Ambito di Specialità</label>
+          <select class="form-select" id="specialita" name="specialita" required>
+            {% for i in specialita %}
+            <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+          </select>
+          </div>
+
+          <div class="mb-3">
+          <label for="conquista_conferma" class="form-label" aria-describedby="conquista_conferma_descr">Conquista o conferma?</label>
+          <div class="form-check">
+            <input class="form-check-input" value="conquista" type="radio" name="conquista_conferma" id="conquista" checked>
+            <label class="form-check-label" for="conquista">Conquista</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" value="conferma" type="radio" name="conquista_conferma" id="conferma">
+            <label class="form-check-label" for="conferma">Conferma</label>
+          </div>
+          </div>
+
+          <hr>
+
+          <h5 class="text-center"><strong>Relazione Staff</strong></h5>
+          <div class="text-center form-text mb-2">Per redigere la Relazione dello Staff, vi chiediamo di rispondere in maniera esaustiva alle seguenti domande.</div>
+
+          <div class="mb-3">
+            <label for="quest1" class="form-label">Breve presentazione della Squadriglia (si evidenzino il livello di autonomia della sq, le relazioni instaurate tra i vari squadriglieri, il livello di competenza di partenza, eventuali situazioni problematiche o difficoltà che possono aver condizionato/influenzato il percorso verso la specialità)</label>
+            <textarea class="form-control" id="quest1" name="quest1" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest2" class="form-label">Il cammino della Squadriglia verso la specialità (progettualità, competenza, autonomia, sfida, sogno)</label>
+            <textarea class="form-control" id="quest2" name="quest2" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest3" class="form-label">La squadriglia è riuscita ad inserire nel suo percorso elementi come: autofinanziamento, sopralluogo, approfondimento tecnico con esperti, reperimento risorse, scelta delle condizioni e degli spazi idonei alle realizzazioni specifiche, verifiche in itinere, attenzione all’impatto sull’ambiente, realizzazione di un cambiamento concreto, esperienze reali piuttosto che puro esercizio tecnico, richieste autorizzazioni e contatti con eventuali istituzioni/autorità? Se sì, quali… Se no, perché…</label>
+            <textarea class="form-control" id="quest3" name="quest3" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest4" class="form-label">Come avete scelto la missione assegnata alla squadriglia: quali risvolti educativi vi attendevate? Quali aspetti tecnici ai fini del “diventare competenti” volevate raggiungere? Qual è stato complessivamente il riscontro finale della missione? Ha dato un valore aggiunto al percorso verso la conquista della specialità?</label>
+            <textarea class="form-control" id="quest4" name="quest4" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest5" class="form-label">Rispetto al sentiero dei singoli, come valutate tutto il percorso di specialità e in che modo ha contribuito alla crescita dei ragazzi, a sviluppare l’autonomia e lo spirito di sq.? (brevetti, specialità, posti d’azione, ecc.)</label>
+            <textarea class="form-control" id="quest5" name="quest5" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest6" class="form-label">La squadriglia è diventata davvero competente nell’ambito scelto?</label>
+            <textarea class="form-control" id="quest6" name="quest6" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest7" class="form-label">C’è qualcosa che avrebbero potuto vivere e/o realizzare in modo migliore e con maggiore impegno/entusiasmo?</label>
+            <textarea class="form-control" id="quest7" name="quest7" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest8" class="form-label">La specialità ha contribuito ad un cambiamento all'interno del territorio o di altre realtà o ancora di persone? Se si, che tipo di cambiamento? (dove per cambiamento non si intende solo quello materiale)</label>
+            <textarea class="form-control" id="quest8" name="quest8" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest9" class="form-label">Durante il percorso per la conquista della specialità, la squadriglia ha vissuto un significativo cammino di fede? Se sì, in che modo lo hanno vissuto?</label>
+            <textarea class="form-control" id="quest9" name="quest9" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="quest10" class="form-label">Considerate la specialità di squadriglia raggiunta? Perché?</label>
+            <textarea class="form-control" id="quest10" name="quest10" required></textarea>
+          </div>
+
+          <hr>
+
+          <div id="send_descr" class="form-text mb-2">Aspetta qualche secondo dopo aver cliccato!<br>Stiamo registrando la tua relazione.</div>
+          <button type="submit" class="btn btn-primary" aria-describedby="send_descr" onclick="inviaForm()">INVIA!</button>
+        </form>
+      </div>
+    </main>
+    <footer></footer>
+    <script type="text/javascript">
+    function inviaForm() {
+            document.getElementById("form_iscriviti").submit();
+            document.getElementById("form_iscriviti").querySelector("button").disabled = true;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  </body>
+</html>
