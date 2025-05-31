@@ -861,12 +861,9 @@ def iscriviti(regione):
 def iscriviti_success():
     return render_template("iscriviti_success.html")
 
-@app.route("/rel_puglia_rep")
+@app.route("/rel_puglia_file")
 @login_required
-def rel_puglia_rep():
-    limita = False
-    if current_user.livello == "iabz":
-        limita = True
+def rel_puglia_file():
     iscritti = []
     tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
     for i in tmp_iscritti:
@@ -907,6 +904,49 @@ def rel_puglia_rep():
     out.seek(0)
     return send_file(out, as_attachment=True, download_name="riepilogo.xlsx")
 
+@app.route("/rel_puglia_rep")
+@login_required
+def rel_puglia_rep():
+    iscritti = []
+    if current_user.livello == "iabz":
+        tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato").filter_by(zona=current_user.zona)
+    else:
+        tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
+    for i in tmp_iscritti:
+        try:
+            rel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(i.id)).first()
+            if rel.stato == True:
+                tmp_iscritto = {"nome": i.nome, "gruppo": i.gruppo, "zona": i.zona, "specialita": i.specialita, "tipo": i.tipo, "risposte": rel.dati}
+                iscritti.append(tmp_iscritto)
+        except:
+            pass
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "risposte"
+    #titoli delle colonne
+    ws.cell(row=1, column=1).value = "Nome Sq"
+    ws.cell(row=1, column=2).value = "Gruppo"
+    ws.cell(row=1, column=3).value = "Zona"
+    ws.cell(row=1, column=4).value = "Specialità"
+    ws.cell(row=1, column=5).value = "Tipo"
+    for i in range(10):
+        ws.cell(row=1, column=6+i).value = f"Risposta {i+1}"
+
+    for i, iscritto in enumerate(iscritti):
+        tmp_riga = i+2
+        ws.cell(row=tmp_riga, column=1).value = iscritto["nome"]
+        ws.cell(row=tmp_riga, column=2).value = iscritto["gruppo"]
+        ws.cell(row=tmp_riga, column=3).value = iscritto["zona"]
+        ws.cell(row=tmp_riga, column=4).value = iscritto["risposte"]["specialita"]
+        ws.cell(row=tmp_riga, column=5).value = iscritto["risposte"]["tipo"]
+        for j in range(10):
+            ws.cell(row=tmp_riga, column=6+j).value = iscritto["risposte"][f"quest{j+1}"]
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return send_file(out, as_attachment=True, download_name="riepilogo.xlsx")
+
 @app.route("/relazione_puglia/<id_sq>", methods=["GET", "POST"])
 def relazione_puglia(id_sq):
     sq = IscrizioniEG.query.filter_by(id=int(id_sq)).first()
@@ -919,9 +959,7 @@ def relazione_puglia(id_sq):
     if request.method == "POST":
         try:
             tryrel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_sq)).first()
-            print(tryrel)
             if tryrel.iscrizioni_id == sq.id:
-                print(tryrel)
                 db.session.delete(tryrel)
                 db.session.commit()
         except Exception as e:
