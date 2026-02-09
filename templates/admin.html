@@ -49,7 +49,10 @@
         <td>--</td>
         {% endif %}
         <td>{{ i["livello"] }}</td>
-        <td>Modifica</td>
+        <td>
+        <a type="button" class="btn btn-sm btn-warning mx-4" href="{{ url_for("modifica_account", id_utente=i["id"]) }}">Modifica</a>
+        <a type="button" class="btn btn-sm btn-danger mx-4" href="{{ url_for("elimina_account", id_utente=i["id"]) }}">Elimina</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

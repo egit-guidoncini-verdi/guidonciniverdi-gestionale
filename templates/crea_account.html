@@ -8,16 +8,22 @@
 
 {% block titolo %}
 
+{% if tipo == "crea" %}
 <h1 class="text-center my-2"><strong>Crea Account</strong></h1>
+{% elif tipo == "edit" %}
+<h1 class="text-center my-2"><strong>Modifica Account {{ dati_utente.username }}</strong></h1>
+{% elif tipo == "delete" %}
+<h1 class="text-center my-2"><strong>Elimina Account {{ dati_utente.username }}</strong></h1>
+{% endif %}
 
 {% endblock %}
 
 {% block corpo %}
 <div class="mx-4 mb-4">
 
+  {% if tipo == "crea" %}
   <form method="post" action="/admin" autocomplete="off">
     <input type="hidden" id="id_form" name="id_form" value="nuovo_utente">
-
     <div class="mb-3">
       <label for="username" class="form-label">Username</label>
       <input type="text" class="form-control" id="username" name="username">
@@ -42,7 +48,7 @@
     <div class="mb-3">
       <label for="regione" class="form-label" aria-describedby="regione_descr">Regione</label>
       <select class="form-select" id="regione" name="regione" required>
-        {% for i in ["piemonte", "puglia"] %}
+        {% for i in ["piemonte", "puglia", "valle_aosta"] %}
         <option value="{{ i }}">{{ i.upper() }}</option>
         {% endfor %}
       </select>
@@ -59,6 +65,79 @@
     </div>
     <button type="submit" class="btn btn-warning">Crea Account</button>
   </form>
+  {% elif tipo == "edit" %}
+
+  <form method="post" action="/admin" autocomplete="off">
+    <input type="hidden" id="id_form" name="id_form" value="reset_utente">
+    <input type="hidden" id="id" name="id" value="{{ dati_utente.id }}">
+    <button type="submit" class="btn btn-warning">Reset Password Account</button>
+  </form>
+
+  <form method="post" action="/admin" autocomplete="off">
+    <input type="hidden" id="id_form" name="id_form" value="aggiorna_utente">
+    <input type="hidden" id="id" name="id" value="{{ dati_utente.id }}">
+    <input type="hidden" id="livello" name="livello" value="{{ dati_utente.livello }}">
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" class="form-control" id="user" name="user" value={{ dati_utente.username }} disabled>
+    </div>
+    <div class="mb-3">
+      <label for="mail" class="form-label">Indirizzo Mail</label>
+      <input type="mail" class="form-control" id="mail" name="mail" value={{ dati_utente.mail }}>
+    </div>
+    <div class="mb-3">
+      <label for="passwd" class="form-label">Telegram ID</label>
+      <input type="text" class="form-control" id="telegram_id" name="telegram_id" aria-describedby="telegram_descr" value={{ dati_utente.telegram_id }}>
+      <div id="telegram_descr" class="form-text mb-2">Campo facoltativo, permette di essere informati anche tramite il Bot Telegram.</div>
+    </div>
+    <div class="mb-3">
+      <label for="liv" class="form-label">Ruolo</label>
+      <select class="form-select" id="liv" name="liv" disabled>
+        {% if dati_utente.livello == "iabz" %}
+        <option value="iabz" selected>IABZ</option>
+        <option value="iabr">IABR</option>
+        {% elif dati_utente.livello == "iabr" %}
+        <option value="iabz">IABZ</option>
+        <option value="iabr" selected>IABR</option>
+        {% endif %}
+      </select>
+    </div>
+    {% if current_user.livello == "admin" %}
+    <div class="mb-3">
+      <label for="regione" class="form-label" aria-describedby="regione_descr">Regione</label>
+      <select class="form-select" id="regione" name="regione" required>
+        {% for i in ["piemonte", "puglia"] %}
+        {% if dati_utente.regione == i %}
+        <option value="{{ i }}" selected>{{ i.upper() }}</option>
+        {% else %}
+        <option value="{{ i }}">{{ i.upper() }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <div class="mb-3">
+      <label for="zona" class="form-label" aria-describedby="zona_descr">Zona</label>
+      <div id="zona_descr" class="form-text mb-2">Campo necessario solo per account IABZ, in tutti gli altri casi verrà ignorato.</div>
+      <select class="form-select" id="zona" name="zona" onchange="updateGruppoOptions()" required>
+        {% for i in gruppi %}
+        {% if dati_utente.zona == i %}
+        <option value="{{ i }}" selected>{{ i }}</option>
+        {% else %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-warning">Modifica Account</button>
+  </form>
+  {% elif tipo == "delete" %}
+  <form method="post" action="/admin" autocomplete="off">
+    <input type="hidden" id="id_form" name="id_form" value="elimina_utente">
+    <input type="hidden" id="id" name="id" value="{{ dati_utente.id }}">
+    <button type="submit" class="btn btn-danger">ELIMINA ACCOUNT! (azione non annullabile!)</button>
+  </form>
+  {% endif %}
 
 </div>
 

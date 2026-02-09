@@ -10,12 +10,16 @@
   <body>
     <header>
       <div class="shadow-sm p-3 mb-3 bg-body-tertiary rounded">
-        <h1 class="text-center"><strong>Guidoncini Verdi 2025 - Iscrizioni {{ regione.capitalize() }}</strong></h1>
+        {% if regione == "valle_aosta" %}
+        <h1 class="text-center"><strong>Guidoncini Verdi 2026 - Iscrizioni Valle d'Aosta</strong></h1>
+        {% else %}
+        <h1 class="text-center"><strong>Guidoncini Verdi 2026 - Iscrizioni {{ regione.capitalize() }}</strong></h1>
+        {% endif %}
       </div>
     </header>
     <main>
       <div class="shadow-sm p-3 mb-3 mx-4 bg-body-tertiary rounded">
-        <p>EI!<br>Sai che quest'anno ci sono state delle modifiche sostanziali al percorso per la specialità di squadriglia?<br>Vai a vedere sul <a href="https://guidonciniverdi.it" target="_blank">SITO</a></p>
+        <p>EI!<br>Vuoi sapere tutto sul percorso specialità di squadriglia?<br>Vai a vedere sul <a href="https://guidonciniverdi.it" target="_blank">SITO</a></p>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}

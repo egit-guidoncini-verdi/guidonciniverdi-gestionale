@@ -10,7 +10,7 @@ with open("credenziali_notifiche.json", "r") as f:
 
 api_key = json.loads(dati)["api_key"]
 
-form = {"api_key": api_key, "tipologia": "admin"}
+form = {"api_key": api_key, "tipologia": "iabz"}
 
 response = requests.post(url, data=form)
 
