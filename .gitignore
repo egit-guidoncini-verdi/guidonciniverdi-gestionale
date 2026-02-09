@@ -5,6 +5,8 @@ __pycache__
 gruppi.csv
 gruppi_piemonte.csv
 gruppi_puglia.csv
+gruppi_sardegna.csv
+gruppi_valle_aosta.csv
 genera_costanti.py
 riepilogo.xlsx
 credenziali_notifiche.json
