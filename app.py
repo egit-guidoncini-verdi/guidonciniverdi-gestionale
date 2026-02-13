@@ -85,7 +85,7 @@ class User(db.Model, UserMixin):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(128), nullable=False, unique=True)
-    password = db.Column(db.String(128), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
     regione = db.Column(db.String(128), nullable=True)
     zona = db.Column(db.String(128), nullable=True)
@@ -99,21 +99,21 @@ class IscrizioniEG(db.Model):
     stato = db.Column(db.String(128), nullable=False)
     nome = db.Column(db.String(128), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
-    regione = db.Column(db.String(128), nullable=False)
-    zona = db.Column(db.String(128), nullable=False)
-    gruppo = db.Column(db.String(128), nullable=False)
+    regione = db.Column(db.Integer, nullable=False)
+    zona = db.Column(db.Integer, nullable=False)
+    gruppo = db.Column(db.Integer, nullable=False)
     specialita = db.Column(db.String(128), nullable=False)
     # tipo indica se conquista o conferma => True se conferma
     tipo = db.Column(db.String(128), nullable=False)
     # Contatti
-    nome_capo_sq = db.Column(db.String(128), nullable=False)
-    nome_capo1 = db.Column(db.String(128), nullable=False)
-    mail_capo1 = db.Column(db.String(128), nullable=False)
+    nome_capo_sq = db.Column(db.String(255), nullable=False)
+    nome_capo1 = db.Column(db.String(255), nullable=False)
+    mail_capo1 = db.Column(db.String(255), nullable=False)
     cell_capo1 = db.Column(db.String(128), nullable=False)
-    nome_capo2 = db.Column(db.String(128), nullable=False)
-    mail_capo2 = db.Column(db.String(128), nullable=False)
+    nome_capo2 = db.Column(db.String(255), nullable=False)
+    mail_capo2 = db.Column(db.String(255), nullable=False)
     cell_capo2 = db.Column(db.String(128), nullable=False)
-    sesso = db.Column(db.String(128))
+    sesso = db.Column(db.String(2))
 
 class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
@@ -131,7 +131,6 @@ class WordpressPost(db.Model):
     iscrizioni_id = db.Column(db.Integer, nullable=False)
     wordpress_user_id = db.Column(db.Integer, nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
-    # campo di testo per indicare se "presentazione", "prima_impresa", "seconda_impresa", "missione", "extra"
     tipo = db.Column(db.String(128), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
 
@@ -155,11 +154,30 @@ class TestiMail(db.Model):
 class StatusPercorso(db.Model):
     __tablename__ = "status_percorso"
     id = db.Column(db.Integer, primary_key=True)
+    anno = db.Column(db.String(128), nullable=True)
     iscrizioni = db.Column(db.JSON, nullable=False)
     abilitazioni = db.Column(db.JSON, nullable=False)
-    regione = db.Column(db.String(128), nullable=True)
+    regione = db.Column(db.Integer, nullable=True)
     data_apertura = db.Column(db.String(128), nullable=False)
     data_chiusura = db.Column(db.String(128), nullable=False)
+
+class Regione(db.Model):
+    __tablename__ = "regioni"
+    id = db.Column(db.Integer, primary_key=True)
+    regione = db.Column(db.String(128), nullable=True)
+    stampabile = db.Column(db.String(128), nullable=True)
+
+class Zona(db.Model):
+    __tablename__ = "zone"
+    id = db.Column(db.Integer, primary_key=True)
+    zona = db.Column(db.String(128), nullable=True)
+    regione = db.Column(db.Integer, nullable=True)
+
+class Gruppo(db.Model):
+    __tablename__ = "gruppi"
+    id = db.Column(db.Integer, primary_key=True)
+    gruppo = db.Column(db.String(128), nullable=True)
+    zona = db.Column(db.Integer, nullable=True)
 
 with app.app_context():
     db.create_all()
