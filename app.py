@@ -486,7 +486,7 @@ def edit_iscrizione(id_iscrizione):
             flash("Modifica Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscrizioni"))
 
-        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2025 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2026 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq)
 
         # Avvisa Francesco e Admin
@@ -546,7 +546,7 @@ def abilita(id_iscrizione):
             tmp_specialita = tmp_iscrizione.specialita.capitalize()
 
         tmp_meta = {
-            "anno": "2025",
+            "anno": "2026",
             "gruppo": tmp_iscrizione.gruppo.capitalize(),
             "rinnovo": tmp_rinnovo,
             "specialita": tmp_specialita,
