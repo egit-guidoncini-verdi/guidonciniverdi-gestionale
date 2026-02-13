@@ -32,8 +32,15 @@ Benvenuto <strong>{{ current_user.username }}</strong>!
 <br>
 {% if current_user.livello != "admin" %}
 <strong>Stato Iscrizioni:</strong>
-{% if stato %}
+{% if stato.iscrizioni %}
 <span class="badge text-bg-success">APERTE</span>
+<br>
+<strong>Stato Abilitazioni:</strong>
+{% if stato.abilitazioni %}
+<span class="badge text-bg-success">APERTE</span>
+{% else %}
+<span class="badge text-bg-warning">CHIUSE</span>
+{% endif %}
 {% else %}
 <span class="badge text-bg-warning">CHIUSE</span>
 {% if current_user.livello == "iabr" or current_user.livello == "admin" %}

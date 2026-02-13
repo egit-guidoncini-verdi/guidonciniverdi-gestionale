@@ -268,12 +268,13 @@ def dashboard():
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
     if current_user.livello == "iabz":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first().iscrizioni
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first()
     if current_user.livello == "iabr":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=current_user.regione).count()
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first().iscrizioni
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first()
     if current_user.livello == "admin":
-        stato = False
+        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione="piemonte").count()
+        stato = StatusPercorso.query.filter_by(regione="piemonte").first()
     return render_template("dashboard.html", stato=stato, non_abilitate=non_abilitate)
 
 @app.route("/stato_iscrizioni", methods=["GET", "POST"])
