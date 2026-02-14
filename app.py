@@ -16,6 +16,18 @@ import base64
 import random
 import json
 import io
+import os
+
+cr = {
+    "wordpress": {
+        "url": os.environ["WORDPRESS_URL"],
+        "user": os.environ["WORDPRESS_USER"],
+        "passwd": os.environ["WORDPRESS_PASSWORD"]
+    },
+    "telegram": {
+        "token": os.environ["TELEGRAM_TOKEN"]
+    }
+}
 
 with open("credenziali.json", "r") as f:
     cr = json.load(f)
@@ -165,7 +177,7 @@ class Regione(db.Model):
     __tablename__ = "regioni"
     id = db.Column(db.Integer, primary_key=True)
     regione = db.Column(db.String(128), nullable=True)
-    stampabile = db.Column(db.String(128), nullable=True)
+    credenziali = db.Column(db.JSON, nullable=True)
 
 class Zona(db.Model):
     __tablename__ = "zone"
