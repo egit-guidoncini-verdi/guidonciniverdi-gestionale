@@ -179,8 +179,15 @@ class Gruppo(db.Model):
     gruppo = db.Column(db.String(128), nullable=True)
     zona = db.Column(db.Integer, nullable=True)
 
-with app.app_context():
+@app.cli.command("init-db")
+def init_db():
     db.create_all()
+    db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin"))
+    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="piemonte", data_apertura="", data_chiusura=""))
+    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="puglia", data_apertura="", data_chiusura=""))
+    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="valle_aosta", data_apertura="", data_chiusura=""))
+    db.session.commit()
+    print("Database inizializzato")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -576,7 +583,7 @@ def abilita(id_iscrizione):
         dati = {
             "username": tmp_username,
             "name": tmp_iscrizione.nome.capitalize(),
-            "email": tmp_iscrizione.mail,
+            "email": f"{tmp_username}@guidonciniverdi.it",
             "password": tmp_passwd,
             "meta": tmp_meta
             }
@@ -738,8 +745,6 @@ def edit_mail(id_mail):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if len(User.query.all()) == 0:
-        return render_template("welcome.html")
     if request.method == "POST":
         utente = User.query.filter_by(username=request.form["username"]).first()
         if utente:
@@ -891,26 +896,6 @@ def utente():
                 flash("Le password non coincidono!", "warning")
         return redirect(url_for("utente"))
     return render_template("utente.html")
-
-@app.route("/welcome", methods=["POST"])
-def welcome():
-    if len(User.query.all()) > 0:
-        return redirect(url_for("login"))
-    if request.form["passwd"] == request.form["conferma_passwd"]:
-        password = generate_password_hash(request.form["passwd"])
-        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin", telegram_id=request.form["telegram_id"])
-        db.session.add(utente)
-        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="piemonte", data_apertura="", data_chiusura="")
-        db.session.add(status)
-        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="puglia", data_apertura="", data_chiusura="")
-        db.session.add(status)
-        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="valle_aosta", data_apertura="", data_chiusura="")
-        db.session.add(status)
-        db.session.commit()
-        flash("Utente creato con successo!", "success")
-    else:
-        flash("Le password non coincidono!", "warning")
-    return redirect(url_for("login"))
 
 @app.route("/iscrivi")
 @login_required
