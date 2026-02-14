@@ -85,7 +85,7 @@ class User(db.Model, UserMixin):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(128), nullable=False, unique=True)
-    password = db.Column(db.String(128), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
     regione = db.Column(db.String(128), nullable=True)
     zona = db.Column(db.String(128), nullable=True)
@@ -99,21 +99,21 @@ class IscrizioniEG(db.Model):
     stato = db.Column(db.String(128), nullable=False)
     nome = db.Column(db.String(128), nullable=False)
     mail = db.Column(db.String(128), nullable=False)
-    regione = db.Column(db.String(128), nullable=False)
-    zona = db.Column(db.String(128), nullable=False)
-    gruppo = db.Column(db.String(128), nullable=False)
+    regione = db.Column(db.Integer, nullable=False)
+    zona = db.Column(db.Integer, nullable=False)
+    gruppo = db.Column(db.Integer, nullable=False)
     specialita = db.Column(db.String(128), nullable=False)
     # tipo indica se conquista o conferma => True se conferma
     tipo = db.Column(db.String(128), nullable=False)
     # Contatti
-    nome_capo_sq = db.Column(db.String(128), nullable=False)
-    nome_capo1 = db.Column(db.String(128), nullable=False)
-    mail_capo1 = db.Column(db.String(128), nullable=False)
+    nome_capo_sq = db.Column(db.String(255), nullable=False)
+    nome_capo1 = db.Column(db.String(255), nullable=False)
+    mail_capo1 = db.Column(db.String(255), nullable=False)
     cell_capo1 = db.Column(db.String(128), nullable=False)
-    nome_capo2 = db.Column(db.String(128), nullable=False)
-    mail_capo2 = db.Column(db.String(128), nullable=False)
+    nome_capo2 = db.Column(db.String(255), nullable=False)
+    mail_capo2 = db.Column(db.String(255), nullable=False)
     cell_capo2 = db.Column(db.String(128), nullable=False)
-    sesso = db.Column(db.String(128))
+    sesso = db.Column(db.String(2))
 
 class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
@@ -131,7 +131,6 @@ class WordpressPost(db.Model):
     iscrizioni_id = db.Column(db.Integer, nullable=False)
     wordpress_user_id = db.Column(db.Integer, nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
-    # campo di testo per indicare se "presentazione", "prima_impresa", "seconda_impresa", "missione", "extra"
     tipo = db.Column(db.String(128), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
 
@@ -155,14 +154,40 @@ class TestiMail(db.Model):
 class StatusPercorso(db.Model):
     __tablename__ = "status_percorso"
     id = db.Column(db.Integer, primary_key=True)
+    anno = db.Column(db.String(128), nullable=True)
     iscrizioni = db.Column(db.JSON, nullable=False)
     abilitazioni = db.Column(db.JSON, nullable=False)
-    regione = db.Column(db.String(128), nullable=True)
+    regione = db.Column(db.Integer, nullable=True)
     data_apertura = db.Column(db.String(128), nullable=False)
     data_chiusura = db.Column(db.String(128), nullable=False)
 
-with app.app_context():
+class Regione(db.Model):
+    __tablename__ = "regioni"
+    id = db.Column(db.Integer, primary_key=True)
+    regione = db.Column(db.String(128), nullable=True)
+    stampabile = db.Column(db.String(128), nullable=True)
+
+class Zona(db.Model):
+    __tablename__ = "zone"
+    id = db.Column(db.Integer, primary_key=True)
+    zona = db.Column(db.String(128), nullable=True)
+    regione = db.Column(db.Integer, nullable=True)
+
+class Gruppo(db.Model):
+    __tablename__ = "gruppi"
+    id = db.Column(db.Integer, primary_key=True)
+    gruppo = db.Column(db.String(128), nullable=True)
+    zona = db.Column(db.Integer, nullable=True)
+
+@app.cli.command("init-db")
+def init_db():
     db.create_all()
+    db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin"))
+    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="piemonte", data_apertura="", data_chiusura=""))
+    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="puglia", data_apertura="", data_chiusura=""))
+    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="valle_aosta", data_apertura="", data_chiusura=""))
+    db.session.commit()
+    print("Database inizializzato")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -486,8 +511,8 @@ def edit_iscrizione(id_iscrizione):
             flash("Modifica Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscrizioni"))
 
-        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2025 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
-        manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq)
+        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2026 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq, regione=iscrizione.regione)
 
         # Avvisa Francesco e Admin
         try:
@@ -546,7 +571,7 @@ def abilita(id_iscrizione):
             tmp_specialita = tmp_iscrizione.specialita.capitalize()
 
         tmp_meta = {
-            "anno": "2025",
+            "anno": "2026",
             "gruppo": tmp_iscrizione.gruppo.capitalize(),
             "rinnovo": tmp_rinnovo,
             "specialita": tmp_specialita,
@@ -558,7 +583,7 @@ def abilita(id_iscrizione):
         dati = {
             "username": tmp_username,
             "name": tmp_iscrizione.nome.capitalize(),
-            "email": tmp_iscrizione.mail,
+            "email": f"{tmp_username}@guidonciniverdi.it",
             "password": tmp_passwd,
             "meta": tmp_meta
             }
@@ -720,8 +745,6 @@ def edit_mail(id_mail):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if len(User.query.all()) == 0:
-        return render_template("welcome.html")
     if request.method == "POST":
         utente = User.query.filter_by(username=request.form["username"]).first()
         if utente:
@@ -873,26 +896,6 @@ def utente():
                 flash("Le password non coincidono!", "warning")
         return redirect(url_for("utente"))
     return render_template("utente.html")
-
-@app.route("/welcome", methods=["POST"])
-def welcome():
-    if len(User.query.all()) > 0:
-        return redirect(url_for("login"))
-    if request.form["passwd"] == request.form["conferma_passwd"]:
-        password = generate_password_hash(request.form["passwd"])
-        utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello="admin", telegram_id=request.form["telegram_id"])
-        db.session.add(utente)
-        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="piemonte", data_apertura="", data_chiusura="")
-        db.session.add(status)
-        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="puglia", data_apertura="", data_chiusura="")
-        db.session.add(status)
-        status = StatusPercorso(iscrizioni=False, abilitazioni=False, regione="valle_aosta", data_apertura="", data_chiusura="")
-        db.session.add(status)
-        db.session.commit()
-        flash("Utente creato con successo!", "success")
-    else:
-        flash("Le password non coincidono!", "warning")
-    return redirect(url_for("login"))
 
 @app.route("/iscrivi")
 @login_required
