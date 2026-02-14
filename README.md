@@ -1,14 +1,14 @@
-# Gestionale Guidoncini Verdi Piemonte
+# Gestionale Guidoncini Verdi
 
 <img title="" src="./static/agesci_piemonte.png" alt="" width="100" data-align="center">
 
-Gestionale utilizzato per validare le iscrizioni al percorso Guidoncini Verdi di [AGESCI Piemonte](https://piemonte.agesci.it/).
+Gestionale utilizzato per validare le iscrizioni al percorso Guidoncini Verdi di [AGESCI Piemonte](https://piemonte.agesci.it/) e [AGESCI Puglia](https://puglia.agesci.it/).
 
 La validazione iscrizioni genera delle richieste alle API di [guidonciniverdi.it](https://guidonciniverdi.it/) per la creazione dell'account utente e delle pagine del Diario di Bordo.
 
 <img title="" src="./static/pag_iscrizioni.png" alt="" width="554" data-align="center">
 
-Il gestionale si occupa inoltre dell'invio di mai a ragazzi e capi.
+Il gestionale si occupa inoltre dell'invio di mail a ragazzi e capi.
 
 Generazione file excel delle iscrizioni per tutti i livelli di utenza (nei limiti della stessa).
 
