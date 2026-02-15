@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Build Docker Image
 
 on:
   push:
@@ -22,8 +22,10 @@ jobs:
       run: |
         docker build . \
           --file Dockerfile \
-          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:${{ github.sha }}
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:${{ github.sha }} \
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:latest
 
     - name: Push Docker image
       run: |
         docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:${{ github.sha }}
+        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:latest
