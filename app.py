@@ -18,6 +18,9 @@ import json
 import io
 import os
 
+with open("credenziali.json", "r") as f:
+    cr = json.load(f)
+
 cr = {
     "wordpress": {
         "url": os.environ["WORDPRESS_URL"],
@@ -26,11 +29,10 @@ cr = {
     },
     "telegram": {
         "token": os.environ["TELEGRAM_TOKEN"]
-    }
+    },
+    "mail": cr["mail"],
+    "mail_puglia": cr["mail_puglia"]
 }
-
-with open("credenziali.json", "r") as f:
-    cr = json.load(f)
 
 # generazione dell'elenco gruppi
 gruppi = {"piemonte": {}, "puglia": {}, "valle_aosta": {}, "sardegna": {}}
