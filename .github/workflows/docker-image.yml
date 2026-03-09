@@ -20,8 +20,8 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build . \
-          --file gestionale/Dockerfile \
+        docker build gestionale \
+          --file Dockerfile \
           --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:${{ github.sha }} \
           --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:latest
 
