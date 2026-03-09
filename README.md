@@ -39,8 +39,8 @@ services:
       db:
         condition: service_healthy
 
-  worker-mail:
-    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-mail:latest
+  deamon:
+    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-deamon:latest
     restart: unless-stopped
     environment:
       DB_TYPE: mariadb
@@ -49,14 +49,6 @@ services:
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: app_db
-      SECRET_KEY: secret_key
-    depends_on:
-      - gestionale
-
-  worker-notifiche:
-    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:latest
-    restart: unless-stopped
-    environment:
       URL_NOTIFICHE: url_notifiche
       API_KEY: api_key
     depends_on:
@@ -88,7 +80,7 @@ services:
       RELAYHOST_USERNAME: your@gmail.com
       RELAYHOST_PASSWORD: yourpassword
     depends_on:
-      - worker-mail
+      - deamon
 
   nginx:
     image: nginx:alpine
