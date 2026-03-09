@@ -1,17 +1,20 @@
 FROM python:3.11-slim
 
+ENV TZ=Europe/Rome
+
 WORKDIR /app
 
 COPY ./invia_notifiche.py ./invia_notifiche.py
+
+RUN apt-get update \
+    && apt-get install -y cron tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY cronjob /etc/cron.d/cronjob
 
-ENV TZ=Europe/Rome
-RUN apt-get install -y tzdata
+RUN chmod 0644 /etc/cron.d/cronjob \
+    && touch /var/log/cron.log
 
-RUN apt-get update && apt-get install -y cron \
-    && chmod 0644 /etc/cron.d/cronjob \
-    && crontab /etc/cron.d/cronjob
-
-RUN touch /var/log/cron.log
-
-CMD ["cron", "-f"]
+CMD ["cron","-f"]
