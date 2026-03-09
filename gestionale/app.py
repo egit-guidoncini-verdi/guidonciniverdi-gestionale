@@ -18,9 +18,6 @@ import json
 import io
 import os
 
-with open("credenziali.json", "r") as f:
-    cr = json.load(f)
-
 cr = {
     "wordpress": {
         "url": os.environ["WORDPRESS_URL"],
@@ -29,9 +26,7 @@ cr = {
     },
     "telegram": {
         "token": os.environ["TELEGRAM_TOKEN"]
-    },
-    "mail": cr["mail"],
-    "mail_puglia": cr["mail_puglia"]
+    }
 }
 
 # generazione dell'elenco gruppi
@@ -209,11 +204,10 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 def manda_mail(indirizzi, copia, titolo, testo, regione="piemonte"):
+    credenziali = Regione.query.filter_by(regione=regione).first().credenziali
     message = MIMEMultipart("alternative")
     message["Subject"] = f"Guidoncini Verdi 2026 - {titolo}"
-    message["From"] = cr["mail"]["sender_email"]
-    if regione == "puglia":
-        message["From"] = cr["mail_puglia"]["sender_email"]
+    message["From"] = credenziali["sender_email"]
     message["To"] = ", ".join(indirizzi)
     if copia:
         message["Cc"] = ", ".join(copia)
@@ -230,30 +224,13 @@ def manda_mail(indirizzi, copia, titolo, testo, regione="piemonte"):
 
     context = ssl.create_default_context()
     try:
-        if regione == "piemonte" or regione == "valle_aosta":
-            with smtplib.SMTP(cr["mail"]["smtp_server"], cr["mail"]["port"]) as server:
-                server.ehlo()
-                server.starttls(context=context)
-                server.ehlo()
-                server.login(cr["mail"]["sender_email"], cr["mail"]["passwd"])
-                server.sendmail(cr["mail"]["sender_email"], indirizzi, message.as_string())
-                server.quit()
-        elif regione == "puglia":
-            with smtplib.SMTP(cr["mail_puglia"]["smtp_server"], cr["mail_puglia"]["port"]) as server:
-                server.ehlo()
-                server.starttls(context=context)
-                server.ehlo()
-                server.login(cr["mail_puglia"]["sender_email"], cr["mail_puglia"]["passwd"])
-                server.sendmail(cr["mail_puglia"]["sender_email"], indirizzi, message.as_string())
-                server.quit()
-        elif regione == "sardegna":
-            with smtplib.SMTP(cr["mail_sardegna"]["smtp_server"], cr["mail_sardegna"]["port"]) as server:
-                server.ehlo()
-                server.starttls(context=context)
-                server.ehlo()
-                server.login(cr["mail_sardegna"]["sender_email"], cr["mail_sardegna"]["passwd"])
-                server.sendmail(cr["mail_sardegna"]["sender_email"], indirizzi, message.as_string())
-                server.quit()
+        with smtplib.SMTP(credenziali["smtp_server"], credenziali["port"]) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            server.login(credenziali["sender_email"], credenziali["passwd"])
+            server.sendmail(credenziali["sender_email"], indirizzi, message.as_string())
+            server.quit()
         return True
     except:
         return False
