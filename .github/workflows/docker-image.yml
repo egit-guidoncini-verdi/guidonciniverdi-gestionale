@@ -18,7 +18,7 @@ jobs:
     - name: Login to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-    - name: Build Docker image
+    - name: Build Gestionale Image
       working-directory: gestionale
       run: |
         docker build . \
@@ -26,7 +26,20 @@ jobs:
           --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:${{ github.sha }} \
           --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:latest
 
-    - name: Push Docker image
+    - name: Push Gestionale Image
       run: |
         docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:${{ github.sha }}
         docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:latest
+
+    - name: Build Notifiche Image
+      working-directory: worker-notifiche
+      run: |
+        docker build . \
+          --file Dockerfile \
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:${{ github.sha }} \
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:latest
+
+    - name: Push Notifiche Image
+      run: |
+        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:${{ github.sha }}
+        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:latest

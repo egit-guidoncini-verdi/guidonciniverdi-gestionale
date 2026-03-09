@@ -1,8 +1,8 @@
-FROM python
+FROM python:3.11-slim
 
 WORKDIR /gestionale_gv
 
-COPY requirements.txt .
+COPY ./requirements.txt .
 
 RUN pip install -r requirements.txt
 

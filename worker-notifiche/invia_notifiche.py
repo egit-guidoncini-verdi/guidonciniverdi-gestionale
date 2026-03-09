@@ -1,14 +1,10 @@
-#!/bin/python3
-
 import requests
 import json
+import os
 
-url = "https://guidonciniverdi.pythonanywhere.com/notifica"
+url = os.environ["URL_NOTIFICHE"]
 
-with open("credenziali_notifiche.json", "r") as f:
-    dati = f.read()
-
-api_key = json.loads(dati)["api_key"]
+api_key = os.environ["API_KEY"]
 
 form = {"api_key": api_key, "tipologia": "iabz"}
 
