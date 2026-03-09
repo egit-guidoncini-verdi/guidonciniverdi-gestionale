@@ -200,6 +200,7 @@ def init_db():
     db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="piemonte", data_apertura="", data_chiusura=""))
     db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="puglia", data_apertura="", data_chiusura=""))
     db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="valle_aosta", data_apertura="", data_chiusura=""))
+    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="sardegna", data_apertura="", data_chiusura=""))
     db.session.commit()
     print("Database inizializzato")
 
@@ -244,6 +245,14 @@ def manda_mail(indirizzi, copia, titolo, testo, regione="piemonte"):
                 server.ehlo()
                 server.login(cr["mail_puglia"]["sender_email"], cr["mail_puglia"]["passwd"])
                 server.sendmail(cr["mail_puglia"]["sender_email"], indirizzi, message.as_string())
+                server.quit()
+        elif regione == "sardegna":
+            with smtplib.SMTP(cr["mail_sardegna"]["smtp_server"], cr["mail_sardegna"]["port"]) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                server.login(cr["mail_sardegna"]["sender_email"], cr["mail_sardegna"]["passwd"])
+                server.sendmail(cr["mail_sardegna"]["sender_email"], indirizzi, message.as_string())
                 server.quit()
         return True
     except:
