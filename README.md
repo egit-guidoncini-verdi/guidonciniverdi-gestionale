@@ -20,6 +20,91 @@ Il gestionale si occupa inoltre dell'invio di mail a ragazzi e capi.
 
 Generazione file excel delle iscrizioni per tutti i livelli di utenza (nei limiti della stessa).
 
+### Deploy
+Docker compose: 
+```yaml
+services:
+  gestionale:
+    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:latest
+    restart: unless-stopped
+    environment:
+      DB_TYPE: mariadb
+      DB_USER: app_user
+      DB_PASSWORD: app_password
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: app_db
+      SECRET_KEY: secret_key
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker-mail:
+    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-mail:latest
+    restart: unless-stopped
+    environment:
+      DB_TYPE: mariadb
+      DB_USER: app_user
+      DB_PASSWORD: app_password
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: app_db
+      SECRET_KEY: secret_key
+    depends_on:
+      - gestionale
+
+  worker-notifiche:
+    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:latest
+    restart: unless-stopped
+    environment:
+      URL_NOTIFICHE: url_notifiche
+      API_KEY: api_key
+    depends_on:
+      - gestionale
+
+  db:
+    image: mariadb:11.4
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_DATABASE: app_db
+      MARIADB_USER: app_user
+      MARIADB_PASSWORD: app_password
+      TZ: Europe/Rome
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  smtp:
+    image: boky/postfix
+    container_name: smtp_relay
+    environment:
+      RELAYHOST: "[smtp.gmail.com]:587"
+      RELAYHOST_USERNAME: your@gmail.com
+      RELAYHOST_PASSWORD: yourpassword
+    depends_on:
+      - worker-mail
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "5000:80"
+    volumes:
+      - nginx-data:/etc/nginx
+    depends_on:
+      - gestionale
+
+volumes:
+  mariadb-data:
+  nginx-data:
+```
+
 ### Scelte implementative
 
 Gestione del backend tramite Flask ([Documentazione qui](https://flask.palletsprojects.com/)).
