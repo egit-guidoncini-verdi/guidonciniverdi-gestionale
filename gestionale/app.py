@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, jsonify, request, url_for, flash, send_from_directory, send_file
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 import smtplib, ssl
@@ -45,10 +46,34 @@ specialita = [
     "Pronto intervento"
 ]
 
+drivers = {
+    "sqlite": "sqlite:///",
+    "postgresql": "postgresql://",
+    "mariadb": "mysql+pymysql://",
+}
+
 # Inizializza app e servizi
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///gv_db_new.db"
-app.config["SECRET_KEY"] = secrets.token_hex()
+db_type = os.environ["DB_TYPE"]
+
+if db_type not in drivers:
+    app.logger.info("Tipo di database non supportato")
+    raise RuntimeError("Tipo di database non supportato")
+
+if db_type == "sqlite":
+    uri = f"{drivers[db_type]}{os.environ['DB_NAME']}"
+else:
+    uri = (
+        f"{drivers[db_type]}"
+        f"{os.environ['DB_USER']}:"
+        f"{os.environ['DB_PASSWORD']}@"
+        f"{os.environ['DB_HOST']}:"
+        f"{os.environ['DB_PORT']}/"
+        f"{os.environ['DB_NAME']}"
+    )
+app.config["SQLALCHEMY_DATABASE_URI"] =  uri
+app.config["SECRET_KEY"] = os.environ['SECRET_KEY']
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 db = SQLAlchemy(app)
 
 login_manager = LoginManager(app)
@@ -62,8 +87,8 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
     mail = db.Column(db.String(255), nullable=False)
-    regione = db.Column(db.Integer, nullable=True)
-    zona = db.Column(db.String(255), nullable=True)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=True)
+    zona = db.Column(db.Integer, db.ForeignKey("zone.id"), nullable=True)
     livello = db.Column(db.String(255), nullable=False)
     telegram_id = db.Column(db.String(255), nullable=True)
 
@@ -75,8 +100,8 @@ class IscrizioniEG(db.Model):
     nome = db.Column(db.String(255), nullable=False)
     mail = db.Column(db.String(255), nullable=False)
     regione = db.Column(db.Integer, nullable=False)
-    zona = db.Column(db.Integer, nullable=False)
-    gruppo = db.Column(db.Integer, nullable=False)
+    zona = db.Column(db.Integer, db.ForeignKey("zone.id"), nullable=False)
+    gruppo = db.Column(db.Integer, db.ForeignKey("gruppi.id"), nullable=False)
     specialita = db.Column(db.String(255), nullable=False)
     # tipo indica se conquista o conferma => True se conferma
     tipo = db.Column(db.String(255), nullable=False)
@@ -94,7 +119,7 @@ class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(255), nullable=False)
-    iscrizioni_id = db.Column(db.Integer, nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     username = db.Column(db.String(255), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
@@ -103,8 +128,8 @@ class WordpressPost(db.Model):
     __tablename__ = "wordpress_post"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(255), nullable=False)
-    iscrizioni_id = db.Column(db.Integer, nullable=False)
-    wordpress_user_id = db.Column(db.Integer, nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
+    wordpress_user_id = db.Column(db.Integer, db.ForeignKey("wordpress_user.id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     tipo = db.Column(db.String(255), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
@@ -114,7 +139,7 @@ class RelazioniPuglia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(255), nullable=False)
     stato = db.Column(db.JSON, nullable=False)
-    iscrizioni_id = db.Column(db.Integer, nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
     dati = db.Column(db.JSON, nullable=False)
 
 class CodaMail(db.Model):
@@ -122,6 +147,7 @@ class CodaMail(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(255), nullable=False)
     stato = db.Column(db.String(255), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
     indirizzi = db.Column(db.JSON, nullable=False)
     titolo = db.Column(db.String(255), nullable=False)
     testo = db.Column(db.UnicodeText, nullable=False)
@@ -132,7 +158,7 @@ class StatusPercorso(db.Model):
     anno = db.Column(db.String(255), nullable=True)
     iscrizioni = db.Column(db.JSON, nullable=False)
     abilitazioni = db.Column(db.JSON, nullable=False)
-    regione = db.Column(db.Integer, nullable=True)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=True)
     data_apertura = db.Column(db.String(255), nullable=False)
     data_chiusura = db.Column(db.String(255), nullable=False)
 
@@ -140,20 +166,20 @@ class Regione(db.Model):
     __tablename__ = "regioni"
     id = db.Column(db.Integer, primary_key=True)
     regione = db.Column(db.String(255), nullable=False)
-    mail = db.Column(db.String(255), nullable=False)
+    mail = db.Column(db.String(255), nullable=True)
 
 class Zona(db.Model):
     __tablename__ = "zone"
     id = db.Column(db.Integer, primary_key=True)
     zona = db.Column(db.String(255), nullable=False)
-    regione = db.Column(db.Integer, nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
 
 class Gruppo(db.Model):
     __tablename__ = "gruppi"
     id = db.Column(db.Integer, primary_key=True)
     gruppo = db.Column(db.String(255), nullable=True)
-    zona = db.Column(db.Integer, nullable=False)
-    regione = db.Column(db.Integer, nullable=False)
+    zona = db.Column(db.Integer, db.ForeignKey("zone.id"), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
 
 class Demone(db.Model):
     __tablename__ = "demoni"
@@ -185,10 +211,8 @@ def init_db():
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def manda_mail(indirizzi, copia, titolo, testo, regione="piemonte"):
-    indirizzo_regione = Regione.query.filter_by(regione=regione).first().mail
-    indirizzi.append(indirizzo_regione)
-    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", indirizzi=indirizzi, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+def manda_mail(indirizzi, copia, titolo, testo, regione):
+    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
     de.session.commit()
     return True
 
