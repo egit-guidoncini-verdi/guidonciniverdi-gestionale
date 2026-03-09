@@ -121,8 +121,8 @@ class CodaMail(db.Model):
     __tablename__ = "coda_mail"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(255), nullable=False)
-    stato = db.Column(db.JSON, nullable=False)
-    destinatari = db.Column(db.JSON, nullable=False)
+    stato = db.Column(db.String(255), nullable=False)
+    indirizzi = db.Column(db.JSON, nullable=False)
     titolo = db.Column(db.String(255), nullable=False)
     testo = db.Column(db.UnicodeText, nullable=False)
 
@@ -139,25 +139,30 @@ class StatusPercorso(db.Model):
 class Regione(db.Model):
     __tablename__ = "regioni"
     id = db.Column(db.Integer, primary_key=True)
-    regione = db.Column(db.String(255), nullable=True)
-    credenziali = db.Column(db.String(255), nullable=True)
+    regione = db.Column(db.String(255), nullable=False)
+    mail = db.Column(db.String(255), nullable=False)
 
 class Zona(db.Model):
     __tablename__ = "zone"
     id = db.Column(db.Integer, primary_key=True)
-    zona = db.Column(db.String(255), nullable=True)
-    regione = db.Column(db.Integer, nullable=True)
+    zona = db.Column(db.String(255), nullable=False)
+    regione = db.Column(db.Integer, nullable=False)
 
 class Gruppo(db.Model):
     __tablename__ = "gruppi"
     id = db.Column(db.Integer, primary_key=True)
     gruppo = db.Column(db.String(255), nullable=True)
-    zona = db.Column(db.Integer, nullable=True)
-    regione = db.Column(db.Integer, nullable=True)
+    zona = db.Column(db.Integer, nullable=False)
+    regione = db.Column(db.Integer, nullable=False)
+
+class Demone(db.Model):
+    __tablename__ = "demoni"
+    key = db.Column(db.String(255), primary_key=True)
+    value = db.Column(db.JSON, nullable=False)
 
 class AnnoCorrente(db.Model):
     __tablename__ = "anno_corrente"
-    value = db.Column(db.String(255), primary_key=True, nullable=False, unique=True)
+    value = db.Column(db.String(255), primary_key=True)
 
 @app.cli.command("init-db")
 def init_db():
@@ -168,6 +173,8 @@ def init_db():
     db.session.add(Regione(regione="valle_aosta"))
     db.session.add(Regione(regione="sardegna"))
     db.session.add(AnnoCorrente(value=str(datetime.today().year)))
+    db.session.add(Demone(key="notifiche", value=False))
+    db.session.add(Demone(key="send_mail", value=False))
     db.session.commit()
     for i in Regione.query.all():
         db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=i.id, data_apertura="", data_chiusura=""))
@@ -179,36 +186,11 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 def manda_mail(indirizzi, copia, titolo, testo, regione="piemonte"):
-    credenziali = Regione.query.filter_by(regione=regione).first().credenziali
-    message = MIMEMultipart("alternative")
-    message["Subject"] = f"Guidoncini Verdi 2026 - {titolo}"
-    message["From"] = credenziali["sender_email"]
-    message["To"] = ", ".join(indirizzi)
-    if copia:
-        message["Cc"] = ", ".join(copia)
-        indirizzi.extend(copia)
-
-    text = f"{titolo}\n{testo}"
-    html = render_template("mail_base.html", titolo=titolo, testo=testo)
-
-    part1 = MIMEText(text, "plain")
-    part2 = MIMEText(html, "html")
-
-    message.attach(part1)
-    message.attach(part2)
-
-    context = ssl.create_default_context()
-    try:
-        with smtplib.SMTP(credenziali["smtp_server"], credenziali["port"]) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
-            server.login(credenziali["sender_email"], credenziali["passwd"])
-            server.sendmail(credenziali["sender_email"], indirizzi, message.as_string())
-            server.quit()
-        return True
-    except:
-        return False
+    indirizzo_regione = Regione.query.filter_by(regione=regione).first().mail
+    indirizzi.append(indirizzo_regione)
+    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", indirizzi=indirizzi, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+    de.session.commit()
+    return True
 
 def manda_telegram(chat_id, titolo, testo):
     text = f"{titolo}\n{testo}"
@@ -283,7 +265,7 @@ def stato_iscrizioni():
     if current_user.livello == "iabz" or current_user.livello == "pattuglia":
         return redirect(url_for("dashboard"))
     if current_user.livello == "iabr":
-        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
     if request.method == "POST":
         if request.form["stato"] == "sospendi":
             stato.iscrizioni = False
@@ -900,7 +882,14 @@ def upload_gruppi():
 @app.route("/iscrivi")
 @login_required
 def iscrivi():
-    return render_template("iscrivi.html", gruppi=Gruppo.query.filter_by(regione=current_user.regione), specialita=specialita)
+    gruppi = Gruppo.query.filter_by(regione=current_user.regione)
+    zone = Zona.query.filter_by(regione=current_user.regione)
+    json_gruppi = {}
+    for i in zone:
+        json_gruppi[i.zona.upper()] = []
+    for i in gruppi:
+        json_gruppi[Zona.query.filter_by(id=i.zona).first().zona.upper()].append(i.gruppo.upper())
+    return render_template("iscrivi.html", gruppi=json_gruppi, specialita=specialita)
 
 @app.route("/iscriviti/<regione>", methods=["GET", "POST"])
 def iscriviti(regione):
@@ -940,7 +929,14 @@ def iscriviti(regione):
         else:
             msg = "Le iscrizioni sono chiuse!<br>Se vuoi registrare una iscrizione tardiva contattaci tramite mail qua sotto!"
         return render_template("iscriviti_chiuse.html", msg=msg, regione=regione, anno=AnnoCorrente.query.all()[0].value)
-    return render_template("iscriviti.html", gruppi=Gruppo.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id), specialita=specialita, regione=regione, anno=AnnoCorrente.query.all()[0].value)
+    gruppi = Gruppo.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id)
+    zone = Zona.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id)
+    json_gruppi = {}
+    for i in zone:
+        json_gruppi[i.zona.upper()] = []
+    for i in gruppi:
+        json_gruppi[Zona.query.filter_by(id=i.zona).first().zona.upper()].append(i.gruppo.upper())
+    return render_template("iscriviti.html", gruppi=json_gruppi, specialita=specialita, regione=regione, anno=AnnoCorrente.query.all()[0].value)
 
 @app.route("/iscriviti_success")
 def iscriviti_success():
