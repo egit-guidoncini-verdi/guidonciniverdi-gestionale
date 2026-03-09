@@ -48,8 +48,8 @@
     <div class="mb-3">
       <label for="regione" class="form-label" aria-describedby="regione_descr">Regione</label>
       <select class="form-select" id="regione" name="regione" required>
-        {% for i in ["piemonte", "puglia", "valle_aosta"] %}
-        <option value="{{ i }}">{{ i.upper() }}</option>
+        {% for i in regioni %}
+        <option value="{{ i.id }}">{{ i.regione.upper() }}</option>
         {% endfor %}
       </select>
     </div>
@@ -59,7 +59,7 @@
       <div id="zona_descr" class="form-text mb-2">Campo necessario solo per account IABZ, in tutti gli altri casi verrà ignorato.</div>
       <select class="form-select" id="zona" name="zona" onchange="updateGruppoOptions()" required>
         {% for i in gruppi %}
-        <option value="{{ i }}">{{ i }}</option>
+        <option value="{{ i.id }}">{{ i.zona.upper() }}</option>
         {% endfor %}
       </select>
     </div>
@@ -106,11 +106,11 @@
     <div class="mb-3">
       <label for="regione" class="form-label" aria-describedby="regione_descr">Regione</label>
       <select class="form-select" id="regione" name="regione" required>
-        {% for i in ["piemonte", "puglia"] %}
+        {% for i in regioni %}
         {% if dati_utente.regione == i %}
-        <option value="{{ i }}" selected>{{ i.upper() }}</option>
+        <option value="{{ i.id }}" selected>{{ i.regione.upper() }}</option>
         {% else %}
-        <option value="{{ i }}">{{ i.upper() }}</option>
+        <option value="{{ i.id }}">{{ i.regione.upper() }}</option>
         {% endif %}
         {% endfor %}
       </select>
@@ -121,10 +121,10 @@
       <div id="zona_descr" class="form-text mb-2">Campo necessario solo per account IABZ, in tutti gli altri casi verrà ignorato.</div>
       <select class="form-select" id="zona" name="zona" onchange="updateGruppoOptions()" required>
         {% for i in gruppi %}
-        {% if dati_utente.zona == i %}
-        <option value="{{ i }}" selected>{{ i }}</option>
+        {% if dati_utente.zona == i.zona %}
+        <option value="{{ i.id }}" selected>{{ i.zona.upper() }}</option>
         {% else %}
-        <option value="{{ i }}">{{ i }}</option>
+        <option value="{{ i.id }}">{{ i.zona.upper() }}</option>
         {% endif %}
         {% endfor %}
       </select>

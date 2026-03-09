@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<title>Gestionale Guidoncini Verdi - Import Gruppi</title>
+
+{% endblock %}
+
+{% block titolo %}
+
+<h1 class="text-center my-2"><strong>Import Gruppi</strong></h1>
+
+{% endblock %}
+
+{% block corpo %}
+
+<div class="mx-4">
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" id="id_form" name="id_form" value="upload_gruppi">
+
+    <div class="mb-3">
+      <label for="regione" class="form-label" aria-describedby="regione_descr">Regione</label>
+      <select class="form-select" id="regione" name="regione" required>
+        {% for i in regioni %}
+        <option value="{{ i.id }}">{{ i.regione.upper() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="file" class="form-label">Carica qui il file CSV</label>
+      <input class="form-control" type="file" id="file" name="file" accept=".csv">
+    </div>
+    <button type="submit" class="btn btn-warning">Carica</button>
+  </form>
+</div>
+
+{% endblock %}

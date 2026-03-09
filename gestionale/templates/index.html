@@ -10,7 +10,7 @@
   <body>
     <header>
       <div class="shadow-sm p-3 mb-3 bg-body-tertiary rounded">
-        <h1 class="text-center"><strong>Guidoncini Verdi 2026</strong></h1>
+        <h1 class="text-center"><strong>Guidoncini Verdi {{ anno }}</strong></h1>
       </div>
     </header>
     <main>
@@ -37,7 +37,7 @@
           <p>Clicca qui per iscriverti!</p>
         </div>
       </a>
-      <a class="btn" href="">
+      <a class="btn" href="{{ url_for("iscriviti", regione="sardegna") }}">
         <div class="shadow-sm p-3 mx-5 mb-3 text-center bg-body-tertiary rounded">
           <img src="/static/sardegna.png" alt="sardegna" width="150">
           <h3>Sei un Capo Squadriglia della Sardegna?</h3>

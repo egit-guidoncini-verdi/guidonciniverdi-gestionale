@@ -31,7 +31,7 @@ jobs:
         docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:${{ github.sha }}
         docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:latest
 
-  build-notifiche:
+  build-deamon:
     runs-on: ubuntu-latest
 
     permissions:
@@ -44,15 +44,15 @@ jobs:
     - name: Login to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       
-    - name: Build Notifiche Image
-      working-directory: worker-notifiche
+    - name: Build Gestionale Deamon Image
+      working-directory: gestionale-deamon
       run: |
         docker build . \
           --file Dockerfile \
-          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:${{ github.sha }} \
-          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:latest
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-deamon:${{ github.sha }} \
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-deamon:latest
 
-    - name: Push Notifiche Image
+    - name: Push Gestionale Deamon Image
       run: |
-        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:${{ github.sha }}
-        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-worker-notifiche:latest
+        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-deamon:${{ github.sha }}
+        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-deamon:latest

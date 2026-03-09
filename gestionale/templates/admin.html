@@ -34,21 +34,29 @@
     <tbody>
       {% for i in utenti %}
       <tr>
-        <th scope="row">{{ i["id"] }}</th>
-        <td>{{ i["username"] }}</td>
-        <td>{{ i["mail"] }}</td>
-        <td>{{ i["telegram_id"] }}</td>
-        {% if i["regione"] %}
-        <td>{{ i["regione"] }}</td>
+        <th scope="row">{{ i.id }}</th>
+        <td>{{ i.username }}</td>
+        <td>{{ i.mail }}</td>
+        <td>{{ i.telegram_id }}</td>
+        {% if i.regione %}
+        {% for y in regioni %}
+        {% if y.id == i.regione %}
+        <td>{{ y.regione.upper() }}</td>
+        {% endif %}
+        {% endfor %}
         {% else %}
         <td>--</td>
         {% endif %}
-        {% if i["zona"] %}
-        <td>{{ i["zona"] }}</td>
+        {% if i.zona %}
+        {% for y in zone %}
+        {% if y.id == i.zona %}
+        <td>{{ y.zona.upper() }}</td>
+        {% endif %}
+        {% endfor %}
         {% else %}
         <td>--</td>
         {% endif %}
-        <td>{{ i["livello"] }}</td>
+        <td>{{ i.livello.upper() }}</td>
         <td>
         <a type="button" class="btn btn-sm btn-warning mx-4" href="{{ url_for("modifica_account", id_utente=i["id"]) }}">Modifica</a>
         <a type="button" class="btn btn-sm btn-danger mx-4" href="{{ url_for("elimina_account", id_utente=i["id"]) }}">Elimina</a>

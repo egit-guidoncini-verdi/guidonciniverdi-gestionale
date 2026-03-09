@@ -29,40 +29,6 @@ cr = {
     }
 }
 
-# generazione dell'elenco gruppi
-gruppi = {"piemonte": {}, "puglia": {}, "valle_aosta": {}, "sardegna": {}}
-df = pd.read_csv("gruppi_piemonte.csv")
-
-for i in list(set(df["zona"].tolist())):
-    gruppi["piemonte"][i] = []
-
-for i in df.index:
-    gruppi["piemonte"][df["zona"][i]].append(df["Denominazione Gruppo"][i])
-
-df = pd.read_csv("gruppi_puglia.csv")
-
-for i in list(set(df["zona"].tolist())):
-    gruppi["puglia"][i] = []
-
-for i in df.index:
-    gruppi["puglia"][df["zona"][i]].append(df["Denominazione Gruppo"][i])
-
-df = pd.read_csv("gruppi_valle_aosta.csv")
-
-for i in list(set(df["zona"].tolist())):
-    gruppi["valle_aosta"][i] = []
-
-for i in df.index:
-    gruppi["valle_aosta"][df["zona"][i]].append(df["Denominazione Gruppo"][i])
-
-df = pd.read_csv("gruppi_sardegna.csv")
-
-for i in list(set(df["zona"].tolist())):
-    gruppi["sardegna"][i] = []
-
-for i in df.index:
-    gruppi["sardegna"][df["zona"][i]].append(df["Denominazione Gruppo"][i])
-
 # costanti varie
 specialita = [
     "Alpinismo",
@@ -81,7 +47,7 @@ specialita = [
 
 # Inizializza app e servizi
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///gv_db.db"
+app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///gv_db_new.db"
 app.config["SECRET_KEY"] = secrets.token_hex()
 db = SQLAlchemy(app)
 
@@ -93,109 +59,118 @@ login_manager.login_message = u"Sessione scaduta!"
 class User(db.Model, UserMixin):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(128), nullable=False, unique=True)
+    username = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
-    mail = db.Column(db.String(128), nullable=False)
-    regione = db.Column(db.String(128), nullable=True)
-    zona = db.Column(db.String(128), nullable=True)
-    livello = db.Column(db.String(128), nullable=False)
-    telegram_id = db.Column(db.String(128), nullable=True)
+    mail = db.Column(db.String(255), nullable=False)
+    regione = db.Column(db.Integer, nullable=True)
+    zona = db.Column(db.String(255), nullable=True)
+    livello = db.Column(db.String(255), nullable=False)
+    telegram_id = db.Column(db.String(255), nullable=True)
 
 class IscrizioniEG(db.Model):
     __tablename__ = "iscrizioniEG"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(128), nullable=False)
-    stato = db.Column(db.String(128), nullable=False)
-    nome = db.Column(db.String(128), nullable=False)
-    mail = db.Column(db.String(128), nullable=False)
+    data = db.Column(db.String(255), nullable=False)
+    stato = db.Column(db.String(255), nullable=False)
+    nome = db.Column(db.String(255), nullable=False)
+    mail = db.Column(db.String(255), nullable=False)
     regione = db.Column(db.Integer, nullable=False)
     zona = db.Column(db.Integer, nullable=False)
     gruppo = db.Column(db.Integer, nullable=False)
-    specialita = db.Column(db.String(128), nullable=False)
+    specialita = db.Column(db.String(255), nullable=False)
     # tipo indica se conquista o conferma => True se conferma
-    tipo = db.Column(db.String(128), nullable=False)
+    tipo = db.Column(db.String(255), nullable=False)
     # Contatti
     nome_capo_sq = db.Column(db.String(255), nullable=False)
     nome_capo1 = db.Column(db.String(255), nullable=False)
     mail_capo1 = db.Column(db.String(255), nullable=False)
-    cell_capo1 = db.Column(db.String(128), nullable=False)
+    cell_capo1 = db.Column(db.String(255), nullable=False)
     nome_capo2 = db.Column(db.String(255), nullable=False)
     mail_capo2 = db.Column(db.String(255), nullable=False)
-    cell_capo2 = db.Column(db.String(128), nullable=False)
+    cell_capo2 = db.Column(db.String(255), nullable=False)
     sesso = db.Column(db.String(2))
 
 class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(128), nullable=False)
+    data = db.Column(db.String(255), nullable=False)
     iscrizioni_id = db.Column(db.Integer, nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
-    username = db.Column(db.String(128), nullable=False)
+    username = db.Column(db.String(255), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
 
 class WordpressPost(db.Model):
     __tablename__ = "wordpress_post"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(128), nullable=False)
+    data = db.Column(db.String(255), nullable=False)
     iscrizioni_id = db.Column(db.Integer, nullable=False)
     wordpress_user_id = db.Column(db.Integer, nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
-    tipo = db.Column(db.String(128), nullable=False)
+    tipo = db.Column(db.String(255), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
 
 class RelazioniPuglia(db.Model):
     __tablename__ = "relazioni_puglia"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(128), nullable=False)
+    data = db.Column(db.String(255), nullable=False)
     stato = db.Column(db.JSON, nullable=False)
     iscrizioni_id = db.Column(db.Integer, nullable=False)
     dati = db.Column(db.JSON, nullable=False)
 
-class TestiMail(db.Model):
-    __tablename__ = "testi_mail"
+class CodaMail(db.Model):
+    __tablename__ = "coda_mail"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(128), nullable=False)
+    data = db.Column(db.String(255), nullable=False)
     stato = db.Column(db.JSON, nullable=False)
     destinatari = db.Column(db.JSON, nullable=False)
-    titolo = db.Column(db.String(128), nullable=False)
+    titolo = db.Column(db.String(255), nullable=False)
     testo = db.Column(db.UnicodeText, nullable=False)
 
 class StatusPercorso(db.Model):
     __tablename__ = "status_percorso"
     id = db.Column(db.Integer, primary_key=True)
-    anno = db.Column(db.String(128), nullable=True)
+    anno = db.Column(db.String(255), nullable=True)
     iscrizioni = db.Column(db.JSON, nullable=False)
     abilitazioni = db.Column(db.JSON, nullable=False)
     regione = db.Column(db.Integer, nullable=True)
-    data_apertura = db.Column(db.String(128), nullable=False)
-    data_chiusura = db.Column(db.String(128), nullable=False)
+    data_apertura = db.Column(db.String(255), nullable=False)
+    data_chiusura = db.Column(db.String(255), nullable=False)
 
 class Regione(db.Model):
     __tablename__ = "regioni"
     id = db.Column(db.Integer, primary_key=True)
-    regione = db.Column(db.String(128), nullable=True)
-    credenziali = db.Column(db.JSON, nullable=True)
+    regione = db.Column(db.String(255), nullable=True)
+    credenziali = db.Column(db.String(255), nullable=True)
 
 class Zona(db.Model):
     __tablename__ = "zone"
     id = db.Column(db.Integer, primary_key=True)
-    zona = db.Column(db.String(128), nullable=True)
+    zona = db.Column(db.String(255), nullable=True)
     regione = db.Column(db.Integer, nullable=True)
 
 class Gruppo(db.Model):
     __tablename__ = "gruppi"
     id = db.Column(db.Integer, primary_key=True)
-    gruppo = db.Column(db.String(128), nullable=True)
+    gruppo = db.Column(db.String(255), nullable=True)
     zona = db.Column(db.Integer, nullable=True)
+    regione = db.Column(db.Integer, nullable=True)
+
+class AnnoCorrente(db.Model):
+    __tablename__ = "anno_corrente"
+    value = db.Column(db.String(255), primary_key=True, nullable=False, unique=True)
 
 @app.cli.command("init-db")
 def init_db():
     db.create_all()
-    db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin"))
-    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="piemonte", data_apertura="", data_chiusura=""))
-    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="puglia", data_apertura="", data_chiusura=""))
-    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="valle_aosta", data_apertura="", data_chiusura=""))
-    db.session.add(StatusPercorso(iscrizioni=False, abilitazioni=False, regione="sardegna", data_apertura="", data_chiusura=""))
+    db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin", telegram_id=""))
+    db.session.add(Regione(regione="piemonte"))
+    db.session.add(Regione(regione="puglia"))
+    db.session.add(Regione(regione="valle_aosta"))
+    db.session.add(Regione(regione="sardegna"))
+    db.session.add(AnnoCorrente(value=str(datetime.today().year)))
+    db.session.commit()
+    for i in Regione.query.all():
+        db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=i.id, data_apertura="", data_chiusura=""))
     db.session.commit()
     print("Database inizializzato")
 
@@ -285,7 +260,7 @@ def crea_navigazione(id_iscrizione, wp_id, header, dati, tipo):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", anno=AnnoCorrente.query.all()[0].value)
 
 @app.route("/dashboard")
 @login_required
@@ -293,13 +268,13 @@ def dashboard():
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
     if current_user.livello == "iabz":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first()
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
     if current_user.livello == "iabr":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=current_user.regione).count()
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first()
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
     if current_user.livello == "admin":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione="piemonte").count()
-        stato = StatusPercorso.query.filter_by(regione="piemonte").first()
+        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione="piemonte").first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
     return render_template("dashboard.html", stato=stato, non_abilitate=non_abilitate)
 
 @app.route("/stato_iscrizioni", methods=["GET", "POST"])
@@ -308,7 +283,7 @@ def stato_iscrizioni():
     if current_user.livello == "iabz" or current_user.livello == "pattuglia":
         return redirect(url_for("dashboard"))
     if current_user.livello == "iabr":
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).first()
+        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
     if request.method == "POST":
         if request.form["stato"] == "sospendi":
             stato.iscrizioni = False
@@ -522,12 +497,12 @@ def edit_iscrizione(id_iscrizione):
         except:
             print("Errore Telegram")
         return redirect(url_for("iscrizioni"))
-    return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=gruppi[current_user.regione], specialita=specialita)
+    return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=Gruppo.query.filter_by(regione=current_user.regione), specialita=specialita)
 
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):
-    if not StatusPercorso.query.filter_by(regione=current_user.regione).first().abilitazioni:
+    if not StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first().abilitazioni:
         return redirect(url_for("iscrizioni"))
     creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
     token = base64.b64encode(creds.encode())
@@ -776,18 +751,18 @@ def admin():
                 tmp_password = ''.join(secrets.choice(alphabet) for i in range(12))
                 password = generate_password_hash(tmp_password)
                 if current_user.livello == "admin":
-                    regione = request.form["regione"]
+                    regione = int(request.form["regione"])
                 else:
                     regione = current_user.regione
                 if request.form["livello"] == "iabz":
-                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=regione, zona=request.form["zona"], telegram_id=request.form["telegram_id"])
+                    utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=regione, zona=int(request.form["zona"]), telegram_id=request.form["telegram_id"])
                 else:
                     utente = User(username=request.form["username"], password=password, mail=request.form["mail"], livello=request.form["livello"], regione=regione, telegram_id=request.form["telegram_id"])
                 db.session.add(utente)
                 db.session.commit()
                 flash("Utente inserito con successo!", "success")
 
-                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi Regione {utente.regione.capitalize()}!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
+                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
 
                 if manda_mail([utente.mail], [], "Conferma Creazione Account", testo_mail, utente.regione):
                     flash("Mail inviata!", "success")
@@ -805,9 +780,9 @@ def admin():
             utente = User.query.filter_by(id=request.form["id"]).first()
             if utente:
                 if current_user.livello == "admin":
-                    utente.regione = request.form["regione"]
+                    utente.regione = int(request.form["regione"])
                 if request.form["livello"] == "iabz":
-                    utente.zona = request.form["zona"]
+                    utente.zona = int(request.form["zona"])
                 utente.mail = request.form["mail"]
                 utente.telegram_id = request.form["telegram_id"]
                 db.session.commit()
@@ -827,7 +802,7 @@ def admin():
                 db.session.commit()
                 flash("Password resettata con successo!", "success")
 
-                testo_mail = f"Caro {utente.username},<br>la presente per confermarti il reset della pasword sul Gestionale Guidoncini Verdi Regione {utente.regione.capitalize()}!<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
+                testo_mail = f"Caro {utente.username},<br>la presente per confermarti il reset della pasword sul Gestionale Guidoncini Verdi!<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
 
                 if manda_mail([utente.mail], [], "Reset Password", testo_mail, utente.regione):
                     flash("Mail inviata!", "success")
@@ -842,11 +817,9 @@ def admin():
         return redirect(url_for("admin"))
     if current_user.livello == "admin":
         utenti=User.query.all()
-        tmp_gruppi = gruppi["piemonte"]
     else:
         utenti=User.query.filter_by(regione=current_user.regione)
-        tmp_gruppi = gruppi[current_user.regione]
-    return render_template("admin.html", utenti=utenti, gruppi=tmp_gruppi)
+    return render_template("admin.html", utenti=utenti, regioni=Regione.query.all(), zone=Zona.query.all())
 
 @app.route("/crea_account")
 @login_required
@@ -855,11 +828,11 @@ def crea_account():
         return redirect(url_for("dashboard"))
     if current_user.livello == "admin":
         utenti=User.query.all()
-        tmp_gruppi = gruppi["piemonte"]
+        tmp_zone = Zona.query.filter_by(regione=Regione.query.filter_by(regione="piemonte").first().id)
     else:
         utenti=User.query.filter_by(regione=current_user.regione)
-        tmp_gruppi = gruppi[current_user.regione]
-    return render_template("crea_account.html", utenti=utenti, gruppi=tmp_gruppi, tipo="crea")
+        tmp_zone = Zona.query.filter_by(regione=current_user.regione)
+    return render_template("crea_account.html", utenti=utenti, gruppi=tmp_zone, tipo="crea", regioni=Regione.query.all())
 
 @app.route("/modifica_account/<id_utente>")
 @login_required
@@ -868,12 +841,12 @@ def modifica_account(id_utente):
         return redirect(url_for("dashboard"))
     if current_user.livello == "admin":
         utenti=User.query.all()
-        tmp_gruppi = gruppi["piemonte"]
+        tmp_zone = Zona.query.filter_by(regione=Regione.query.filter_by(regione="piemonte").first().id)
     else:
         utenti=User.query.filter_by(regione=current_user.regione)
-        tmp_gruppi = gruppi[current_user.regione]
+        tmp_zone = Zona.query.filter_by(regione=current_user.regione)
     dati_utente = User.query.filter_by(id=int(id_utente)).first()
-    return render_template("crea_account.html", utenti=utenti, gruppi=tmp_gruppi, tipo="edit", dati_utente=dati_utente)
+    return render_template("crea_account.html", utenti=utenti, gruppi=tmp_zone, tipo="edit", dati_utente=dati_utente, regioni=Regione.query.all())
 
 @app.route("/elimina_account/<id_utente>")
 @login_required
@@ -897,10 +870,37 @@ def utente():
         return redirect(url_for("utente"))
     return render_template("utente.html")
 
+
+@app.route("/upload_gruppi", methods=["GET", "POST"])
+@login_required
+def upload_gruppi():
+    if current_user.livello != "admin":
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        tmp_regione = int(request.form["regione"])
+        file = request.files.get("file")
+        if not file:
+            flash("Nessun file caricato!", "warning")
+            return render_template("gruppi_upload.html")
+        df = pd.read_csv(file)
+        for i in list(set(df["zona"].tolist())):
+            try:
+                db.session.add(Zona(zona=i.lower(), regione=tmp_regione))
+            except:
+                pass
+        db.session.commit()
+        for i in df.index:
+            try:
+                db.session.add(Gruppo(gruppo=df["Denominazione Gruppo"][i].lower(), regione=tmp_regione, zona=Zona.query.filter_by(zona=df["zona"][i].lower()).first().id))
+            except:
+                pass
+        db.session.commit()
+    return render_template("gruppi_upload.html", regioni=Regione.query.all())
+
 @app.route("/iscrivi")
 @login_required
 def iscrivi():
-    return render_template("iscrivi.html", gruppi=gruppi[current_user.regione], specialita=specialita)
+    return render_template("iscrivi.html", gruppi=Gruppo.query.filter_by(regione=current_user.regione), specialita=specialita)
 
 @app.route("/iscriviti/<regione>", methods=["GET", "POST"])
 def iscriviti(regione):
@@ -908,7 +908,7 @@ def iscriviti(regione):
         if request.form["nome_squadriglia"].replace(" ", "") == "" or request.form["mail_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_rep1"].replace(" ", "") == "" or request.form["mail_rep1"].replace(" ", "") == "" or request.form["numero_rep1"].replace(" ", "") == "":
             flash("Non hai compilato i campi obbligatori. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
-        if request.form["gruppo"] not in gruppi[regione][request.form["zona"]]:
+        if request.form["gruppo"] not in Gruppo.query.filter_by(zona=Zona.query.filter_by(zona=request.form["zona"]).first().id):
             flash("Il gruppo selezionato non è corretto. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
         try:
@@ -929,9 +929,9 @@ def iscriviti(regione):
             manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Nuova Iscrizione", testo_telegram)
         except:
             print("Errore")
-        return redirect(url_for("iscriviti_success"))
-    if not StatusPercorso.query.filter_by(regione=regione).first().iscrizioni:
-        stato = StatusPercorso.query.filter_by(regione=regione).first()
+        return redirect(url_for("iscriviti_success", anno=AnnoCorrente.query.all()[0].value))
+    if not StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first().iscrizioni:
+        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
         msg = ""
         if stato.data_apertura == "":
             msg = "Le iscrizioni apriranno nei prossimi giorni!"
@@ -939,8 +939,8 @@ def iscriviti(regione):
             msg = "Le iscrizioni sono momentaneamente chiuse per problemi tecnici, riapriranno a breve!"
         else:
             msg = "Le iscrizioni sono chiuse!<br>Se vuoi registrare una iscrizione tardiva contattaci tramite mail qua sotto!"
-        return render_template("iscriviti_chiuse.html", msg=msg, regione=regione)
-    return render_template("iscriviti.html", gruppi=gruppi[regione], specialita=specialita, regione=regione)
+        return render_template("iscriviti_chiuse.html", msg=msg, regione=regione, anno=AnnoCorrente.query.all()[0].value)
+    return render_template("iscriviti.html", gruppi=Gruppo.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id), specialita=specialita, regione=regione, anno=AnnoCorrente.query.all()[0].value)
 
 @app.route("/iscriviti_success")
 def iscriviti_success():

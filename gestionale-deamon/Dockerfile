@@ -2,9 +2,9 @@ FROM python:3.11-slim
 
 ENV TZ=Europe/Rome
 
-WORKDIR /app
+WORKDIR /deamon
 
-COPY ./invia_notifiche.py ./invia_notifiche.py
+COPY ./deamon.py ./deamon.py
 
 RUN apt-get update \
     && apt-get install -y cron tzdata \

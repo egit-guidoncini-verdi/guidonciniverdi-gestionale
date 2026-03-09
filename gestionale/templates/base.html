@@ -26,6 +26,9 @@
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for("mail") }}">Mail</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for("upload_gruppi") }}">Import Gruppi</a>
+            </li>
             {% endif %}
             {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
             <li class="nav-item">
