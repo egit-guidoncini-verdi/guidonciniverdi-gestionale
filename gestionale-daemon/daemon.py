@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 from datetime import datetime
 from time import sleep
 import threading
+import schedule
 import requests
 import smtplib
 import json
@@ -67,26 +68,41 @@ class AnnoCorrente(Base):
     __tablename__ = "anno_corrente"
     value = Column(String(4), primary_key=True)
 
-engine = create_engine(uri)
+engine = create_engine(uri, pool_pre_ping=True, pool_recycle=3600)
 Session = sessionmaker(bind=engine)
 
-def invia_notifiche():
-    url = os.environ["URL_NOTIFICHE"]
-    api_key = os.environ["API_KEY"]
-    response = requests.post(url, data={"api_key": api_key, "tipologia": "iabz"})
-    print(response.json())
+demone_mail = True
+demone_notifiche = True
+demone_wordpress = True
+
+def send_notifiche():
+    def task():
+        global demone_notifiche
+        def job():
+            url = os.environ["URL_NOTIFICHE"]
+            api_key = os.environ["API_KEY"]
+            try:
+                response = requests.post(url, data={"api_key": api_key, "tipologia": "iabz"})
+                print(response.json())
+            except Exception as e:
+                print(e)
+        schedule.every().saturday.at("10:00").do(job)
+        while demone_notifiche:
+            schedule.run_pending()
+            sleep(1)
+    threading.Thread(target=task, name="send_notifiche", daemon=True).start()
 
 def send_mail():
     def task():
-        demone_mail = True
+        global demone_mail
+        env = Environment(loader=FileSystemLoader("."))
+        template = env.get_template("mail_base.html")
         while demone_mail:
-            env = Environment(loader=FileSystemLoader("."))
-            template = env.get_template("mail_base.html")
             session = Session()
             demone_mail = session.query(Demone).filter_by(key="send_mail").first().value
 
-            try:
-                tmp_mail = session.query(CodaMail).filter_by(stato="PENDING").first()
+            tmp_mail = session.query(CodaMail).filter_by(stato="PENDING").first()
+            if tmp_mail:
                 tmp_mail.stato = "SENDING"
                 session.commit()
                 try:
@@ -121,12 +137,42 @@ def send_mail():
                     print(e)
                     tmp_mail.stato = "FAILED"
                 session.commit()
-            except:
-                pass
             session.close()
-            sleep(30)
+            sleep(10)
     threading.Thread(target=task, name="send_mail", daemon=True).start()
 
-send_mail()
+def job_wordpress():
+    def task():
+        global demone_wordpress
+        while demone_wordpress:
+            session = Session()
+            demone_wordpress = session.query(Demone).filter_by(key="job_wordpress").first().value
+            session.close()
+            sleep(10)
+    threading.Thread(target=task, name="job_wordpress", daemon=True).start()
+
 while True:
-    pass
+    session = Session()
+    demoni = {d.key: d.value for d in session.query(Demone).all()}
+    session.close()
+    demone_mail = demoni["send_mail"]
+    demone_notifiche = demoni["send_notifiche"]
+    demone_wordpress = demoni["job_wordpress"]
+    session.close()
+    mail_seen = False
+    notifiche_seen = False
+    wordpress_seen = False
+    for i in threading.enumerate():
+        if i.name == "send_mail":
+            mail_seen = True
+        if i.name == "send_notifiche":
+            notifiche_seen = True
+        if i.name == "job_wordpress":
+            wordpress_seen = True
+    if demone_mail and not mail_seen:
+        send_mail()
+    if demone_notifiche and not notifiche_seen:
+        send_notifiche()
+    if demone_wordpress and not wordpress_seen:
+        job_wordpress()
+    sleep(30)

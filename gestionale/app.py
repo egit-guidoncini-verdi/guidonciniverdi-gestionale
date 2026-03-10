@@ -200,8 +200,8 @@ def init_db():
     db.session.add(Regione(regione="valle_aosta"))
     db.session.add(Regione(regione="sardegna"))
     db.session.add(AnnoCorrente(value=str(datetime.today().year)))
-    db.session.add(Demone(key="notifiche", value=False))
-    db.session.add(Demone(key="send_mail", value=False))
+    db.session.add(Demone(key="send_notifiche", value=True))
+    db.session.add(Demone(key="send_mail", value=True))
     db.session.commit()
     for i in Regione.query.all():
         db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=i.id))
@@ -908,12 +908,13 @@ def upload_gruppi():
 def iscrivi():
     gruppi = Gruppo.query.filter_by(regione=current_user.regione)
     zone = Zona.query.filter_by(regione=current_user.regione)
+    regione = Regione.query.filter_by(id=current_user.regione).first().regione
     json_gruppi = {}
     for i in zone:
         json_gruppi[i.zona.upper()] = []
     for i in gruppi:
         json_gruppi[Zona.query.filter_by(id=i.zona).first().zona.upper()].append(i.gruppo.upper())
-    return render_template("iscrivi.html", gruppi=json_gruppi, specialita=specialita)
+    return render_template("iscrivi.html", gruppi=json_gruppi, specialita=specialita, regione=regione)
 
 @app.route("/iscriviti/<regione>", methods=["GET", "POST"])
 def iscriviti(regione):
@@ -928,7 +929,7 @@ def iscriviti(regione):
             flash("Il gruppo selezionato non è corretto. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
         try:
-            iscrizione = IscrizioniEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=regione, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+            iscrizione = IscrizioniEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=Regione.query.filter_by(regione=regione).first().id, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
             db.session.add(iscrizione)
             db.session.commit()
         except Exception as e:

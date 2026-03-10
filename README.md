@@ -35,12 +35,13 @@ services:
       DB_PORT: 3306
       DB_NAME: app_db
       SECRET_KEY: secret_key
+      TZ: Europe/Rome
     depends_on:
       db:
         condition: service_healthy
 
-  deamon:
-    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-deamon:latest
+  daemon:
+    image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-daemon:latest
     restart: unless-stopped
     environment:
       DB_TYPE: mariadb
@@ -51,6 +52,7 @@ services:
       DB_NAME: app_db
       URL_NOTIFICHE: url_notifiche
       API_KEY: api_key
+      TZ: Europe/Rome
     depends_on:
       - gestionale
 
@@ -79,8 +81,9 @@ services:
       RELAYHOST: "[smtp.gmail.com]:587"
       RELAYHOST_USERNAME: your@gmail.com
       RELAYHOST_PASSWORD: yourpassword
+      TZ: Europe/Rome
     depends_on:
-      - deamon
+      - daemon
 
   nginx:
     image: nginx:alpine
