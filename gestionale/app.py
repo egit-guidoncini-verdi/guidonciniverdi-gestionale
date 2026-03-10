@@ -95,7 +95,7 @@ class User(db.Model, UserMixin):
 class IscrizioniEG(db.Model):
     __tablename__ = "iscrizioniEG"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(255), nullable=False)
+    data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.String(255), nullable=False)
     nome = db.Column(db.String(255), nullable=False)
     mail = db.Column(db.String(255), nullable=False)
@@ -118,7 +118,7 @@ class IscrizioniEG(db.Model):
 class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(255), nullable=False)
+    data = db.Column(db.DateTime, nullable=False)
     iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     username = db.Column(db.String(255), nullable=False)
@@ -127,7 +127,7 @@ class WordpressUser(db.Model):
 class WordpressPost(db.Model):
     __tablename__ = "wordpress_post"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(255), nullable=False)
+    data = db.Column(db.DateTime, nullable=False)
     iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
     wordpress_user_id = db.Column(db.Integer, db.ForeignKey("wordpress_user.id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
@@ -137,7 +137,7 @@ class WordpressPost(db.Model):
 class RelazioniPuglia(db.Model):
     __tablename__ = "relazioni_puglia"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(255), nullable=False)
+    data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.JSON, nullable=False)
     iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
     dati = db.Column(db.JSON, nullable=False)
@@ -145,22 +145,23 @@ class RelazioniPuglia(db.Model):
 class CodaMail(db.Model):
     __tablename__ = "coda_mail"
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(255), nullable=False)
+    data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.String(255), nullable=False)
     regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
     indirizzi = db.Column(db.JSON, nullable=False)
+    indirizzi_copia = db.Column(db.JSON, nullable=False)
     titolo = db.Column(db.String(255), nullable=False)
     testo = db.Column(db.UnicodeText, nullable=False)
 
 class StatusPercorso(db.Model):
     __tablename__ = "status_percorso"
     id = db.Column(db.Integer, primary_key=True)
-    anno = db.Column(db.String(255), nullable=True)
+    anno = db.Column(db.String(4), nullable=True)
     iscrizioni = db.Column(db.JSON, nullable=False)
     abilitazioni = db.Column(db.JSON, nullable=False)
     regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=True)
-    data_apertura = db.Column(db.String(255), nullable=False)
-    data_chiusura = db.Column(db.String(255), nullable=False)
+    data_apertura = db.Column(db.DateTime, nullable=True)
+    data_chiusura = db.Column(db.DateTime, nullable=True)
 
 class Regione(db.Model):
     __tablename__ = "regioni"
@@ -184,11 +185,11 @@ class Gruppo(db.Model):
 class Demone(db.Model):
     __tablename__ = "demoni"
     key = db.Column(db.String(255), primary_key=True)
-    value = db.Column(db.JSON, nullable=False)
+    value = db.Column(db.Boolean, nullable=False)
 
 class AnnoCorrente(db.Model):
     __tablename__ = "anno_corrente"
-    value = db.Column(db.String(255), primary_key=True)
+    value = db.Column(db.String(4), primary_key=True)
 
 @app.cli.command("init-db")
 def init_db():
@@ -203,7 +204,7 @@ def init_db():
     db.session.add(Demone(key="send_mail", value=False))
     db.session.commit()
     for i in Regione.query.all():
-        db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=i.id, data_apertura="", data_chiusura=""))
+        db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=i.id))
     db.session.commit()
     print("Database inizializzato")
 
@@ -212,8 +213,8 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 def manda_mail(indirizzi, copia, titolo, testo, regione):
-    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
-    de.session.commit()
+    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, indirizzi_copia=copia, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+    db.session.commit()
     return True
 
 def manda_telegram(chat_id, titolo, testo):
@@ -296,12 +297,11 @@ def stato_iscrizioni():
             db.session.commit()
         if request.form["stato"] == "apri":
             stato.iscrizioni = True
-            stato.data_apertura = str(datetime.now())
-            stato.data_chiusura = ""
+            stato.data_apertura = datetime.now()
             db.session.commit()
         if request.form["stato"] == "chiudi":
             stato.iscrizioni = False
-            stato.data_chiusura = str(datetime.now())
+            stato.data_chiusura = datetime.now()
             db.session.commit()
         if request.form["stato"] == "abilita":
             stato.abilitazioni = True
@@ -613,7 +613,7 @@ def abilita(id_iscrizione):
 def mail():
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    return render_template("testi_mail.html", testi_mail=TestiMail.query.all())
+    return render_template("mail.html", mail=CodaMail.query.all())
 
 @app.route("/test_mail/<id_mail>")
 @login_required
@@ -921,14 +921,18 @@ def iscriviti(regione):
         if request.form["nome_squadriglia"].replace(" ", "") == "" or request.form["mail_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_squadriglia"].replace(" ", "") == "" or request.form["nome_capo_rep1"].replace(" ", "") == "" or request.form["mail_rep1"].replace(" ", "") == "" or request.form["numero_rep1"].replace(" ", "") == "":
             flash("Non hai compilato i campi obbligatori. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
-        if request.form["gruppo"] not in Gruppo.query.filter_by(zona=Zona.query.filter_by(zona=request.form["zona"]).first().id):
+        tmp_lista_gruppi = []
+        for i in Gruppo.query.filter_by(zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id):
+            tmp_lista_gruppi.append(i.gruppo)
+        if request.form["gruppo"].lower() not in tmp_lista_gruppi:
             flash("Il gruppo selezionato non è corretto. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
         try:
-            iscrizione = IscrizioniEG(data=str(datetime.now()), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=regione, zona=request.form["zona"], gruppo=request.form["gruppo"], specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+            iscrizione = IscrizioniEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=regione, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
             db.session.add(iscrizione)
             db.session.commit()
-        except:
+        except Exception as e:
+            print(e)
             flash("Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
 

@@ -2,19 +2,19 @@
 
 {% block head %}
 
-<title>GV Piemonte - Mail</title>
+<title>GV Piemonte - Coda Mail</title>
 
 {% endblock %}
 
 {% block titolo %}
 
-<h1 class="text-center my-2"><strong>Mail</strong></h1>
+<h1 class="text-center my-2"><strong>Coda Mail</strong></h1>
 
 {% endblock %}
 
 {% block corpo %}
 
-<a type="button" class="btn btn-sm btn-warning mx-4" href="{{ url_for("crea_mail") }}">Crea nuova Mail</a>
+<a type="button" class="btn btn-sm btn-warning mx-4 disabled" href="{{ url_for("crea_mail") }}">Crea nuova Mail</a>
 
 <div class="mx-4">
     <div class="table-responsive">
@@ -30,29 +30,13 @@
         </tr>
       </thead>
       <tbody>
-        {% for i in testi_mail %}
+        {% for i in mail %}
         <tr>
           <th scope="row">{{ i.id }}</th>
-          <td>{{ i.data[8:10] }}/{{ i.data[5:7] }}/{{ i.data[0:4] }}</td>
+          <td>{{ i.data }}</td>
           <td>{{ i.titolo }}</td>
-          <td>
-          {% if i.destinatari["sq"] %}
-          <span class="badge bg-primary">SQ ISCRITTE</span>
-          {% endif %}
-          {% if i.destinatari["sq_abilitate"] %}
-          <span class="badge bg-primary">SQ ABILITATE</span>
-          {% endif %}
-          {% if i.destinatari["capi"] %}
-          <span class="badge bg-primary">CAPI</span>
-          {% endif %}
-          </td>
-          <td>
-          {% if i.stato == False %}
-          <span class="badge bg-warning">DA INVIARE</span>
-          {% elif i.stato == True %}
-          <span class="badge bg-success">INVIATA</span>
-          {% endif %}
-          </td>
+          <td>{{ i.indirizzi }} - {{ i.indirizzi_copia }}</td>
+          <td>{{ i.stato }}</td>
           <td>
           <div class="btn-group" role="group" aria-label="Basic outline example">
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("send_mail", id_mail=i.id) }}">Invia!</a>

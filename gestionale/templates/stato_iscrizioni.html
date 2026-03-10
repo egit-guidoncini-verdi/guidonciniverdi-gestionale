@@ -32,18 +32,18 @@
     <button type="submit" class="btn btn-primary">SOSPENDI ISCRIZIONI!</button>
   </form>
   {% else %}
-    {% if stato.data_apertura != "" %}
+    {% if stato.data_apertura != None %}
     <form class="my-2" method="post">
       <input type="hidden" class="form-control" name="stato" value="apri">
       <button type="submit" class="btn btn-primary">RIAPRI LE ISCRIZIONI!</button>
     </form>
-      {% if stato.data_chiusura == "" %}
+      {% if stato.data_chiusura == None %}
       <form class="my-2" method="post">
         <input type="hidden" class="form-control" name="stato" value="chiudi">
         <button type="submit" class="btn btn-danger">CHIUDI LE ISCRIZIONI!</button>
       </form>
       {% endif %}
-    {% elif stato.data_chiusura != "" %}
+    {% elif stato.data_chiusura != None %}
     <form class="my-2" method="post">
       <input type="hidden" class="form-control" name="stato" value="apri">
       <button type="submit" class="btn btn-primary">RIAPRI LE ISCRIZIONI!</button>
