@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, jsonify, request, url_for, flash, send_from_directory, send_file
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+import click
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
@@ -113,7 +114,8 @@ class IscrizioniEG(db.Model):
     nome_capo2 = db.Column(db.String(255), nullable=False)
     mail_capo2 = db.Column(db.String(255), nullable=False)
     cell_capo2 = db.Column(db.String(255), nullable=False)
-    sesso = db.Column(db.String(2))
+    sesso = db.Column(db.String(2), nullable=False)
+    link = db.Column(db.Text, nullable=False)
 
 class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
@@ -122,6 +124,7 @@ class WordpressUser(db.Model):
     iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     username = db.Column(db.String(255), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
 
 class WordpressPost(db.Model):
@@ -152,6 +155,13 @@ class CodaMail(db.Model):
     indirizzi_copia = db.Column(db.JSON, nullable=False)
     titolo = db.Column(db.String(255), nullable=False)
     testo = db.Column(db.UnicodeText, nullable=False)
+
+class JobWordpress(db.Model):
+    __tablename__ = "job_wordpress"
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.DateTime, nullable=False)
+    stato = db.Column(db.String(255), nullable=False)
+    dati = db.Column(db.JSON, nullable=False)
 
 class StatusPercorso(db.Model):
     __tablename__ = "status_percorso"
@@ -191,22 +201,25 @@ class AnnoCorrente(db.Model):
     __tablename__ = "anno_corrente"
     value = db.Column(db.String(4), primary_key=True)
 
-@app.cli.command("init-db")
+@app.cli.command("init_db")
 def init_db():
     db.create_all()
     db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin", telegram_id=""))
-    db.session.add(Regione(regione="piemonte"))
-    db.session.add(Regione(regione="puglia"))
-    db.session.add(Regione(regione="valle_aosta"))
-    db.session.add(Regione(regione="sardegna"))
     db.session.add(AnnoCorrente(value=str(datetime.today().year)))
     db.session.add(Demone(key="send_notifiche", value=True))
     db.session.add(Demone(key="send_mail", value=True))
     db.session.commit()
-    for i in Regione.query.all():
-        db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=i.id))
-    db.session.commit()
     print("Database inizializzato")
+
+@app.cli.command("crea_regione")
+@click.argument("nome_regione")
+def crea_regione(nome_regione):
+    regione = Regione(regione=nome_regione)
+    db.session.add(regione)
+    db.session.flush()
+    db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=regione.id))
+    db.session.commit()
+    print(f"Regione {nome_regione} creata!")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -238,7 +251,7 @@ def crea_utente(id_iscrizione, header, dati):
     except Exception as e:
         print(e)
         return False
-    utente = WordpressUser(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_id=int(id_autore), username=dati["username"], meta=dati)
+    utente = WordpressUser(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_id=int(id_autore), username=dati["username"], password=dati["password"], meta=dati)
     db.session.add(utente)
     db.session.commit()
     return id_autore
@@ -294,21 +307,17 @@ def stato_iscrizioni():
     if request.method == "POST":
         if request.form["stato"] == "sospendi":
             stato.iscrizioni = False
-            db.session.commit()
         if request.form["stato"] == "apri":
             stato.iscrizioni = True
             stato.data_apertura = datetime.now()
-            db.session.commit()
         if request.form["stato"] == "chiudi":
             stato.iscrizioni = False
             stato.data_chiusura = datetime.now()
-            db.session.commit()
         if request.form["stato"] == "abilita":
             stato.abilitazioni = True
-            db.session.commit()
         if request.form["stato"] == "ferma":
             stato.abilitazioni = False
-            db.session.commit()
+        db.session.commit()
         return redirect(url_for("stato_iscrizioni"))
     return render_template("stato_iscrizioni.html", stato=stato)
 
@@ -929,7 +938,7 @@ def iscriviti(regione):
             flash("Il gruppo selezionato non è corretto. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
         try:
-            iscrizione = IscrizioniEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=Regione.query.filter_by(regione=regione).first().id, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"])
+            iscrizione = IscrizioniEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=Regione.query.filter_by(regione=regione).first().id, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"], link="")
             db.session.add(iscrizione)
             db.session.commit()
         except Exception as e:
@@ -1123,16 +1132,6 @@ def notifica():
     except:
         return {"status": False}
     '''
-    non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
-    abilitate = IscrizioniEG.query.filter_by(stato="abilitato").count()
-    testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
-    tmp_utenti = User.query.filter_by(livello="admin").all()
-    for i in tmp_utenti:
-        if non_abilitate > 0:
-            manda_telegram(i.telegram_id, "Report TOTALE", testo_telegram)
-    if request.form["tipologia"] == "admin":
-        return {"status": True}
-
     tmp_utenti = User.query.filter_by(livello="pattuglia").all()
     for i in tmp_utenti:
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=i.regione).count()

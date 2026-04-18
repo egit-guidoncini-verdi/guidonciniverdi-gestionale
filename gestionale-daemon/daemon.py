@@ -42,6 +42,69 @@ else:
 
 Base = declarative_base()
 
+class User(Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    username = Column(String(255), nullable=False, unique=True)
+    password = Column(String(255), nullable=False)
+    mail = Column(String(255), nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id"), nullable=True)
+    zona = Column(Integer, ForeignKey("zone.id"), nullable=True)
+    livello = Column(String(255), nullable=False)
+    telegram_id = Column(String(255), nullable=True)
+
+class IscrizioniEG(Base):
+    __tablename__ = "iscrizioniEG"
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    stato = Column(String(255), nullable=False)
+    nome = Column(String(255), nullable=False)
+    mail = Column(String(255), nullable=False)
+    regione = Column(Integer, nullable=False)
+    zona = Column(Integer, ForeignKey("zone.id"), nullable=False)
+    gruppo = Column(Integer, ForeignKey("gruppi.id"), nullable=False)
+    specialita = Column(String(255), nullable=False)
+    # tipo indica se conquista o conferma => True se conferma
+    tipo = Column(String(255), nullable=False)
+    # Contatti
+    nome_capo_sq = Column(String(255), nullable=False)
+    nome_capo1 = Column(String(255), nullable=False)
+    mail_capo1 = Column(String(255), nullable=False)
+    cell_capo1 = Column(String(255), nullable=False)
+    nome_capo2 = Column(String(255), nullable=False)
+    mail_capo2 = Column(String(255), nullable=False)
+    cell_capo2 = Column(String(255), nullable=False)
+    sesso = Column(String(2), nullable=False)
+    link = Column(Text, nullable=False)
+
+class WordpressUser(Base):
+    __tablename__ = "wordpress_user"
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioniEG.id"), nullable=False)
+    wordpress_id = Column(Integer, nullable=False)
+    username = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=False)
+    meta = Column(JSON, nullable=False)
+
+class WordpressPost(Base):
+    __tablename__ = "wordpress_post"
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioniEG.id"), nullable=False)
+    wordpress_user_id = Column(Integer, ForeignKey("wordpress_user.id"), nullable=False)
+    wordpress_id = Column(Integer, nullable=False)
+    tipo = Column(String(255), nullable=False)
+    meta = Column(JSON, nullable=False)
+
+class RelazioniPuglia(Base):
+    __tablename__ = "relazioni_puglia"
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    stato = Column(JSON, nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioniEG.id"), nullable=False)
+    dati = Column(JSON, nullable=False)
+
 class CodaMail(Base):
     __tablename__ = "coda_mail"
     id = Column(Integer, primary_key=True)
@@ -53,11 +116,41 @@ class CodaMail(Base):
     titolo = Column(String(255), nullable=False)
     testo = Column(UnicodeText, nullable=False)
 
+class JobWordpress(Base):
+    __tablename__ = "job_wordpress"
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    stato = Column(String(255), nullable=False)
+    dati = Column(JSON, nullable=False)
+
+class StatusPercorso(Base):
+    __tablename__ = "status_percorso"
+    id = Column(Integer, primary_key=True)
+    anno = Column(String(4), nullable=True)
+    iscrizioni = Column(JSON, nullable=False)
+    abilitazioni = Column(JSON, nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id"), nullable=True)
+    data_apertura = Column(DateTime, nullable=True)
+    data_chiusura = Column(DateTime, nullable=True)
+
 class Regione(Base):
     __tablename__ = "regioni"
     id = Column(Integer, primary_key=True)
     regione = Column(String(255), nullable=False)
     mail = Column(String(255), nullable=True)
+
+class Zona(Base):
+    __tablename__ = "zone"
+    id = Column(Integer, primary_key=True)
+    zona = Column(String(255), nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id"), nullable=False)
+
+class Gruppo(Base):
+    __tablename__ = "gruppi"
+    id = Column(Integer, primary_key=True)
+    gruppo = Column(String(255), nullable=True)
+    zona = Column(Integer, ForeignKey("zone.id"), nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id"), nullable=False)
 
 class Demone(Base):
     __tablename__ = "demoni"
