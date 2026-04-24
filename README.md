@@ -35,26 +35,31 @@ services:
       DB_PORT: 3306
       DB_NAME: app_db
       SECRET_KEY: secret_key
-      TZ: Europe/Rome
+      WORDPRESS_URL: "https://dominio.it/wp-json/wp/v2"
+      WORDPRESS_USER: utente
+      WORDPRESS_PASSWORD: "WORDPRESS_PASSWORD"
+      TELEGRAM_TOKEN: "TELEGRAM_TOKEN"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
-  daemon:
+  gestionale-daemon:
     image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-daemon:latest
     restart: unless-stopped
     environment:
+      MAIL_USERNAME: "noreply@dominio.it"
+      MAIL_HOST: smtp
+      MAIL_PORT: 587
       DB_TYPE: mariadb
       DB_USER: app_user
       DB_PASSWORD: app_password
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: app_db
-      URL_NOTIFICHE: url_notifiche
-      API_KEY: api_key
-      TZ: Europe/Rome
+      URL_NOTIFICHE: "http://gestionale:8000/notifica"
+      API_KEY: "KEY"
     depends_on:
-      - gestionale
+      - db
+      - smtp
 
   db:
     image: mariadb:11.4
@@ -78,12 +83,12 @@ services:
     image: boky/postfix
     container_name: smtp_relay
     environment:
-      RELAYHOST: "[smtp.gmail.com]:587"
-      RELAYHOST_USERNAME: your@gmail.com
-      RELAYHOST_PASSWORD: yourpassword
-      TZ: Europe/Rome
+      ALLOWED_SENDER_DOMAINS: "dominio.it"
+      RELAYHOST: "[authsmtp.securemail.pro]:587"
+      RELAYHOST_USERNAME: "noreply@dominio.it"
+      RELAYHOST_PASSWORD: "PASSWORD"
     depends_on:
-      - daemon
+      - gestionale
 
   nginx:
     image: nginx:alpine
@@ -91,20 +96,33 @@ services:
     ports:
       - "5000:80"
     volumes:
-      - nginx-data:/etc/nginx
+      - nginx:/etc/nginx
     depends_on:
       - gestionale
 
 volumes:
   mariadb-data:
-  nginx-data:
+  nginx:
 ```
 
+Per il primo setup è necessario eseguire i seguenti comandi sul container "gestionale":
+```bash
+flask db upgrade #Aggiorna lo schema del DB
+flask init_db #Crea l'utente admin e inizializza con dati default
+```
+Ad ogni aggiornamento di versione è sufficiente:
+```bash
+flask db upgrade #Aggiorna lo schema del DB
+```
+Comandi utili:
+```bash
+flask crea_regione piemonte #Crea la regione
+```
 ### Scelte implementative
 
 Gestione del backend tramite Flask ([Documentazione qui](https://flask.palletsprojects.com/)).
 
-Come database è stato scelto SQLite ([Documentazione qui](https://www.sqlite.org/)) per la sua leggerezza e la facilità di esportare i dati in caso di cambio hosting, la connessione con il database è fatta tramite SQLAlchemy ([Documentazione qui](https://www.sqlalchemy.org/)).
+Come database è stato scelto MariaDB ([Documentazione qui](https://mariadb.org/)) per la sua leggerezza e semplicità, l'interazione con il database è gestita tramite l'ORM SQLAlchemy ([Documentazione qui](https://www.sqlalchemy.org/)).
 
 ### Livelli di utente
 
