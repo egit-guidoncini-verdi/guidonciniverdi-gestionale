@@ -11,6 +11,4 @@ COPY ./templates ./templates
 COPY ./static ./static
 COPY ./migrations ./migrations
 
-RUN flask db upgrade
-
 CMD ["gunicorn",  "-w", "3", "-b 0.0.0.0",  "app:app"]
