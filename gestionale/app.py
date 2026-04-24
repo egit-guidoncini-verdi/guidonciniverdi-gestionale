@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -201,15 +202,21 @@ class AnnoCorrente(db.Model):
     __tablename__ = "anno_corrente"
     value = db.Column(db.String(4), primary_key=True)
 
+migrate = Migrate(app, db)
+
 @app.cli.command("init_db")
 def init_db():
-    db.create_all()
-    db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin", telegram_id=""))
-    db.session.add(AnnoCorrente(value=str(datetime.today().year)))
-    db.session.add(Demone(key="send_notifiche", value=True))
-    db.session.add(Demone(key="send_mail", value=True))
-    db.session.commit()
-    print("Database inizializzato")
+    try:
+        db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin", telegram_id=""))
+        print("Utente 'admin' creato con password: 'password'")
+        db.session.add(AnnoCorrente(value=str(datetime.today().year)))
+        db.session.add(Demone(key="send_notifiche", value=True))
+        db.session.add(Demone(key="send_mail", value=True))
+        db.session.commit()
+        print("Operazione terminata correttamente!")
+    except Exception as e:
+        print("Qualcosa è andato storto!")
+        print(e)
 
 @app.cli.command("crea_regione")
 @click.argument("nome_regione")
