@@ -218,6 +218,7 @@ def init_db():
         db.session.add(AnnoCorrente(value=str(datetime.today().year)))
         db.session.add(Demone(key="send_notifiche", value=True))
         db.session.add(Demone(key="send_mail", value=True))
+        db.session.add(Demone(key="send_telegram", value=True))
         db.session.add(Demone(key="job_wordpress", value=True))
         db.session.commit()
         print("Operazione terminata correttamente!")
