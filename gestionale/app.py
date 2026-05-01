@@ -212,6 +212,7 @@ def init_db():
         db.session.add(AnnoCorrente(value=str(datetime.today().year)))
         db.session.add(Demone(key="send_notifiche", value=True))
         db.session.add(Demone(key="send_mail", value=True))
+        db.session.add(Demone(key="job_wordpress", value=True))
         db.session.commit()
         print("Operazione terminata correttamente!")
     except Exception as e:
@@ -227,6 +228,14 @@ def crea_regione(nome_regione):
     db.session.add(StatusPercorso(anno=str(datetime.today().year), iscrizioni=False, abilitazioni=False, regione=regione.id))
     db.session.commit()
     print(f"Regione {nome_regione} creata!")
+
+@app.cli.command("aggiorna_anno")
+@click.argument("user_anno")
+def crea_regione(user_anno):
+    anno_corrente = AnnoCorrente.query.all()[0]
+    anno_corrente.value = user_anno
+    db.session.commit()
+    print(f"AnnoCorrente aggiornato: {anno_corrente.value}")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -1127,45 +1136,6 @@ def relazione_delete(id_sq):
     relazione.stato = False
     db.session.commit()
     return redirect(url_for("dettagli", id_iscrizione=id_sq))
-
-@app.route("/notifica", methods=["POST"])
-def notifica():
-    with open("credenziali_notifiche.json", "r") as f:
-        dati = f.read()
-    if request.form["api_key"] != json.loads(dati)["api_key"]:
-        return {"status": False}
-    try:
-        request.form["tipologia"]
-    except:
-        return {"status": False}
-    '''
-    tmp_utenti = User.query.filter_by(livello="pattuglia").all()
-    for i in tmp_utenti:
-        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=i.regione).count()
-        abilitate = IscrizioniEG.query.filter_by(stato="abilitato").filter_by(regione=i.regione).count()
-        testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
-        if non_abilitate > 0:
-            manda_telegram(i.telegram_id, f"Report {i.regione.capitalize()}", testo_telegram)
-    '''
-
-    tmp_utenti = User.query.filter_by(livello="iabr").all()
-    for i in tmp_utenti:
-        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=i.regione).count()
-        abilitate = IscrizioniEG.query.filter_by(stato="abilitato").filter_by(regione=i.regione).count()
-        testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
-        if non_abilitate > 0:
-            manda_telegram(i.telegram_id, f"Report {i.regione.capitalize()}", testo_telegram)
-    if request.form["tipologia"] == "regione":
-        return jsonify({"status": True})
-
-    tmp_utenti = User.query.filter_by(livello="iabz").all()
-    for i in tmp_utenti:
-        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=i.zona).count()
-        abilitate = IscrizioniEG.query.filter_by(stato="abilitato").filter_by(zona=i.zona).count()
-        testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
-        if non_abilitate > 0:
-            manda_telegram(i.telegram_id, f"Report {i.zona}", testo_telegram)
-    return {"status": True}
 
 @app.errorhandler(404)
 def page_not_found(e):

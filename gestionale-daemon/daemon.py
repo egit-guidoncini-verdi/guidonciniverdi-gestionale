@@ -3,6 +3,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from jinja2 import Environment, FileSystemLoader
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from urllib.parse import quote
 from datetime import datetime
 from time import sleep
 import threading
@@ -168,39 +169,62 @@ demone_mail = True
 demone_notifiche = True
 demone_wordpress = True
 
+def manda_telegram(chat_id, titolo, testo):
+    text = quote(f"{titolo}\n{testo}")
+    t_url = f"https://api.telegram.org/bot{os.environ['TELEGRAM_TOKEN']}/sendMessage?chat_id={chat_id}&text={text}"
+    try:
+        requests.get(t_url, timeout=20)
+    except Exception as e:
+        print(e)
+
 def send_notifiche():
     def task():
-        global demone_notifiche
+        scheduler = schedule.Scheduler()
         def job():
-            url = os.environ["URL_NOTIFICHE"]
-            api_key = os.environ["API_KEY"]
+            session = Session()
             try:
-                response = requests.post(url, data={"api_key": api_key, "tipologia": "iabz"})
-                print(response.json())
+                tmp_utenti = session.query(User).filter_by(livello="iabr").all()
+                tmp_utenti.extend(session.query(User).filter_by(livello="pattuglia").all())
+                for i in tmp_utenti:
+                    non_abilitate = session.query(IscrizioniEG).filter_by(stato="da_abilitare").filter_by(regione=i.regione).count()
+                    abilitate = session.query(IscrizioniEG).filter_by(stato="abilitato").filter_by(regione=i.regione).count()
+                    testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
+                    if non_abilitate > 0:
+                        manda_telegram(i.telegram_id, f"Report {i.regione.capitalize()}", testo_telegram)
+
+                tmp_utenti = session.query(User).filter_by(livello="iabz").all()
+                for i in tmp_utenti:
+                    non_abilitate = session.query(IscrizioniEG).filter_by(stato="da_abilitare").filter_by(zona=i.zona).count()
+                    abilitate = session.query(IscrizioniEG).filter_by(stato="abilitato").filter_by(zona=i.zona).count()
+                    testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
+                    if non_abilitate > 0:
+                        manda_telegram(i.telegram_id, f"Report {i.zona}", testo_telegram)
             except Exception as e:
                 print(e)
-        schedule.every().saturday.at("10:00").do(job)
+            session.close()
+
+        scheduler.every().saturday.at("10:00").do(job)
+
+        global demone_notifiche
         while demone_notifiche:
-            schedule.run_pending()
+            scheduler.run_pending()
             sleep(1)
     threading.Thread(target=task, name="send_notifiche", daemon=True).start()
 
 def send_mail():
     def task():
-        global demone_mail
         env = Environment(loader=FileSystemLoader("."))
         template = env.get_template("mail_base.html")
-        while demone_mail:
+        scheduler = schedule.Scheduler()
+        def job():
             session = Session()
-            demone_mail = session.query(Demone).filter_by(key="send_mail").first().value
-
             tmp_mail = session.query(CodaMail).filter_by(stato="PENDING").first()
             if tmp_mail:
                 tmp_mail.stato = "SENDING"
                 session.commit()
                 try:
                     tmp_regione = session.query(Regione).filter_by(id=tmp_mail.regione).first()
-                    anno = session.query(AnnoCorrente).all()[0].value
+                    anno = session.query(AnnoCorrente).all[0].value
                     html = template.render(anno=anno, titolo=tmp_mail.titolo, testo=tmp_mail.testo, mail_regione=tmp_regione.mail)
                     indirizzi = tmp_mail.indirizzi.copy()
                     message = MIMEMultipart("alternative")
@@ -231,16 +255,19 @@ def send_mail():
                     tmp_mail.stato = "FAILED"
                 session.commit()
             session.close()
-            sleep(10)
+
+        scheduler.every(10).seconds.do(job)
+
+        global demone_mail
+        while demone_mail:
+            scheduler.run_pending()
+            sleep(1)
     threading.Thread(target=task, name="send_mail", daemon=True).start()
 
 def job_wordpress():
     def task():
         global demone_wordpress
         while demone_wordpress:
-            session = Session()
-            demone_wordpress = session.query(Demone).filter_by(key="job_wordpress").first().value
-            session.close()
             sleep(10)
     threading.Thread(target=task, name="job_wordpress", daemon=True).start()
 

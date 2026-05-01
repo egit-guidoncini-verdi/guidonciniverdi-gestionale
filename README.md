@@ -40,7 +40,7 @@ services:
       WORDPRESS_PASSWORD: "WORDPRESS_PASSWORD"
       TELEGRAM_TOKEN: "TELEGRAM_TOKEN"
     depends_on:
-      - db
+      - gestionale-daemon
 
   gestionale-daemon:
     image: ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-daemon:latest
@@ -55,8 +55,7 @@ services:
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: app_db
-      URL_NOTIFICHE: "http://gestionale:8000/notifica"
-      API_KEY: "KEY"
+      TELEGRAM_TOKEN: "TELEGRAM_TOKEN"
     depends_on:
       - db
       - smtp
@@ -82,13 +81,14 @@ services:
   smtp:
     image: boky/postfix
     container_name: smtp_relay
+    restart: unless-stopped
     environment:
       ALLOWED_SENDER_DOMAINS: "dominio.it"
       RELAYHOST: "[authsmtp.securemail.pro]:587"
       RELAYHOST_USERNAME: "noreply@dominio.it"
       RELAYHOST_PASSWORD: "PASSWORD"
     depends_on:
-      - gestionale
+      - db
 
   nginx:
     image: nginx:alpine
