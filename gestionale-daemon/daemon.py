@@ -117,6 +117,15 @@ class CodaMail(Base):
     titolo = Column(String(255), nullable=False)
     testo = Column(UnicodeText, nullable=False)
 
+class CodaTelegram(Base):
+    __tablename__ = "coda_telegram"
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    stato = Column(String(255), nullable=False)
+    chat_id = Column(Integer, nullable=False)
+    titolo = Column(String(255), nullable=False)
+    testo = Column(UnicodeText, nullable=False)
+
 class JobWordpress(Base):
     __tablename__ = "job_wordpress"
     id = Column(Integer, primary_key=True)
@@ -166,16 +175,14 @@ engine = create_engine(uri, pool_pre_ping=True, pool_recycle=3600)
 Session = sessionmaker(bind=engine)
 
 demone_mail = True
+demone_telegram = True
 demone_notifiche = True
 demone_wordpress = True
 
 def manda_telegram(chat_id, titolo, testo):
-    text = quote(f"{titolo}\n{testo}")
-    t_url = f"https://api.telegram.org/bot{os.environ['TELEGRAM_TOKEN']}/sendMessage?chat_id={chat_id}&text={text}"
-    try:
-        requests.get(t_url, timeout=20)
-    except Exception as e:
-        print(e)
+    session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+    session.commit()
+    return True
 
 def send_notifiche():
     def task():
@@ -210,6 +217,36 @@ def send_notifiche():
             scheduler.run_pending()
             sleep(1)
     threading.Thread(target=task, name="send_notifiche", daemon=True).start()
+
+def send_telegram():
+    def task():
+        scheduler = schedule.Scheduler()
+        def job():
+            session = Session()
+            tmp_telegram = session.query(CodaTelegram).filter_by(stato="PENDING").first()
+            if tmp_telegram:
+                tmp_telegram.stato = "SENDING"
+                session.commit()
+                try:
+                    text = quote(f"{tmp_telegram.titolo}\n{tmp_telegram.testo}")
+                    t_url = f"https://api.telegram.org/bot{os.environ['TELEGRAM_TOKEN']}/sendMessage?chat_id={tmp_telegram.chat_id}&text={text}"
+                    requests.get(t_url, timeout=20)
+                    
+                    tmp_telegram.stato = "SENT"
+
+                except Exception as e:
+                    print(e)
+                    tmp_telegram.stato = "FAILED"
+                session.commit()
+            session.close()
+
+        scheduler.every(10).seconds.do(job)
+
+        global demone_telegram
+        while demone_telegram:
+            scheduler.run_pending()
+            sleep(1)
+    threading.Thread(target=task, name="send_telegram", daemon=True).start()
 
 def send_mail():
     def task():
@@ -276,14 +313,18 @@ while True:
     demoni = {d.key: d.value for d in session.query(Demone).all()}
     session.close()
     demone_mail = demoni["send_mail"]
+    demone_telegram = demoni["send_telegram"]
     demone_notifiche = demoni["send_notifiche"]
     demone_wordpress = demoni["job_wordpress"]
     session.close()
     mail_seen = False
+    telegram_seen = False
     notifiche_seen = False
     wordpress_seen = False
     for i in threading.enumerate():
         if i.name == "send_mail":
+            mail_seen = True
+        if i.name == "send_telegram":
             mail_seen = True
         if i.name == "send_notifiche":
             notifiche_seen = True
@@ -291,6 +332,8 @@ while True:
             wordpress_seen = True
     if demone_mail and not mail_seen:
         send_mail()
+    if demone_telegram and not telegram_seen:
+        send_telegram()
     if demone_notifiche and not notifiche_seen:
         send_notifiche()
     if demone_wordpress and not wordpress_seen:
