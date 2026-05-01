@@ -71,7 +71,7 @@
         <tr>
           <th scope="row">Link</th>
           {% if iscrizione.stato == "abilitato" %}
-          <td><a href="{{ link_sq }}">{{ link_sq }}</a></td>
+          <td><a href="{{ iscrizione.link }}">{{ iscrizione.link }}</a></td>
           {% endif %}
         </tr>
         {% if iscrizione.regione == "puglia" %}

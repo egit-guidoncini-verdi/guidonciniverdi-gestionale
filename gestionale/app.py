@@ -26,9 +26,6 @@ cr = {
         "url": os.environ["WORDPRESS_URL"],
         "user": os.environ["WORDPRESS_USER"],
         "passwd": os.environ["WORDPRESS_PASSWORD"]
-    },
-    "telegram": {
-        "token": os.environ["TELEGRAM_TOKEN"]
     }
 }
 
@@ -248,7 +245,7 @@ def manda_mail(indirizzi, copia, titolo, testo, regione):
 
 def manda_telegram(chat_id, titolo, testo):
     text = f"{titolo}\n{testo}"
-    t_url = f"https://api.telegram.org/bot{cr['telegram']['token']}/sendMessage?chat_id={chat_id}&text={text}"
+    t_url = f"https://api.telegram.org/bot{os.environ["TELEGRAM_TOKEN"]}/sendMessage?chat_id={chat_id}&text={text}"
     try:
         requests.get(t_url)
         return True
@@ -414,22 +411,12 @@ def report():
 @app.route("/dettagli/<id_iscrizione>")
 @login_required
 def dettagli(id_iscrizione):
-    creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
-    token = base64.b64encode(creds.encode())
-    header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
-    link_sq = ""
-    if tmp_iscrizione.stato == "abilitato":
-        try:
-            tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(id_iscrizione)).filter_by(tipo="posts").first().wordpress_id
-            link_sq = requests.get(cr["wordpress"]["url"]+"/posts/"+str(tmp_wordpress_id), headers=header).json()["link"]
-        except:
-            link_sq = ""
     try:
         relazione = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_iscrizione)).first()
     except:
         relazione = False
-    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, link_sq=link_sq, relazione=relazione)
+    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, relazione=relazione)
 
 @app.route("/elimina/<id_iscrizione>")
 @login_required
@@ -565,16 +552,8 @@ def abilita(id_iscrizione):
             tmp_rinnovo = False
         else:
             tmp_rinnovo = True
-        if tmp_iscrizione.zona == "ZONA DEI VINI":
-            tmp_zona = "dei Vini"
-        elif tmp_iscrizione.zona == "REGIONE VALLE D’AOSTA":
-            tmp_zona = "Valle d'Aosta"
-        else:
-            tmp_zona = tmp_iscrizione.zona.removeprefix("ZONA ").capitalize()
-        if tmp_iscrizione.specialita.capitalize() == "Pronto intervento":
-            tmp_specialita = "Pronto Intervento"
-        else:
-            tmp_specialita = tmp_iscrizione.specialita.capitalize()
+        tmp_zona = tmp_iscrizione.zona.removeprefix("ZONA ").title()
+        tmp_specialita = tmp_iscrizione.specialita.title()
 
         tmp_meta = {
             "anno": "2026",
