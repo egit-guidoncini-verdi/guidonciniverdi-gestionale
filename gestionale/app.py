@@ -154,6 +154,15 @@ class CodaMail(db.Model):
     titolo = db.Column(db.String(255), nullable=False)
     testo = db.Column(db.UnicodeText, nullable=False)
 
+class CodaTelegram(db.Model):
+    __tablename__ = "coda_telegram"
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.DateTime, nullable=False)
+    stato = db.Column(db.String(255), nullable=False)
+    chat_id = db.Column(db.Integer, nullable=False)
+    titolo = db.Column(db.String(255), nullable=False)
+    testo = db.Column(db.UnicodeText, nullable=False)
+
 class JobWordpress(db.Model):
     __tablename__ = "job_wordpress"
     id = db.Column(db.Integer, primary_key=True)
@@ -244,13 +253,9 @@ def manda_mail(indirizzi, copia, titolo, testo, regione):
     return True
 
 def manda_telegram(chat_id, titolo, testo):
-    text = f"{titolo}\n{testo}"
-    t_url = f"https://api.telegram.org/bot{os.environ["TELEGRAM_TOKEN"]}/sendMessage?chat_id={chat_id}&text={text}"
-    try:
-        requests.get(t_url)
-        return True
-    except:
-        return False
+    db.session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+    db.session.commit()
+    return True
 
 def genera_password_sq():
     nomi = ["Akela", "Baloo", "Chil", "Kaa", "Raksha", "Arcanda", "Sciba", "Scoiattoli", "Mi", "Mowgli"]

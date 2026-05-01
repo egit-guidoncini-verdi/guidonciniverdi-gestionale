@@ -38,7 +38,6 @@ services:
       WORDPRESS_URL: "https://dominio.it/wp-json/wp/v2"
       WORDPRESS_USER: utente
       WORDPRESS_PASSWORD: "WORDPRESS_PASSWORD"
-      TELEGRAM_TOKEN: "TELEGRAM_TOKEN"
     depends_on:
       - gestionale-daemon
 
