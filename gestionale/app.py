@@ -538,20 +538,15 @@ def abilita(id_iscrizione):
         flash("Non ho trovato l'iscrizione!", "warning")
         return redirect(url_for("iscrizioni"))
     tmp_passwd = genera_password_sq()
-    response = requests.get(cr["wordpress"]["url"]+"/users", headers=header)
     valid_username = True
-    for i in response.json():
-        if i["slug"] == tmp_username:
-            valid_username = False
+    if db.session.query(WordpressUser.query.filter_by(username=tmp_username).exists()).scalar():
+        valid_username = False
     if request.method == "POST":
         try:
             tmp_username = request.form["username"]
+            valid_username = True
         except KeyError:
             tmp_username = f"{tmp_iscrizione.nome.strip(' ')}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
-        valid_username = True
-        for i in response.json():
-            if i["slug"] == tmp_username:
-                valid_username = False
         if not valid_username:
             return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
         if tmp_iscrizione.tipo == "conquista":
