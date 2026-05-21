@@ -1,0 +1,54 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build-gestionale:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Login to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Build Gestionale Image
+      working-directory: gestionale
+      run: |
+        docker build . \
+          --file Dockerfile \
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:dev
+
+    - name: Push Gestionale Image
+      run: |
+        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale:dev
+
+  build-daemon:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Login to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      
+    - name: Build Gestionale Daemon Image
+      working-directory: gestionale-daemon
+      run: |
+        docker build . \
+          --file Dockerfile \
+          --tag ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-daemon:dev
+
+    - name: Push Gestionale Daemon Image
+      run: |
+        docker push ghcr.io/egit-guidoncini-verdi/guidonciniverdi-gestionale-daemon:dev
