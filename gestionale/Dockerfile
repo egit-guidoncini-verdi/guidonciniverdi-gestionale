@@ -10,5 +10,8 @@ COPY ./app.py ./app.py
 COPY ./templates ./templates
 COPY ./static ./static
 COPY ./migrations ./migrations
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 
-CMD ["gunicorn",  "-w", "3", "-b 0.0.0.0",  "app:app"]
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
