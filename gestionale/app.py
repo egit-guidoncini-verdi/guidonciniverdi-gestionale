@@ -390,6 +390,7 @@ def report():
     ws.cell(row=1, column=13).value = "Mail Capo Rep 2"
     ws.cell(row=1, column=14).value = "Cell Capo Rep 2"
     ws.cell(row=1, column=15).value = "Stato Iscrizione"
+    ws.cell(row=1, column=16).value = "Link Diario di Bordo"
 
     for i, iscritto in enumerate(iscritti):
         tmp_riga = i+2
@@ -408,6 +409,7 @@ def report():
         ws.cell(row=tmp_riga, column=13).value = iscritto.mail_capo2
         ws.cell(row=tmp_riga, column=14).value = iscritto.cell_capo2
         ws.cell(row=tmp_riga, column=15).value = iscritto.stato
+        ws.cell(row=tmp_riga, column=15).value = iscritto.link
 
     out = io.BytesIO()
     wb.save(out)
