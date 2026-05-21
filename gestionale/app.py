@@ -250,12 +250,12 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 def manda_mail(indirizzi, copia, titolo, testo, regione):
-    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, indirizzi_copia=copia, titolo=f"Guidoncini Verdi {SysOption.query.filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
+    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, indirizzi_copia=copia, titolo=f"Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} - {titolo}", testo=testo))
     db.session.commit()
     return True
 
 def manda_telegram(chat_id, titolo, testo):
-    db.session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {SysOption.query.filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
+    db.session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} - {titolo}", testo=testo))
     db.session.commit()
     return True
 
