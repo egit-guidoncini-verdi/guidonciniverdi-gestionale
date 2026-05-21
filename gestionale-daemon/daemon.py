@@ -167,9 +167,10 @@ class Demone(Base):
     key = Column(String(255), primary_key=True)
     value = Column(Boolean, nullable=False)
 
-class AnnoCorrente(Base):
-    __tablename__ = "anno_corrente"
-    value = Column(String(4), primary_key=True)
+class SysOption(db.Model):
+    __tablename__ = "system_option"
+    key = db.Column(db.String(128), primary_key=True)
+    value = db.Column(db.String(128), nullable=False)
 
 engine = create_engine(uri, pool_pre_ping=True, pool_recycle=3600)
 Session = sessionmaker(bind=engine)
@@ -180,7 +181,7 @@ demone_notifiche = True
 demone_wordpress = True
 
 def manda_telegram(chat_id, titolo, testo):
-    session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+    session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {session.query(SysOption).query.filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
     session.commit()
     return True
 
@@ -261,7 +262,7 @@ def send_mail():
                 session.commit()
                 try:
                     tmp_regione = session.query(Regione).filter_by(id=tmp_mail.regione).first()
-                    anno = session.query(AnnoCorrente).all[0].value
+                    anno = session.query(SysOption).query.filter_by(key="AnnoCorrente").first().value
                     html = template.render(anno=anno, titolo=tmp_mail.titolo, testo=tmp_mail.testo, mail_regione=tmp_regione.mail)
                     indirizzi = tmp_mail.indirizzi.copy()
                     message = MIMEMultipart("alternative")

@@ -204,9 +204,10 @@ class Demone(db.Model):
     key = db.Column(db.String(255), primary_key=True)
     value = db.Column(db.Boolean, nullable=False)
 
-class AnnoCorrente(db.Model):
-    __tablename__ = "anno_corrente"
-    value = db.Column(db.String(4), primary_key=True)
+class SysOption(db.Model):
+    __tablename__ = "system_option"
+    key = db.Column(db.String(128), primary_key=True)
+    value = db.Column(db.String(128), nullable=False)
 
 migrate = Migrate(app, db)
 
@@ -215,7 +216,7 @@ def init_db():
     try:
         db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin", telegram_id=""))
         print("Utente 'admin' creato con password: 'password'")
-        db.session.add(AnnoCorrente(value=str(datetime.today().year)))
+        db.session.add(SysOption(key="AnnoCorrente", value=str(datetime.today().year)))
         db.session.add(Demone(key="send_notifiche", value=True))
         db.session.add(Demone(key="send_mail", value=True))
         db.session.add(Demone(key="send_telegram", value=True))
@@ -239,7 +240,7 @@ def crea_regione(nome_regione):
 @app.cli.command("aggiorna_anno")
 @click.argument("user_anno")
 def crea_regione(user_anno):
-    anno_corrente = AnnoCorrente.query.all()[0]
+    anno_corrente = SysOption.query.filter_by(key="AnnoCorrente").first().value
     anno_corrente.value = user_anno
     db.session.commit()
     print(f"AnnoCorrente aggiornato: {anno_corrente.value}")
@@ -249,12 +250,12 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 def manda_mail(indirizzi, copia, titolo, testo, regione):
-    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, indirizzi_copia=copia, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+    db.session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, indirizzi_copia=copia, titolo=f"Guidoncini Verdi {SysOption.query.filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
     db.session.commit()
     return True
 
 def manda_telegram(chat_id, titolo, testo):
-    db.session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {AnnoCorrente.query.all()[0].value} - {titolo}", testo=testo))
+    db.session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {SysOption.query.filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
     db.session.commit()
     return True
 
@@ -299,7 +300,7 @@ def crea_navigazione(id_iscrizione, wp_id, header, dati, tipo):
 
 @app.route("/")
 def index():
-    return render_template("index.html", anno=AnnoCorrente.query.all()[0].value)
+    return render_template("index.html", anno=SysOption.query.filter_by(key="AnnoCorrente").first().value)
 
 @app.route("/dashboard")
 @login_required
@@ -307,13 +308,13 @@ def dashboard():
     non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
     if current_user.livello == "iabz":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
     if current_user.livello == "iabr":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=current_user.regione).count()
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
     if current_user.livello == "admin":
         non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione="piemonte").count()
-        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione="piemonte").first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
+        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione="piemonte").first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
     return render_template("dashboard.html", stato=stato, non_abilitate=non_abilitate)
 
 @app.route("/stato_iscrizioni", methods=["GET", "POST"])
@@ -322,7 +323,7 @@ def stato_iscrizioni():
     if current_user.livello == "iabz" or current_user.livello == "pattuglia":
         return redirect(url_for("dashboard"))
     if current_user.livello == "iabr":
-        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
     if request.method == "POST":
         if request.form["stato"] == "sospendi":
             stato.iscrizioni = False
@@ -528,7 +529,7 @@ def edit_iscrizione(id_iscrizione):
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):
-    if not StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first().abilitazioni:
+    if not StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first().abilitazioni:
         return redirect(url_for("iscrizioni"))
     creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
     token = base64.b64encode(creds.encode())
@@ -954,9 +955,9 @@ def iscriviti(regione):
             manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Nuova Iscrizione", testo_telegram)
         except:
             print("Errore")
-        return redirect(url_for("iscriviti_success", anno=AnnoCorrente.query.all()[0].value))
-    if not StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first().iscrizioni:
-        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=AnnoCorrente.query.all()[0].value).first()
+        return redirect(url_for("iscriviti_success", anno=SysOption.query.filter_by(key="AnnoCorrente").first().value))
+    if not StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first().iscrizioni:
+        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
         msg = ""
         if stato.data_apertura == "":
             msg = "Le iscrizioni apriranno nei prossimi giorni!"
@@ -964,7 +965,7 @@ def iscriviti(regione):
             msg = "Le iscrizioni sono momentaneamente chiuse per problemi tecnici, riapriranno a breve!"
         else:
             msg = "Le iscrizioni sono chiuse!<br>Se vuoi registrare una iscrizione tardiva contattaci tramite mail qua sotto!"
-        return render_template("iscriviti_chiuse.html", msg=msg, regione=regione, anno=AnnoCorrente.query.all()[0].value)
+        return render_template("iscriviti_chiuse.html", msg=msg, regione=regione, anno=SysOption.query.filter_by(key="AnnoCorrente").first().value)
     gruppi = Gruppo.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id)
     zone = Zona.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id)
     json_gruppi = {}
@@ -972,7 +973,7 @@ def iscriviti(regione):
         json_gruppi[i.zona.upper()] = []
     for i in gruppi:
         json_gruppi[Zona.query.filter_by(id=i.zona).first().zona.upper()].append(i.gruppo.upper())
-    return render_template("iscriviti.html", gruppi=json_gruppi, specialita=specialita, regione=regione, anno=AnnoCorrente.query.all()[0].value)
+    return render_template("iscriviti.html", gruppi=json_gruppi, specialita=specialita, regione=regione, anno=SysOption.query.filter_by(key="AnnoCorrente").first().value)
 
 @app.route("/iscriviti_success")
 def iscriviti_success():
