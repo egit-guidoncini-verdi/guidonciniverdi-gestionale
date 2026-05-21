@@ -10,7 +10,7 @@ COPY ./app.py ./app.py
 COPY ./templates ./templates
 COPY ./static ./static
 COPY ./migrations ./migrations
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./docker-entrypoint.sh ./docker-entrypoint.sh
 
 RUN chmod +x /docker-entrypoint.sh
 
