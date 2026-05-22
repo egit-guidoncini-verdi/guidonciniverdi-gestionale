@@ -104,24 +104,46 @@ volumes:
   nginx:
 ```
 
-Per il primo setup è necessario eseguire i seguenti comandi sul container "gestionale":
-```bash
-flask db upgrade #Aggiorna lo schema del DB
-flask init_db #Crea l'utente admin e inizializza con dati default
+Esempio di file nginx.conf da creare nel volume 'nginx':
 ```
-Ad ogni aggiornamento di versione è sufficiente:
-```bash
-flask db upgrade #Aggiorna lo schema del DB
+events {}
+
+http {
+    upstream backend {
+        server web:8000;
+    }
+
+    server {
+        listen 80;
+
+        location / {
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
 ```
+
+Per il primo setup è necessario eseguire il seguente comando nel container "gestionale":
+```bash
+flask init_db #Crea l'utente admin e inizializza con dati default il DB
+```
+
 Comandi utili:
 ```bash
-flask crea_regione piemonte #Crea la regione
+flask crea_regione piemonte #Crea la regione 'piemonte'
+flask aggiorna_anno 2026 #Aggiorna l'anno in corso a '2026'
 ```
 ### Scelte implementative
 
 Gestione del backend tramite Flask ([Documentazione qui](https://flask.palletsprojects.com/)).
 
 Come database è stato scelto MariaDB ([Documentazione qui](https://mariadb.org/)) per la sua leggerezza e semplicità, l'interazione con il database è gestita tramite l'ORM SQLAlchemy ([Documentazione qui](https://www.sqlalchemy.org/)).
+
+Per l'invio di mail si è scelto di appoggiarsi al servizio Postfix ([Documentazione qui](https://www.postfix.org/documentation.html)).
 
 ### Livelli di utente
 
@@ -137,7 +159,5 @@ Sono presenti quattro livelli di utente.
 ### Future
 
 - Reset password degli utenti wordpress
-
-- Possibilità di creare pagine extra su wordpress
 
 - Sistema di reset a fine anno
