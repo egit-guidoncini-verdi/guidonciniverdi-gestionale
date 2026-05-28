@@ -9,5 +9,6 @@ COPY ./requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
 COPY ./daemon.py ./daemon.py
+COPY ./mail_base.html ./mail_base.html
 
 CMD ["python","daemon.py"]
