@@ -357,7 +357,7 @@ def send_mail():
 def job_wordpress():
     def task():
         scheduler = schedule.Scheduler()
-        creds = f"{os.environ["WORDPRESS_USER"]}:{os.environ["WORDPRESS_PASSWORD"]}"
+        creds = f"{os.environ['WORDPRESS_USER']}:{os.environ['WORDPRESS_PASSWORD']}"
         token = base64.b64encode(creds.encode())
         header = {"Authorization": f"Basic {token.decode('utf-8')}"}
 
