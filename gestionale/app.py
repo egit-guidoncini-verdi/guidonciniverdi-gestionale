@@ -15,19 +15,9 @@ from datetime import datetime
 import requests
 import secrets
 import string
-import base64
-import random
 import json
 import io
 import os
-
-cr = {
-    "wordpress": {
-        "url": os.environ["WORDPRESS_URL"],
-        "user": os.environ["WORDPRESS_USER"],
-        "passwd": os.environ["WORDPRESS_PASSWORD"]
-    }
-}
 
 # costanti varie
 specialita = [
@@ -217,6 +207,7 @@ def init_db():
         db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin", telegram_id=""))
         print("Utente 'admin' creato con password: 'password'")
         db.session.add(SysOption(key="AnnoCorrente", value=str(datetime.today().year)))
+        db.session.add(SysOption(key="TemplatePost", value="8183"))
         db.session.add(Demone(key="send_notifiche", value=True))
         db.session.add(Demone(key="send_mail", value=True))
         db.session.add(Demone(key="send_telegram", value=True))
@@ -240,10 +231,18 @@ def crea_regione(nome_regione):
 @app.cli.command("aggiorna_anno")
 @click.argument("user_anno")
 def crea_regione(user_anno):
-    anno_corrente = SysOption.query.filter_by(key="AnnoCorrente").first().value
+    anno_corrente = SysOption.query.filter_by(key="AnnoCorrente").first()
     anno_corrente.value = user_anno
     db.session.commit()
     print(f"AnnoCorrente aggiornato: {anno_corrente.value}")
+
+@app.cli.command("aggiorna_template")
+@click.argument("template_id")
+def crea_regione(template_id):
+    template_post = SysOption.query.filter_by(key="TemplatePost").first()
+    template_post.value = template_id
+    db.session.commit()
+    print(f"TemplatePost aggiornato: {template_post.value}")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -256,45 +255,6 @@ def manda_mail(indirizzi, copia, titolo, testo, regione):
 
 def manda_telegram(chat_id, titolo, testo):
     db.session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} - {titolo}", testo=testo))
-    db.session.commit()
-    return True
-
-def genera_password_sq():
-    nomi = ["Akela", "Baloo", "Chil", "Kaa", "Raksha", "Arcanda", "Sciba", "Scoiattoli", "Mi", "Mowgli"]
-    colori = ["Rosso", "Blu", "Verde", "Giallo", "Arancione", "Viola", "Rosa", "Marrone", "Grigio", "Nero"]
-    return f"{random.choice(nomi)}{random.choice(colori)}"
-
-def crea_utente(id_iscrizione, header, dati):
-    try:
-        response = requests.post(cr["wordpress"]["url"]+"/users", headers=header, json=dati)
-        id_autore = response.json()["id"]
-    except Exception as e:
-        print(e)
-        return False
-    utente = WordpressUser(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_id=int(id_autore), username=dati["username"], password=dati["password"], meta=dati)
-    db.session.add(utente)
-    db.session.commit()
-    return id_autore
-
-def crea_post(id_iscrizione, wp_id, header, dati, tipo):
-    try:
-        response = requests.post(cr["wordpress"]["url"]+"/posts", headers=header, json=dati)
-        id_post = response.json()["id"]
-    except:
-        return False
-    post = WordpressPost(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_user_id=wp_id, wordpress_id=int(id_post), tipo=tipo, meta=dati)
-    db.session.add(post)
-    db.session.commit()
-    return True
-
-def crea_navigazione(id_iscrizione, wp_id, header, dati, tipo):
-    try:
-        response = requests.post(cr["wordpress"]["url"]+"/navigazione", headers=header, json=dati)
-        id_post = response.json()["id"]
-    except:
-        return False
-    post = WordpressPost(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_user_id=wp_id, wordpress_id=int(id_post), tipo=tipo, meta=dati)
-    db.session.add(post)
     db.session.commit()
     return True
 
@@ -350,14 +310,18 @@ def iscrizioni():
     iscritti = []
     tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione)
     for i in tmp_iscritti:
+        tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
+        tmp_zona = Zona.query.filter_by(id=i.zona).first()
         if limita and i.zona != current_user.zona:
             continue
-        iscritti.append(i)
+        iscritti.append((i,tmp_gruppo,tmp_zona))
     if current_user.livello == "admin":
         iscritti = []
         tmp_iscritti=IscrizioniEG.query.all()
         for i in tmp_iscritti:
-            iscritti.append(i)
+            tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
+            tmp_zona = Zona.query.filter_by(id=i.zona).first()
+            iscritti.append((i,tmp_gruppo,tmp_zona))
     return render_template("iscrizioni.html", iscritti=iscritti)
 
 @app.route("/report")
@@ -421,11 +385,13 @@ def report():
 @login_required
 def dettagli(id_iscrizione):
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    tmp_gruppo = Gruppo.query.filter_by(id=tmp_iscrizione.gruppo).first()
+    tmp_zona = Zona.query.filter_by(id=tmp_iscrizione.zona).first()
     try:
         relazione = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_iscrizione)).first()
     except:
         relazione = False
-    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, relazione=relazione)
+    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, gruppo=tmp_gruppo, zona=tmp_zona, relazione=relazione)
 
 @app.route("/elimina/<id_iscrizione>")
 @login_required
@@ -513,7 +479,7 @@ def edit_iscrizione(id_iscrizione):
             flash("Modifica Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscrizioni"))
 
-        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2026 è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq, regione=iscrizione.regione)
 
         # Avvisa Francesco e Admin
@@ -529,92 +495,45 @@ def edit_iscrizione(id_iscrizione):
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
 def abilita(id_iscrizione):
-    if not StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first().abilitazioni:
+    if not StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first().abilitazioni:
         return redirect(url_for("iscrizioni"))
-    creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
-    token = base64.b64encode(creds.encode())
-    header = {"Authorization": f"Basic {token.decode('utf-8')}"}
     tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
-    try:
-        tmp_username = f"{tmp_iscrizione.nome.strip(' ')}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
-    except:
-        flash("Non ho trovato l'iscrizione!", "warning")
-        return redirect(url_for("iscrizioni"))
-    tmp_passwd = genera_password_sq()
-    valid_username = True
-    if db.session.query(WordpressUser.query.filter_by(username=tmp_username).exists()).scalar():
-        valid_username = False
+    tmp_gruppo = Gruppo.query.filter_by(id=tmp_iscrizione.gruppo).first()
+    tmp_zona = Zona.query.filter_by(id=tmp_iscrizione.zona).first()
+    tmp_regione = Regione.query.filter_by(id=tmp_iscrizione.regione).first()
+    tmp_username = f"{tmp_iscrizione.nome.strip(' ')}_{tmp_gruppo.gruppo.lower()}".replace(" ", "_").lower()
     if request.method == "POST":
         try:
             tmp_username = request.form["username"]
-            valid_username = True
         except KeyError:
-            tmp_username = f"{tmp_iscrizione.nome.strip(' ')}_{tmp_iscrizione.gruppo}".replace(" ", "_").lower()
-        if not valid_username:
-            return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
+            pass
+    valid_username = True
+    if db.session.query(WordpressUser.query.filter_by(username=tmp_username).exists()).scalar():
+        valid_username = False
+    if not valid_username:
+        return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
+    if request.method == "POST":
         if tmp_iscrizione.tipo == "conquista":
             tmp_rinnovo = False
         else:
             tmp_rinnovo = True
-        tmp_zona = tmp_iscrizione.zona.removeprefix("ZONA ").title()
         tmp_specialita = tmp_iscrizione.specialita.title()
 
         tmp_meta = {
-            "anno": "2026",
-            "gruppo": tmp_iscrizione.gruppo.capitalize(),
+            "anno": SysOption.query.filter_by(key="AnnoCorrente").first().value,
+            "gruppo": tmp_gruppo.gruppo.capitalize(),
             "rinnovo": tmp_rinnovo,
             "specialita": tmp_specialita,
             "squadriglia": tmp_iscrizione.nome.capitalize(),
-            "regione": tmp_iscrizione.regione.capitalize(),
-            "zona": tmp_zona
+            "regione": tmp_regione.regione.capitalize(),
+            "zona": tmp_zona.zona.removeprefix("ZONA ").title()
             }
 
-        dati = {
-            "username": tmp_username,
-            "name": tmp_iscrizione.nome.capitalize(),
-            "email": f"{tmp_username}@guidonciniverdi.it",
-            "password": tmp_passwd,
-            "meta": tmp_meta
-            }
-
-        id_autore = crea_utente(id_iscrizione, header, dati)
-        if not id_autore:
-            flash("Qualcosa è andato storto con la creazione dell'utente", "warning")
-            return redirect(url_for("iscrizioni"))
-
-        tmp_ok = True
-        tmp_content = requests.get(cr["wordpress"]["url"]+"/posts/8183?context=edit", headers=header).json()["content"]["raw"]
-
-        dati = {
-            "author": int(id_autore),
-            "categories": [22],
-            "content": tmp_content,
-            "meta": tmp_meta,
-            "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-            "title": f"{tmp_meta['squadriglia']}",
-            "status": "publish"
-            }
-        if not crea_post(id_iscrizione, id_autore, header, dati, "posts"):
-            tmp_ok = False
-
-        if not tmp_ok:
-            flash("Qualcosa è andato storto con la creazione dei post, abbiamo avvisato gli IABR", "warning")
-            try:
-                testo_telegram = f"Squadriglia {tmp_iscrizione.nome}\n{tmp_iscrizione.gruppo} - {tmp_iscrizione.zona}\nNon tutti i post sono stati correttamente creati"
-                manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Problema tecnico!!", testo_telegram)
-                manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Problema tecnico!!", testo_telegram)
-            except:
-                print("Errore")
-            return redirect(url_for("iscrizioni"))
-
-        tmp_iscrizione.stato = "abilitato"
+        if tmp_iscrizione.stato == "da_abilitare":
+            db.session.add(JobWordpress(data=str(datetime.now()), stato="PENDING", dati={"iscrizione": tmp_iscrizione.id, "tipo": "crea_sq", "username": tmp_username, "meta": tmp_meta}))
         db.session.commit()
-
-        testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">cliccando qui</a> oppure scaricando la app.<br><a href=\"https://play.google.com/store/apps/details?id=org.wordpress.android\" target=\"_blank\">Clicca qui per scaricare la app per Android</a><br><a href=\"https://apps.apple.com/it/app/wordpress-website-builder/id335703880\" target=\"_blank\">Clicca qui per scaricare la app per iOS</a><br>Trovate maggiori info qui: <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_username}<br>Password: {tmp_passwd}"
-        manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq, tmp_iscrizione.regione)
-
         return redirect(url_for("iscrizioni"))
-    return render_template("abilita.html", iscrizione=tmp_iscrizione, username=tmp_username, valid_username=valid_username)
+    return render_template("abilita.html", iscrizione=tmp_iscrizione, gruppo=tmp_gruppo, zona=tmp_zona, username=tmp_username, valid_username=valid_username)
 
 @app.route("/mail")
 @login_required
@@ -945,7 +864,7 @@ def iscriviti(regione):
             flash("Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
 
-        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi 2026 è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accedere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accedere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq, iscrizione.regione)
 
         # Avvisa Francesco e Admin

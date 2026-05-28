@@ -51,7 +51,7 @@
     </div>
     {% endif %}
 
-    <p>Vuoi davvero abilitare la squadriglia {{ iscrizione.nome }} del Gruppo {{ iscrizione.gruppo }} - {{ iscrizione.zona }}?</p>
+    <p>Vuoi davvero abilitare la squadriglia {{ iscrizione.nome }} del Gruppo {{ gruppo.gruppo.capitalize() }} - {{ zona.zona.title() }}?</p>
 
     <button type="submit" class="btn btn-warning" onclick="inviaForm()">ABILITA!</button>
   </form>

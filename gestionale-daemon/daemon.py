@@ -10,9 +10,25 @@ import threading
 import schedule
 import requests
 import smtplib
+import random
+import base64
 import json
 import os
 
+specialita = [
+    "Alpinismo",
+    "Artigianato",
+    "Campismo",
+    "Civitas",
+    "Esplorazione",
+    "Espressione",
+    "Giornalismo",
+    "Internazionale",
+    "Natura",
+    "Nautica",
+    "Olimpia",
+    "Pronto intervento"
+]
 
 sender_address = os.environ["MAIL_USERNAME"]
 smtp_host = os.environ["MAIL_HOST"]
@@ -167,10 +183,10 @@ class Demone(Base):
     key = Column(String(255), primary_key=True)
     value = Column(Boolean, nullable=False)
 
-class SysOption(db.Model):
+class SysOption(Base):
     __tablename__ = "system_option"
-    key = db.Column(db.String(128), primary_key=True)
-    value = db.Column(db.String(128), nullable=False)
+    key = Column(String(128), primary_key=True)
+    value = Column(String(128), nullable=False)
 
 engine = create_engine(uri, pool_pre_ping=True, pool_recycle=3600)
 Session = sessionmaker(bind=engine)
@@ -180,10 +196,46 @@ demone_telegram = True
 demone_notifiche = True
 demone_wordpress = True
 
-def manda_telegram(chat_id, titolo, testo):
-    session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {session.query(SysOption).query.filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
+def manda_mail(indirizzi, copia, titolo, testo, regione):
+    session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, indirizzi_copia=copia, titolo=f"Guidoncini Verdi {session.query(SysOption).filter_by(key='AnnoCorrente').first().value} - {titolo}", testo=testo))
     session.commit()
     return True
+
+def manda_telegram(chat_id, titolo, testo):
+    session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {session.query(SysOption).filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
+    session.commit()
+    return True
+
+def genera_password_sq():
+    nomi = ["Akela", "Baloo", "Chil", "Kaa", "Raksha", "Arcanda", "Sciba", "Scoiattoli", "Mi", "Mowgli"]
+    colori = ["Rosso", "Blu", "Verde", "Giallo", "Arancione", "Viola", "Rosa", "Marrone", "Grigio", "Nero"]
+    return f"{random.choice(nomi)}{random.choice(colori)}"
+
+def crea_utente(id_iscrizione, header, dati):
+    try:
+        response = requests.post(os.environ["WORDPRESS_URL"]+"/users", headers=header, json=dati)
+        id_autore = response.json()["id"]
+    except Exception as e:
+        print(e)
+        return False
+    session = Session()
+    utente = WordpressUser(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_id=int(id_autore), username=dati["username"], password=dati["password"], meta=dati)
+    session.add(utente)
+    session.commit()
+    return id_autore
+
+def crea_post(id_iscrizione, id_autore, header, dati, tipo):
+    try:
+        response = requests.post(os.environ["WORDPRESS_URL"]+"/posts", headers=header, json=dati)
+        id_post = response.json()["id"]
+    except:
+        return False
+    session = Session()
+    utente = session.query(WordpressUser).filter_by(wordpress_id=int(id_autore)).first()
+    post = WordpressPost(data=str(datetime.now()), iscrizioni_id=int(id_iscrizione), wordpress_user_id=utente.id, wordpress_id=int(id_post), tipo=tipo, meta=dati)
+    session.add(post)
+    session.commit()
+    return id_post
 
 def send_notifiche():
     def task():
@@ -262,7 +314,7 @@ def send_mail():
                 session.commit()
                 try:
                     tmp_regione = session.query(Regione).filter_by(id=tmp_mail.regione).first()
-                    anno = session.query(SysOption).query.filter_by(key="AnnoCorrente").first().value
+                    anno = session.query(SysOption).filter_by(key="AnnoCorrente").first().value
                     html = template.render(anno=anno, titolo=tmp_mail.titolo, testo=tmp_mail.testo, mail_regione=tmp_regione.mail)
                     indirizzi = tmp_mail.indirizzi.copy()
                     message = MIMEMultipart("alternative")
@@ -304,9 +356,78 @@ def send_mail():
 
 def job_wordpress():
     def task():
+        scheduler = schedule.Scheduler()
+        creds = f"{os.environ["WORDPRESS_USER"]}:{os.environ["WORDPRESS_PASSWORD"]}"
+        token = base64.b64encode(creds.encode())
+        header = {"Authorization": f"Basic {token.decode('utf-8')}"}
+
+        def job():
+            session = Session()
+            tmp_job = session.query(JobWordpress).filter_by(stato="PENDING").first()
+            if tmp_job:
+                tmp_job.stato = "SENDING"
+                session.commit()
+                
+                if tmp_job.dati["tipo"] == "crea_sq":
+                    tmp_iscrizione = session.query(IscrizioniEG).filter_by(id=tmp_job.dati["iscrizione"]).first()
+                    tmp_iscrizione.stato = "in_abilitazione"
+                    session.commit()
+                    tmp_passwd = genera_password_sq()
+                    dati = {
+                        "username": tmp_job.dati["username"],
+                        "name": tmp_iscrizione.nome.capitalize(),
+                        "email": f"{tmp_job.dati["username"]}@guidonciniverdi.it",
+                        "password": tmp_passwd,
+                        "meta": tmp_job.dati["meta"]
+                        }
+
+                    id_autore = crea_utente(tmp_job.dati["iscrizione"], header, dati)
+                    if not id_autore:
+                        tmp_job.stato = "FAILED"
+                    tmp_ok = True
+                    tmp_content = requests.get(f"{os.environ['WORDPRESS_URL']}/posts/{session.query(SysOption).filter_by(key='TemplatePost').first().value}?context=edit", headers=header, verify=False).json()["content"]["raw"]
+
+                    dati = {
+                        "author": int(id_autore),
+                        "categories": [22],
+                        "content": tmp_content,
+                        "meta": tmp_job.dati["meta"],
+                        "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
+                        "title": f"{tmp_job.dati["meta"]['squadriglia']}",
+                        "status": "publish"
+                        }
+                    id_post = crea_post(tmp_job.dati["iscrizione"], int(id_autore), header, dati, "posts")
+                    if not id_post:
+                        tmp_ok = False
+
+                    if not tmp_ok:
+                        try:
+                            testo_telegram = f"Squadriglia {tmp_iscrizione.nome}\n{tmp_iscrizione.gruppo} - {tmp_iscrizione.zona}\nNon tutti i post sono stati correttamente creati"
+                            manda_telegram(User.query.filter_by(username="egm").first().telegram_id, "Problema tecnico!!", testo_telegram)
+                            manda_telegram(User.query.filter_by(username="admin").first().telegram_id, "Problema tecnico!!", testo_telegram)
+                        except:
+                            print("Errore")
+                        tmp_job.stato = "FAILED"
+                    else:
+                        tmp_job.stato = "DONE"
+
+                    tmp_iscrizione.link = requests.get(f"{os.environ['WORDPRESS_URL']}/posts/{str(id_post)}", headers=header).json()["link"]
+                    tmp_iscrizione.stato = "abilitato"
+                    session.commit()
+
+                    testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">cliccando qui</a> oppure scaricando la app.<br><a href=\"https://play.google.com/store/apps/details?id=org.wordpress.android\" target=\"_blank\">Clicca qui per scaricare la app per Android</a><br><a href=\"https://apps.apple.com/it/app/wordpress-website-builder/id335703880\" target=\"_blank\">Clicca qui per scaricare la app per iOS</a><br>Trovate maggiori info qui: <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_job.dati['username']}<br>Password: {tmp_passwd}"
+                    manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq, tmp_iscrizione.regione)
+
+
+                session.commit()
+            session.close()
+
+        scheduler.every(10).seconds.do(job)
+
         global demone_wordpress
         while demone_wordpress:
-            sleep(10)
+            scheduler.run_pending()
+            sleep(1)
     threading.Thread(target=task, name="job_wordpress", daemon=True).start()
 
 while True:
@@ -326,7 +447,7 @@ while True:
         if i.name == "send_mail":
             mail_seen = True
         if i.name == "send_telegram":
-            mail_seen = True
+            telegram_seen = True
         if i.name == "send_notifiche":
             notifiche_seen = True
         if i.name == "job_wordpress":

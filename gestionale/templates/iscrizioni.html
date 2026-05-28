@@ -61,22 +61,22 @@
       </thead>
       <tbody>
         {% for i in iscritti %}
-        {% if i["stato"] == "da_abilitare" %}
+        {% if i[0]["stato"] == "da_abilitare" %}
         <tr>
-          <th scope="row">{{ i["id"] }}</th>
-          <td>{{ i["zona"] }}</td>
-          <td>{{ i["gruppo"] }}</td>
-          <td>{{ i["nome"] }}</td>
-          <td>{{ i["specialita"] }}</td>
-          <td>{{ i["tipo"].capitalize() }}</td>
+          <th scope="row">{{ i[0]["id"] }}</th>
+          <td>{{ i[2]["zona"].title() }}</td>
+          <td>{{ i[1]["gruppo"].capitalize() }}</td>
+          <td>{{ i[0]["nome"] }}</td>
+          <td>{{ i[0]["specialita"] }}</td>
+          <td>{{ i[0]["tipo"].capitalize() }}</td>
           <td>
           <div class="btn-group" role="group">
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["id"]) }}">Abilita!</a>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i[0]["id"]) }}">Abilita!</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i[0]["id"]) }}">Dettagli</a>
             {% if current_user.livello == "admin" %}
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i["id"]) }}">Modifica</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i[0]["id"]) }}">Modifica</a>
             {% endif %}
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Scarta</a>
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i[0]["id"]) }}">Scarta</a>
           </div>
           </td>
         </tr>
@@ -115,16 +115,16 @@
         {% for i in iscritti %}
         {% if i["stato"] == "abilitato" %}
         <tr>
-          <th scope="row">{{ i["id"] }}</th>
-          <td>{{ i["zona"] }}</td>
-          <td>{{ i["gruppo"] }}</td>
-          <td>{{ i["nome"] }}</td>
-          <td>{{ i["specialita"] }}</td>
-          <td>{{ i["tipo"].capitalize() }}</td>
+          <th scope="row">{{ i[0]["id"] }}</th>
+          <td>{{ i[2]["zona"].title() }}</td>
+          <td>{{ i[1]["gruppo"].capitalize() }}</td>
+          <td>{{ i[0]["nome"] }}</td>
+          <td>{{ i[0]["specialita"] }}</td>
+          <td>{{ i[0]["tipo"].capitalize() }}</td>
           <td>
           <div class="btn-group" role="group">
             <button type="button" class="btn btn-outline-primary" disabled>Pagina extra</button>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i[0]["id"]) }}">Dettagli</a>
           </div>
           </td>
         </tr>
@@ -163,40 +163,40 @@
       <tbody>
         {% for i in iscritti %}
         <tr>
-          <th scope="row">{{ i["id"] }}</th>
-          <td>{{ i["zona"] }}</td>
-          <td>{{ i["gruppo"] }}</td>
-          <td>{{ i["nome"] }}</td>
-          <td>{{ i["specialita"] }}</td>
-          <td>{{ i["tipo"].capitalize() }}</td>
-          {% if i["stato"] == "abilitato" %}
+          <th scope="row">{{ i[0]["id"] }}</th>
+          <td>{{ i[2]["zona"].title() }}</td>
+          <td>{{ i[1]["gruppo"].capitalize() }}</td>
+          <td>{{ i[0]["nome"] }}</td>
+          <td>{{ i[0]["specialita"] }}</td>
+          <td>{{ i[0]["tipo"].capitalize() }}</td>
+          {% if i[0]["stato"] == "abilitato" %}
           <td><span class="badge bg-success">Abilitato</span></td>
           <td>
           <div class="btn-group" role="group">
             <button type="button" class="btn btn-outline-primary" disabled>Pagina extra</button>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i[0]["id"]) }}">Dettagli</a>
           </div>
           </td>
-          {% elif i["stato"] == "da_abilitare" %}
+          {% elif i[0]["stato"] == "da_abilitare" %}
           <td><span class="badge bg-warning">NON Abilitato</span></td>
           <td>
           <div class="btn-group" role="group">
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i["id"]) }}">Abilita!</a>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i[0]["id"]) }}">Abilita!</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i[0]["id"]) }}">Dettagli</a>
             {% if current_user.livello == "admin" %}
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i["id"]) }}">Modifica</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i[0]["id"]) }}">Modifica</a>
             {% endif %}
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i["id"]) }}">Scarta</a>
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=i[0]["id"]) }}">Scarta</a>
           </div>
           </td>
           {% elif i["stato"] == "eliminato" %}
           <td><span class="badge bg-danger">Eliminato</span></td>
           <td>
           <div class="btn-group" role="group">
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i["id"]) }}">Dettagli</a>
-            <a type="button" class="btn btn-outline-success" href="{{ url_for("ripristina", id_iscrizione=i["id"]) }}">Ripristina</a>
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("dettagli", id_iscrizione=i[0]["id"]) }}">Dettagli</a>
+            <a type="button" class="btn btn-outline-success" href="{{ url_for("ripristina", id_iscrizione=i[0]["id"]) }}">Ripristina</a>
             {% if current_user.livello == "admin" %}
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina_def", id_iscrizione=i["id"]) }}">Elimina</a>
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina_def", id_iscrizione=i[0]["id"]) }}">Elimina</a>
             {% endif %}
           </div>
           </td>
