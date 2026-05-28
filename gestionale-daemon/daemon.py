@@ -376,7 +376,7 @@ def job_wordpress():
                     dati = {
                         "username": tmp_job.dati["username"],
                         "name": tmp_iscrizione.nome.capitalize(),
-                        "email": f"{tmp_job.dati["username"]}@guidonciniverdi.it",
+                        "email": f"{tmp_job.dati['username']}@guidonciniverdi.it",
                         "password": tmp_passwd,
                         "meta": tmp_job.dati["meta"]
                         }
@@ -393,7 +393,7 @@ def job_wordpress():
                         "content": tmp_content,
                         "meta": tmp_job.dati["meta"],
                         "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
-                        "title": f"{tmp_job.dati["meta"]['squadriglia']}",
+                        "title": f"{tmp_job.dati['meta']['squadriglia']}",
                         "status": "publish"
                         }
                     id_post = crea_post(tmp_job.dati["iscrizione"], int(id_autore), header, dati, "posts")
