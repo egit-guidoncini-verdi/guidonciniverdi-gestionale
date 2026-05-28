@@ -202,7 +202,7 @@ def manda_mail(indirizzi, copia, titolo, testo, regione):
     return True
 
 def manda_telegram(chat_id, titolo, testo):
-    session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {session.query(SysOption).filter_by(key="AnnoCorrente").first().value} - {titolo}", testo=testo))
+    session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {session.query(SysOption).filter_by(key='AnnoCorrente').first().value} - {titolo}", testo=testo))
     session.commit()
     return True
 
