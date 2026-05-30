@@ -397,12 +397,22 @@ def job_wordpress():
                     tmp_ok = True
                     tmp_content = requests.get(f"{os.environ['WORDPRESS_URL']}/posts/{session.query(SysOption).filter_by(key='TemplatePost').first().value}?context=edit", headers=header, verify=False).json()["content"]["raw"]
 
+                    specialita_wordpress = requests.get(f"{os.environ['WORDPRESS_URL']}/specialita?per_page=100", headers=header, verify=False).json()
+                    tmp_specialita = {}
+                    for i in specialita_wordpress:
+                        tmp_specialita[i["name"]] = i["id"]
+                    categorie_wordpress = requests.get(f"{os.environ['WORDPRESS_URL']}/categories?per_page=100", headers=header, verify=False).json()
+                    tmp_id_categoria = 0
+                    for i in categorie_wordpress:
+                        if i["name"] == "Pagina unica":
+                            tmp_id_categoria = i["id"]
+
                     dati = {
                         "author": int(id_autore),
-                        "categories": [22],
+                        "categories": [tmp_id_categoria],
                         "content": tmp_content,
                         "meta": tmp_job.dati["meta"],
-                        "specialita": [specialita.index(tmp_iscrizione.specialita.capitalize())+3],
+                        "specialita": [tmp_specialita[tmp_iscrizione.specialita.title()]],
                         "title": f"{tmp_job.dati['meta']['squadriglia']}",
                         "status": "publish"
                         }
