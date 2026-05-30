@@ -325,6 +325,7 @@ def send_mail():
                     if tmp_mail.indirizzi_copia:
                         message["Cc"] = ", ".join(tmp_mail.indirizzi_copia)
                         indirizzi.extend(tmp_mail.indirizzi_copia)
+                        indirizzi = [x for x in indirizzi if x != ""]
 
                     text = f"{tmp_mail.titolo}\n{tmp_mail.testo}"
                     part1 = MIMEText(text, "plain")
@@ -335,7 +336,12 @@ def send_mail():
                     with smtplib.SMTP(smtp_host, smtp_port) as server:
                         response = server.sendmail(sender_address, indirizzi, message.as_string())
                     
-                    if response == {}:
+                    refused_count = len(response)
+                    sent_count = len(indirizzi) - refused_count
+                    if refused_count:
+                        print(f"Mail {tmp_mail.id}: destinatari rifiutati dal server SMTP: {response}")
+
+                    if sent_count > 0:
                         tmp_mail.stato = "SENT"
                     else:
                         tmp_mail.stato = "FAILED"
