@@ -22,15 +22,23 @@
     </ol>
   </nav>
 
-  {% if iscrizione.stato == "da_abilitare" %}
   <div class="btn-group" role="group">
+  {% if iscrizione.stato in ["da_abilitare", "failed_user"] %}
   <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=iscrizione.id) }}">Abilita!</a>
-  {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
+  {% endif %}
+  {% if iscrizione.stato not in ["in_abilitazione", "failed_post"] %}
   <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=iscrizione.id) }}">Modifica</a>
+  {% endif %}
+  {% if iscrizione.stato in ["da_abilitare", "failed_user"] %}
   <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=iscrizione.id) }}">Scarta</a>
   {% endif %}
-  </div>
+  {% if iscrizione.stato == "eliminato" %}
+  <a type="button" class="btn btn-outline-danger" href="{{ url_for("ripristina", id_iscrizione=i[0]["id"]) }}">Ripristina</a>
+    {% if current_user.livello == "admin" %}
+    <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina_def", id_iscrizione=i[0]["id"]) }}">Elimina Definitivamente</a>
+    {% endif %}
   {% endif %}
+  </div>
   <div class="table-responsive">
     <table class="table">
       <tbody>
@@ -63,17 +71,33 @@
           {% if iscrizione.stato == "abilitato" %}
           <td><span class="badge bg-success">Abilitato</span></td>
           {% elif iscrizione.stato == "da_abilitare" %}
-          <td><span class="badge bg-warning">Da Abilitare</span></td>
+          <td><span class="badge bg-warning">NON Abilitato</span></td>
+          {% elif iscrizione.stato == "in_abilitazione" %}
+          <td><span class="badge bg-secondary">Abilitazione in corso...</span></td>
+          {% elif iscrizione.stato == "failed_user" %}
+          <td><span class="badge bg-danger">Abilitazione fallita!</span></td>
+          {% elif iscrizione.stato == "failed_post" %}
+          <td><span class="badge bg-secondary">Creazione del Diario fallita</span></td>
           {% elif iscrizione.stato == "eliminato" %}
           <td><span class="badge bg-danger">Eliminato</span></td>
           {% endif %}
         </tr>
-        <tr>
-          <th scope="row">Link</th>
-          {% if iscrizione.stato == "abilitato" %}
-          <td><a href="{{ iscrizione.link }}">{{ iscrizione.link }}</a></td>
+        {% if iscrizione.stato == "abilitato" %}
+          <tr>
+            <th scope="row">Link Diario di Bordo</th>
+            <td><a href="{{ iscrizione.link }}">{{ iscrizione.link }}</a></td>
+          </tr>
+          {% if wordpress_user %}
+            <tr>
+              <th scope="row">Wordpress Username</th>
+              <td>{{ wordpress_user.username }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Wordpress Password</th>
+              <td>{{ wordpress_user.password }}</td>
+            </tr>
           {% endif %}
-        </tr>
+        {% endif %}
         {% if iscrizione.regione == "puglia" %}
           <tr>
             <th scope="row">Relazione</th>

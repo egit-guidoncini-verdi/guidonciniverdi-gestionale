@@ -35,9 +35,6 @@ services:
       DB_PORT: 3306
       DB_NAME: app_db
       SECRET_KEY: secret_key
-      WORDPRESS_URL: "https://dominio.it/wp-json/wp/v2"
-      WORDPRESS_USER: utente
-      WORDPRESS_PASSWORD: "WORDPRESS_PASSWORD"
     depends_on:
       - gestionale-daemon
 
@@ -54,6 +51,9 @@ services:
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: app_db
+      WORDPRESS_URL: "https://dominio.it/wp-json/wp/v2"
+      WORDPRESS_USER: utente
+      WORDPRESS_PASSWORD: "WORDPRESS_PASSWORD"
       TELEGRAM_TOKEN: "TELEGRAM_TOKEN"
     depends_on:
       - db

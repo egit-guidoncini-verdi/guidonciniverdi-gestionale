@@ -391,7 +391,11 @@ def dettagli(id_iscrizione):
         relazione = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_iscrizione)).first()
     except:
         relazione = False
-    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, gruppo=tmp_gruppo, zona=tmp_zona, relazione=relazione)
+    try:
+        wordpress_user = WordpressUser.query.filter_by(iscrizioni_id=int(id_iscrizione)).first()
+    except:
+        wordpress_user = False
+    return render_template("dettaglio_iscrizione.html", iscrizione=tmp_iscrizione, gruppo=tmp_gruppo, zona=tmp_zona, relazione=relazione, wordpress_user=wordpress_user)
 
 @app.route("/elimina/<id_iscrizione>")
 @login_required

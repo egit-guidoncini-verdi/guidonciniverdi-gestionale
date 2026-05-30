@@ -360,6 +360,15 @@ def job_wordpress():
         creds = f"{os.environ['WORDPRESS_USER']}:{os.environ['WORDPRESS_PASSWORD']}"
         token = base64.b64encode(creds.encode())
         header = {"Authorization": f"Basic {token.decode('utf-8')}"}
+        session = Session()
+        tmp_iscrizioni = session.query(IscrizioniEG).filter_by(stato="in_abilitazione")
+        for i in tmp_iscrizioni:
+            i.stato = "da_abilitare"
+        tmp_jobs = session.query(JobWordpress).filter_by(stato="SENDING")
+        for i in tmp_jobs:
+            i.stato = "PENDING"
+        session.commit()
+        session.close()
 
         def job():
             session = Session()
@@ -384,6 +393,7 @@ def job_wordpress():
                     id_autore = crea_utente(tmp_job.dati["iscrizione"], header, dati)
                     if not id_autore:
                         tmp_job.stato = "FAILED"
+                        tmp_iscrizione.stato = "failed_user"
                     tmp_ok = True
                     tmp_content = requests.get(f"{os.environ['WORDPRESS_URL']}/posts/{session.query(SysOption).filter_by(key='TemplatePost').first().value}?context=edit", headers=header, verify=False).json()["content"]["raw"]
 
@@ -408,16 +418,15 @@ def job_wordpress():
                         except:
                             print("Errore")
                         tmp_job.stato = "FAILED"
+                        tmp_iscrizione.stato = "failed_post"
                     else:
                         tmp_job.stato = "DONE"
+                        tmp_iscrizione.link = requests.get(f"{os.environ['WORDPRESS_URL']}/posts/{str(id_post)}", headers=header).json()["link"]
+                        tmp_iscrizione.stato = "abilitato"
 
-                    tmp_iscrizione.link = requests.get(f"{os.environ['WORDPRESS_URL']}/posts/{str(id_post)}", headers=header).json()["link"]
-                    tmp_iscrizione.stato = "abilitato"
+                        testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">cliccando qui</a> oppure scaricando la app.<br><a href=\"https://play.google.com/store/apps/details?id=org.wordpress.android\" target=\"_blank\">Clicca qui per scaricare la app per Android</a><br><a href=\"https://apps.apple.com/it/app/wordpress-website-builder/id335703880\" target=\"_blank\">Clicca qui per scaricare la app per iOS</a><br>Trovate maggiori info qui: <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_job.dati['username']}<br>Password: {tmp_passwd}"
+                        manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq, tmp_iscrizione.regione)
                     session.commit()
-
-                    testo_mail_sq = f"Congratulazioni {tmp_iscrizione.nome},<br>ecco le credenziali per il Diario di Bordo Digitale, potete accedere <a href=\"https://guidonciniverdi.it/wp-login.php\" target=\"_blank\">cliccando qui</a> oppure scaricando la app.<br><a href=\"https://play.google.com/store/apps/details?id=org.wordpress.android\" target=\"_blank\">Clicca qui per scaricare la app per Android</a><br><a href=\"https://apps.apple.com/it/app/wordpress-website-builder/id335703880\" target=\"_blank\">Clicca qui per scaricare la app per iOS</a><br>Trovate maggiori info qui: <a href=\"https://guidonciniverdi.it/come-funziona/\" target=\"_blank\">guidonciniverdi.it/come-funziona/</a><hr><h4><strong>Credenziali</strong></h4>Username: {tmp_job.dati['username']}<br>Password: {tmp_passwd}"
-                    manda_mail([tmp_iscrizione.mail], [tmp_iscrizione.mail_capo1, tmp_iscrizione.mail_capo2], "Credenziali Diario di Bordo!", testo_mail_sq, tmp_iscrizione.regione)
-
 
                 session.commit()
             session.close()
