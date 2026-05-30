@@ -2,13 +2,17 @@
 
 {% block head %}
 
-<title>GV Piemonte - Stato Iscrizioni</title>
+<title>GV Piemonte - Gestione Regione</title>
 
 {% endblock %}
 
 {% block titolo %}
 
-<h1 class="text-center my-2"><strong>Stato Iscrizioni</strong></h1>
+{% if regione.regione == "valle_aosta" %}
+<h1 class="text-center my-2"><strong>Gestione Regione Valle d'Aosta</strong></h1>
+{% else %}
+<h1 class="text-center my-2"><strong>Gestione Regione {{ regione.regione.capitalize() }}</strong></h1>
+{% endif %}
 
 {% endblock %}
 

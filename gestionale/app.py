@@ -277,12 +277,13 @@ def dashboard():
         stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione="piemonte").first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
     return render_template("dashboard.html", stato=stato, non_abilitate=non_abilitate)
 
-@app.route("/stato_iscrizioni", methods=["GET", "POST"])
+@app.route("/gestione_regione", methods=["GET", "POST"])
 @login_required
-def stato_iscrizioni():
-    if current_user.livello == "iabz" or current_user.livello == "pattuglia":
+def gestione_regione():
+    if current_user.livello in ["iabz", "pattuglia", "admin"]:
         return redirect(url_for("dashboard"))
     if current_user.livello == "iabr":
+        regione = Regione.query.filter_by(id=current_user.regione).first()
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
     if request.method == "POST":
         if request.form["stato"] == "sospendi":
@@ -298,8 +299,8 @@ def stato_iscrizioni():
         if request.form["stato"] == "ferma":
             stato.abilitazioni = False
         db.session.commit()
-        return redirect(url_for("stato_iscrizioni"))
-    return render_template("stato_iscrizioni.html", stato=stato)
+        return redirect(url_for("gestione_regione"))
+    return render_template("gestione_regione.html", stato=stato, regione=regione)
 
 @app.route("/iscrizioni")
 @login_required
