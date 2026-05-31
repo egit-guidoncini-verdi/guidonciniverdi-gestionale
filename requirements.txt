@@ -8,3 +8,5 @@ openpyxl
 pandas
 SQLAlchemy
 requests
+weasyprint
+pypdf

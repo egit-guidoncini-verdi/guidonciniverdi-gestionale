@@ -1,0 +1,27 @@
+<html>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 5px;
+}
+</style>
+<body>
+<h1>{{ iscritto["nome"] }}</h1>
+<h3>{{ iscritto["gruppo"] }} - {{ iscritto["zona"] }}</h3>
+<h3>{{ iscritto["risposte"]["specialita"] }} - {{ iscritto["risposte"]["tipo"].capitalize() }}</h3>
+<a href="{{ iscritto["link"] }}">{{ iscritto["link"] }}</a>
+<br>
+<table>
+    {% for i in range(10) %}
+      <tr>
+        <td>Risposta {{ i+1 }}</td>
+        <td>{{ iscritto["risposte"]["quest" ~ (i+1)] }}</td>
+      </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

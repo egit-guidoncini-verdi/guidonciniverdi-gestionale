@@ -20,6 +20,7 @@
 {% if current_user.livello == "admin" or current_user.livello == "iabr" %}
 <a type="button" class="btn btn-sm btn-warning mb-2" href="{{ url_for("rel_puglia_file") }}">Scarica File Relazioni</a>
 <a type="button" class="btn btn-sm btn-warning mb-2" href="{{ url_for("rel_puglia_rep") }}">Genera Report Relazioni</a>
+<a type="button" class="btn btn-sm btn-warning mb-2" href="{{ url_for("rel_puglia_pdf") }}">Genera PDF Diari di Bordo</a>
 {% endif %}
 {% endif %}
 

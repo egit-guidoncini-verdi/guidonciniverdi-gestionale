@@ -16,6 +16,8 @@ import base64
 import random
 import json
 import io
+from weasyprint import HTML
+from pypdf import PdfReader, PdfWriter
 
 with open("credenziali.json", "r") as f:
     cr = json.load(f)
@@ -1043,6 +1045,50 @@ def rel_puglia_rep():
     wb.save(out)
     out.seek(0)
     return send_file(out, as_attachment=True, download_name="riepilogo.xlsx")
+
+@app.route("/rel_puglia_pdf")
+@login_required
+def rel_puglia_pdf():
+    creds = f"{cr['wordpress']['user']}:{cr['wordpress']['passwd']}"
+    token = base64.b64encode(creds.encode())
+    header = {"Authorization": f"Basic {token.decode('utf-8')}"}
+    iscritti = []
+    if current_user.livello == "iabz":
+        tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato").filter_by(zona=current_user.zona)
+    else:
+        tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
+    for i in tmp_iscritti:
+        try:
+            rel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(i.id)).first()
+            try:
+                tmp_wordpress_id = WordpressPost.query.filter_by(iscrizioni_id=int(i.id)).filter_by(tipo="posts").first().wordpress_id
+                link_sq = requests.get(cr["wordpress"]["url"]+"/posts/"+str(tmp_wordpress_id), headers=header).json()["link"]
+            except:
+                link_sq = ""
+            try:
+                tmp_risposte = rel.dati
+            except:
+                tmp_risposte = {"tipo": i.tipo, "specialita": i.specialita}
+                for j in range(10):
+                    tmp_risposte[f"quest{j+1}"] = ""
+            tmp_iscritto = {"nome": i.nome, "gruppo": i.gruppo, "zona": i.zona, "specialita": i.specialita, "tipo": i.tipo, "risposte": tmp_risposte, "link": link_sq}
+            iscritti.append(tmp_iscritto)
+        except:
+            pass
+
+    writer = PdfWriter()
+
+    for i in iscritti:
+        html = render_template("rel_puglia_pdf.html", iscritto=i)
+        pdf_bytes = HTML(string=html).write_pdf()
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        for page in reader.pages:
+            writer.add_page(page)
+
+    out = io.BytesIO()
+    writer.write(out)
+    out.seek(0)
+    return send_file(out, as_attachment=True, download_name="riepilogo.pdf")
 
 @app.route("/relazione_puglia/<id_sq>", methods=["GET", "POST"])
 def relazione_puglia(id_sq):
