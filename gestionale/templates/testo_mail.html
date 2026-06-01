@@ -3,13 +3,13 @@
 {% block head %}
 
 <title>GV Piemonte - Mail</title>
-{{ ckeditor.load(pkg_type="basic") }}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
 
 {% endblock %}
 
 {% block titolo %}
 
-<h1 class="text-center my-2"><strong>Crea Mail</strong></h1>
+<h1 class="text-center my-2"><strong>Crea Mail Massiva</strong></h1>
 
 {% endblock %}
 
@@ -39,13 +39,26 @@
         </div>
     </div>
     <div class="input-group mb-3">
-    <span class="input-group-text">Titolo</span>
-    <input type="text" class="form-control" placeholder="Aggiornamento" aria-label="Aggiornamento" id="titolo" name="titolo">
+    <span class="input-group-text">Oggetto</span>
+    <input type="text" class="form-control" placeholder="Scrivi qui l'oggetto della mail..." aria-label="titolo" id="oggetto" name="oggetto">
     </div>
-    {{ ckeditor.create(value=preset) }}
+        <div id="editor">
+            <p></p>
+        </div>
     <button type="submit" class="btn btn-primary my-3">Salva</button>
 </form>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+    const options = {
+    modules: {
+        toolbar: true
+    },
+    placeholder: 'Scrivi qui il testo della mail...',
+    theme: 'snow'
+    };
+  const quill = new Quill('#editor', options);
+</script>
 
 {% endblock %}

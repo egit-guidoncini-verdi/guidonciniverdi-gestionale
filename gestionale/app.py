@@ -7,8 +7,6 @@ from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import smtplib, ssl
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import pandas as pd
 from openpyxl import Workbook
 from datetime import datetime
@@ -18,6 +16,8 @@ import string
 import json
 import io
 import os
+from weasyprint import HTML
+from pypdf import PdfReader, PdfWriter
 
 # costanti varie
 specialita = [
@@ -484,7 +484,7 @@ def edit_iscrizione(id_iscrizione):
             flash("Modifica Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscrizioni"))
 
-        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} è stata modificata come richiesto.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        testo_mail_sq = f"Carə {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} è stata modificata come richiesto.<br><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Modifica iscrizione", testo_mail_sq, regione=iscrizione.regione)
 
         # Avvisa Francesco e Admin
@@ -496,6 +496,28 @@ def edit_iscrizione(id_iscrizione):
             print("Errore Telegram")
         return redirect(url_for("iscrizioni"))
     return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=Gruppo.query.filter_by(regione=current_user.regione), specialita=specialita)
+
+@app.route("/export/<id_iscrizione>")
+@login_required
+def export_iscrizione(id_iscrizione):
+    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
+        return redirect(url_for("dashboard"))
+    i = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
+    tmp_zona = Zona.query.filter_by(id=i.zona).first()
+    tmp_iscritto = {"nome": i.nome, "gruppo": tmp_gruppo.gruppo, "zona": tmp_zona.zona, "specialita": i.specialita, "tipo": i.tipo, "link": i.link}
+    writer = PdfWriter()
+
+    html = render_template("export_pdf.html", iscritto=tmp_iscritto)
+    pdf_bytes = HTML(string=html).write_pdf()
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    for page in reader.pages:
+        writer.add_page(page)
+
+    out = io.BytesIO()
+    writer.write(out)
+    out.seek(0)
+    return send_file(out, as_attachment=True, download_name="riepilogo.pdf")
 
 @app.route("/abilita/<id_iscrizione>", methods=["GET", "POST"])
 @login_required
@@ -546,15 +568,6 @@ def mail():
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
     return render_template("mail.html", mail=CodaMail.query.all())
-
-@app.route("/test_mail/<id_mail>")
-@login_required
-def test_mail(id_mail):
-    if (current_user.livello != "iabr") and (current_user.livello != "admin"):
-        return redirect(url_for("dashboard"))
-    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
-    manda_mail([current_user.mail], [], testo_mail.titolo, testo_mail.testo)
-    return redirect(url_for("mail"))
 
 @app.route("/send_mail/<id_mail>")
 @login_required
@@ -629,32 +642,30 @@ def crea_mail():
 def edit_mail(id_mail):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
+    testo_mail = CodaMail.query.filter_by(id=id_mail).first()
+    tmp_testo_mail = {
+        "stato": testo_mail.stato,
+        "indirizzi": ",".join(testo_mail.indirizzi).strip(","),
+        "indirizzi_copia": ",".join(testo_mail.indirizzi_copia).strip(","),
+        "titolo": testo_mail.titolo,
+        "testo": testo_mail.testo
+    }
     if request.method == 'POST':
-        destinatari = {"sq": False,"sq_abilitate": False, "capi": False}
         try:
-            request.form["squadriglie"]
-            destinatari["sq"] = True
+            tmp_testo_mail["indirizzi"] = request.form["to"]
         except KeyError:
-            destinatari["sq"] = False
+            pass
         try:
-            request.form["squadriglie_abilitate"]
-            destinatari["sq_abilitate"] = True
+            tmp_testo_mail["indirizzi_copia"] = request.form["cc"]
         except KeyError:
-            destinatari["sq_abilitate"] = False
-        try:
-            request.form["capi_reparto"]
-            destinatari["capi"] = True
-        except KeyError:
-            destinatari["capi"] = False
-        testo_mail.data = str(datetime.now())
-        testo_mail.destinatari = destinatari
-        testo_mail.stato = False
-        testo_mail.titolo = request.form["titolo"]
-        testo_mail.testo = request.form["ckeditor"]
+            pass
+        testo_mail.indirizzi = tmp_testo_mail["indirizzi"].split(",")
+        testo_mail.indirizzi_copia = tmp_testo_mail["indirizzi_copia"].split(",")
+        testo_mail.titolo = tmp_testo_mail["titolo"]
+        testo_mail.testo = request.form["testo"]
         db.session.commit()
         return redirect(url_for("mail"))
-    return render_template("edit_testo_mail.html", testo_mail=testo_mail)
+    return render_template("edit_testo_mail.html", testo_mail=tmp_testo_mail)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -700,7 +711,7 @@ def admin():
                 db.session.commit()
                 flash("Utente inserito con successo!", "success")
 
-                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
+                testo_mail = f"Benvenuto {utente.username},<br>la presente per confermarti la creazione dell'account sul Gestionale Guidoncini Verdi!<br>Il Gestionale è la piattaforma usata per gestire le iscrizioni dei ragazzi e il nuovissimo sito <a href=\"guidonciniverdi.it\" target=\"_blank\">guidonciniverdi.it</a>.<br><h4><strong>Dettagli Iscrizione</strong></h4>Username: {utente.username}<br>Password provvisoria: {tmp_password}<br>Per accedere al gestionale puoi cliccare a questo <a href=\"guidonciniverdi.pythonanywhere.com/dashboard\" target=\"_blank\">link</a>"
 
                 if manda_mail([utente.mail], [], "Conferma Creazione Account", testo_mail, utente.regione):
                     flash("Mail inviata!", "success")
@@ -869,7 +880,7 @@ def iscriviti(regione):
             flash("Iscrizione fallita. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
 
-        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accedere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<hr><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
+        testo_mail_sq = f"Congratulazioni {iscrizione.nome},<br>la vostra iscrizione al percorso Guidoncini Verdi {SysOption.query.filter_by(key='AnnoCorrente').first().value} è stata registrata!<br>Nelle prossime settimane riceverete una mail con le credenziali per accedere al vostro Diario di Bordo Digitale, nell'attesa potete iniziare a scoprire il nostro nuovissimo sito <a href=\"https://guidonciniverdi.it/\" target=\"_blank\">guidonciniverdi.it</a>.<br><h4><strong>Dettagli Iscrizione</strong></h4>Zona: {iscrizione.zona}<br>Gruppo: {iscrizione.gruppo}<br>Ambito scelto: {iscrizione.specialita} - {iscrizione.tipo.capitalize()}"
         manda_mail([iscrizione.mail], [iscrizione.mail_capo1, iscrizione.mail_capo2], "Iscrizione completata!", testo_mail_sq, iscrizione.regione)
 
         # Avvisa Francesco e Admin

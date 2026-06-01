@@ -3,7 +3,7 @@
 {% block head %}
 
 <title>GV Piemonte - Mail</title>
-{{ ckeditor.load(pkg_type="basic") }}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
 
 {% endblock %}
 
@@ -16,48 +16,63 @@
 {% block corpo %}
 <div class="mx-5">
 
-<form method="post">
-    <div class="mb-3">
-        <label class="form-label">Destinatari</label>
-        <div class="form-check">
-        {% if testo_mail.destinatari["sq"] %}
-        <input class="form-check-input" type="checkbox" value="squadriglie" name="squadriglie" id="squadriglie" checked>
-        {% else %}
-        <input class="form-check-input" type="checkbox" value="squadriglie" name="squadriglie" id="squadriglie">
-        {% endif %}
-        <label class="form-check-label" for="squadriglie">
-            Squadriglie Iscritte (non abilitate)
-        </label>
-        </div>
-        <div class="form-check">
-        {% if testo_mail.destinatari["sq_abilitate"] %}
-        <input class="form-check-input" type="checkbox" value="squadriglie_abilitate" name="squadriglie_abilitate" id="squadriglie_abilitate" checked>
-        {% else %}
-        <input class="form-check-input" type="checkbox" value="squadriglie_abilitate" name="squadriglie_abilitate" id="squadriglie_abilitate">
-        {% endif %}
-        <label class="form-check-label" for="squadriglie_abilitate">
-            Squadriglie Abilitate
-        </label>
-        </div>
-        <div class="form-check">
-        {% if testo_mail.destinatari["capi"] %}
-        <input class="form-check-input" type="checkbox" value="capi_reparto" name="capi_reparto" id="capi_reparto" checked>
-        {% else %}
-        <input class="form-check-input" type="checkbox" value="capi_reparto" name="capi_reparto" id="capi_reparto">
-        {% endif %}
-        <label class="form-check-label" for="capi_reparto">
-            Capi Reparto
-        </label>
-        </div>
+<form method="post" id="mailForm">
+    <div class="input-group mb-3">
+    <span class="input-group-text">To</span>
+    {% if testo_mail.stato not in ['SENT','SENDING','PENDING'] %}
+    <input type="text" class="form-control" placeholder="Destinatari" aria-label="indirizzi" id="to" name="to" value="{{ testo_mail.indirizzi }}">
+    {% else %}
+    <input disabled type="text" class="form-control" placeholder="Destinatari" aria-label="indirizzi" id="to" name="to" value="{{ testo_mail.indirizzi }}">
+    {% endif %}
+    </div>
+    <div class="input-group mb-3">
+    <span class="input-group-text">Cc</span>
+    {% if testo_mail.stato not in ['SENT','SENDING','PENDING'] %}
+    <input type="text" class="form-control" placeholder="Indirizzi in copia" aria-label="indirizzi_copia" id="cc" name="cc" value="{{ testo_mail.indirizzi_copia }}">
+    {% else %}
+    <input disabled type="text" class="form-control" placeholder="Indirizzi in copia" aria-label="indirizzi_copia" id="cc" name="cc" value="{{ testo_mail.indirizzi_copia }}">
+    {% endif %}
     </div>
     <div class="input-group mb-3">
     <span class="input-group-text">Titolo</span>
-    <input type="text" class="form-control" placeholder="Aggiornamento" aria-label="Aggiornamento" id="titolo" name="titolo" value="{{ testo_mail.titolo }}">
+    {% if testo_mail.stato not in ['SENT','SENDING','PENDING'] %}
+    <input type="text" class="form-control" placeholder="Scrivi qui l'oggetto della mail..." aria-label="titolo" id="titolo" name="titolo" value="{{ testo_mail.titolo }}">
+    {% else %}
+    <input disabled type="text" class="form-control" placeholder="Scrivi qui l'oggetto della mail..." aria-label="titolo" id="titolo" name="titolo" value="{{ testo_mail.titolo }}">
+    {% endif %}
     </div>
-    {{ ckeditor.create(value=testo_mail.testo) }}
+    <div id="editor">
+        {{ testo_mail.testo | safe }}
+    </div>
+    <input type="hidden" name="testo" id="testo">
+    {% if testo_mail.stato not in ['SENT','SENDING','PENDING'] %}
     <button type="submit" class="btn btn-primary my-3">Salva</button>
+    {% endif %}
 </form>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+    {% if testo_mail.stato in ['SENT','SENDING','PENDING'] %}
+    const options = {
+    readOnly: true,
+    modules: {
+        toolbar: null
+    },
+    theme: 'snow'
+    };
+    {% else %}
+    const options = {
+    modules: {
+        toolbar: true
+    },
+    theme: 'snow'
+    };
+    {% endif %}
+    const quill = new Quill('#editor', options);
 
+    document.getElementById('mailForm').addEventListener('submit', function() {
+        document.getElementById('testo').value = quill.root.innerHTML;
+    });
+</script>
 {% endblock %}

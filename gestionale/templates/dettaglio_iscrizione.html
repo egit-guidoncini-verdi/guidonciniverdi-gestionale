@@ -38,6 +38,7 @@
     <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina_def", id_iscrizione=i[0]["id"]) }}">Elimina Definitivamente</a>
     {% endif %}
   {% endif %}
+  <a type="button" class="btn btn-outline-primary" href="{{ url_for("export_iscrizione", id_iscrizione=iscrizione.id) }}">Export</a>
   </div>
   <div class="table-responsive">
     <table class="table">

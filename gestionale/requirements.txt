@@ -10,3 +10,5 @@ pandas
 SQLAlchemy
 requests
 PyMySQL
+weasyprint
+pypdf

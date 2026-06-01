@@ -1,0 +1,19 @@
+<html>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 5px;
+}
+</style>
+<body>
+<h1>{{ iscritto["nome"] }}</h1>
+<h3>{{ iscritto["gruppo"].upper() }} - {{ iscritto["zona"].upper() }}</h3>
+<h3>{{ iscritto["specialita"] }} - {{ iscritto["tipo"].capitalize() }}</h3>
+<a href="{{ iscritto["link"] }}">{{ iscritto["link"] }}</a>
+
+</body>
+</html>

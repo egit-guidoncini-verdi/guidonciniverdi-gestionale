@@ -14,7 +14,7 @@
 
 {% block corpo %}
 
-<a type="button" class="btn btn-sm btn-warning mx-4 disabled" href="{{ url_for("crea_mail") }}">Crea nuova Mail</a>
+<a type="button" class="btn btn-sm btn-warning mx-4" href="{{ url_for("crea_mail") }}">Crea nuova Mail</a>
 
 <div class="mx-4">
     <div class="table-responsive">
@@ -24,7 +24,8 @@
           <th scope="col">#</th>
           <th scope="col">Data</th>
           <th scope="col">Titolo</th>
-          <th scope="col">Destinatari</th>
+          <th scope="col">To</th>
+          <th scope="col">Cc</th>
           <th scope="col">Stato</th>
           <th scope="col"></th>
         </tr>
@@ -35,14 +36,24 @@
           <th scope="row">{{ i.id }}</th>
           <td>{{ i.data }}</td>
           <td>{{ i.titolo }}</td>
-          <td>{{ i.indirizzi }} - {{ i.indirizzi_copia }}</td>
+          <td>{{ ",".join(i.indirizzi).strip(",") }}</td>
+          <td>{{ ",".join(i.indirizzi_copia).strip(",") }}</td>
           <td>{{ i.stato }}</td>
           <td>
           <div class="btn-group" role="group" aria-label="Basic outline example">
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("send_mail", id_mail=i.id) }}">Invia!</a>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("test_mail", id_mail=i.id) }}">Testa</a>
-            <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_mail", id_mail=i.id) }}">Modifica</a>
+            {% if i.stato in ['DRAFT','FAILED'] %}
+            <a type="button" class="btn btn-outline-success" href="{{ url_for("send_mail", id_mail=i.id) }}">Invia!</a>
+            {% endif %}
+            <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_mail", id_mail=i.id) }}">
+            {% if i.stato in ['SENT','SENDING','PENDING'] %}
+            Visualizza
+            {% else %}
+            Modifica
+            {% endif %}
+            </a>
+            {% if i.stato in ['PENDING','DRAFT','FAILED'] %}
             <a type="button" class="btn btn-outline-danger" href="{{ url_for("delete_mail", id_mail=i.id) }}">Elimina</a>
+            {% endif %}
           </div>
           </td>
         </tr>
