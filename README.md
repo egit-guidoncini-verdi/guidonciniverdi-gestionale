@@ -145,6 +145,10 @@ Come database è stato scelto MariaDB ([Documentazione qui](https://mariadb.org/
 
 Per l'invio di mail si è scelto di appoggiarsi al servizio Postfix ([Documentazione qui](https://www.postfix.org/documentation.html)).
 
+### Schema DataBase
+
+<img title="" src="./static/schema_db.png" alt="" width="554" data-align="center">
+
 ### Livelli di utente
 
 Sono presenti quattro livelli di utente.
