@@ -483,6 +483,13 @@ def edit_iscrizione(id_iscrizione):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
     iscrizione=IscrizioneEG.query.filter_by(id=int(id_iscrizione)).first()
+    gruppi = Gruppo.query.filter_by(regione=iscrizione.regione)
+    zone = Zona.query.filter_by(regione=iscrizione.regione)
+    json_gruppi = {}
+    for i in zone:
+        json_gruppi[i.zona.upper()] = []
+    for i in gruppi:
+        json_gruppi[Zona.query.filter_by(id=i.zona).first().zona.upper()].append(i.gruppo.upper())
     try:
         if iscrizione.stato == "abilitato":
             flash("L'utente è già stato abilitato!", "warning")
@@ -525,7 +532,7 @@ def edit_iscrizione(id_iscrizione):
         except:
             print("Errore Telegram")
         return redirect(url_for("iscrizioni"))
-    return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=Gruppo.query.filter_by(regione=current_user.regione), specialita=specialita)
+    return render_template("edit_iscrizione.html", iscrizione=iscrizione, gruppi=json_gruppi, specialita=specialita)
 
 @app.route("/export/<id_iscrizione>")
 @login_required
