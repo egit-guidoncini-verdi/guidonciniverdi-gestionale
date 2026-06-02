@@ -271,6 +271,9 @@ def index():
 def dashboard():
     dati_iscrizioni = {"da_abilitare": 0, "abilitate": 0, "eliminate": 0, "storico": {"labels": [], "datasets": []}}
     stato = False
+    tmp_regione = False
+    if current_user.livello != "admin":
+        tmp_regione = Regione.query.filter_by(id=current_user.regione).first().regione
     if current_user.livello == "iabz":
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
         totale_iscritti = IscrizioneEG.query.filter_by(zona=current_user.zona).filter_by(anno_percorso=stato.id).count()
@@ -300,7 +303,7 @@ def dashboard():
         dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id).count()
         dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id).count()
         dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
-    return render_template("dashboard.html", stato=stato, regione=Regione.query.filter_by(id=current_user.regione).first().regione, dati_iscrizioni=dati_iscrizioni)
+    return render_template("dashboard.html", stato=stato, regione=tmp_regione, dati_iscrizioni=dati_iscrizioni)
 
 @app.route("/gestione_regione", methods=["GET", "POST"])
 @login_required
