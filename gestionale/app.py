@@ -269,20 +269,37 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    dati_iscrizioni = {"da_abilitare": 0, "abilitate": 0, "eliminate": 0}
+    dati_iscrizioni = {"da_abilitare": 0, "abilitate": 0, "eliminate": 0, "storico": {"labels": [], "datasets": []}}
     stato = False
     if current_user.livello == "iabz":
-        totale_iscritti = IscrizioneEG.query.filter_by(zona=current_user.zona).count()
-        dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(zona=current_user.zona).count()
-        dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(zona=current_user.zona).count()
-        dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
+        totale_iscritti = IscrizioneEG.query.filter_by(zona=current_user.zona).filter_by(anno_percorso=stato.id).count()
+        dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(zona=current_user.zona).filter_by(anno_percorso=stato.id).count()
+        dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(zona=current_user.zona).filter_by(anno_percorso=stato.id).count()
+        dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
     if current_user.livello == "iabr":
-        totale_iscritti = IscrizioneEG.query.filter_by(regione=current_user.regione).count()
-        dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(regione=current_user.regione).count()
-        dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(regione=current_user.regione).count()
-        dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
+        for i in StatusPercorso.query.filter_by(regione=current_user.regione):
+            dati_iscrizioni["storico"]["labels"].append(i.anno)
+            dati_iscrizioni["storico"]["labels"].sort()
+        tmp_dati_iscrizioni = {
+            "abilitate": [],
+            "eliminate": [],
+            "da_abilitare": []
+            }
+        for i in dati_iscrizioni["storico"]["labels"]:
+            tmp_stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=i).first()
+            tmp_totale_iscritti = IscrizioneEG.query.filter_by(regione=current_user.regione).filter_by(anno_percorso=tmp_stato.id).count()
+            tmp_dati_iscrizioni["abilitate"].append(IscrizioneEG.query.filter_by(stato="abilitato").filter_by(regione=current_user.regione).filter_by(anno_percorso=tmp_stato.id).count())
+            tmp_dati_iscrizioni["eliminate"].append(IscrizioneEG.query.filter_by(stato="eliminato").filter_by(regione=current_user.regione).filter_by(anno_percorso=tmp_stato.id).count())
+            tmp_dati_iscrizioni["da_abilitare"].append(tmp_totale_iscritti - (tmp_dati_iscrizioni["abilitate"][-1] + tmp_dati_iscrizioni["eliminate"][-1]))
+        dati_iscrizioni["storico"]["datasets"].append({"label": "Abilitati", "data":tmp_dati_iscrizioni["abilitate"], "backgroundColor": '#198754'})
+        dati_iscrizioni["storico"]["datasets"].append({"label": "Da Abilitare", "data":tmp_dati_iscrizioni["da_abilitare"], "backgroundColor": '#ffc107'})
+        dati_iscrizioni["storico"]["datasets"].append({"label": "Elminati", "data":tmp_dati_iscrizioni["eliminate"], "backgroundColor": '#dc3545'})
+        totale_iscritti = IscrizioneEG.query.filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id).count()
+        dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id).count()
+        dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id).count()
+        dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
     return render_template("dashboard.html", stato=stato, dati_iscrizioni=dati_iscrizioni)
 
 @app.route("/gestione_regione", methods=["GET", "POST"])
@@ -314,17 +331,19 @@ def gestione_regione():
 @login_required
 def iscrizioni():
     limita = False
-    if current_user.livello == "iabz":
-        limita = True
-    iscritti = []
-    tmp_iscritti=IscrizioneEG.query.filter_by(regione=current_user.regione)
-    for i in tmp_iscritti:
-        tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
-        tmp_zona = Zona.query.filter_by(id=i.zona).first()
-        if limita and i.zona != current_user.zona:
-            continue
-        iscritti.append((i,tmp_gruppo,tmp_zona))
-    if current_user.livello == "admin":
+    if current_user.livello != "admin":
+        if current_user.livello == "iabz":
+            limita = True
+        iscritti = []
+        stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
+        tmp_iscritti=IscrizioneEG.query.filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id)
+        for i in tmp_iscritti:
+            tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
+            tmp_zona = Zona.query.filter_by(id=i.zona).first()
+            if limita and i.zona != current_user.zona:
+                continue
+            iscritti.append((i,tmp_gruppo,tmp_zona))
+    else:
         iscritti = []
         tmp_iscritti=IscrizioneEG.query.all()
         for i in tmp_iscritti:

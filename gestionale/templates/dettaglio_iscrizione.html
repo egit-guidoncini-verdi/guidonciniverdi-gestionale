@@ -26,16 +26,16 @@
   {% if iscrizione.stato in ["da_abilitare", "failed_user"] %}
   <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=iscrizione.id) }}">Abilita!</a>
   {% endif %}
-  {% if iscrizione.stato not in ["in_abilitazione", "failed_post"] %}
+  {% if iscrizione.stato not in ["in_abilitazione", "failed_post", "eliminato"] %}
   <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=iscrizione.id) }}">Modifica</a>
   {% endif %}
   {% if iscrizione.stato in ["da_abilitare", "failed_user"] %}
   <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina", id_iscrizione=iscrizione.id) }}">Scarta</a>
   {% endif %}
   {% if iscrizione.stato == "eliminato" %}
-  <a type="button" class="btn btn-outline-danger" href="{{ url_for("ripristina", id_iscrizione=i[0]["id"]) }}">Ripristina</a>
+  <a type="button" class="btn btn-outline-success" href="{{ url_for("ripristina", id_iscrizione=iscrizione.id) }}">Ripristina</a>
     {% if current_user.livello == "admin" %}
-    <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina_def", id_iscrizione=i[0]["id"]) }}">Elimina Definitivamente</a>
+    <a type="button" class="btn btn-outline-danger" href="{{ url_for("elimina_def", id_iscrizione=iscrizione.id) }}">Elimina Definitivamente</a>
     {% endif %}
   {% endif %}
   <a type="button" class="btn btn-outline-primary" href="{{ url_for("export_iscrizione", id_iscrizione=iscrizione.id) }}">Export</a>

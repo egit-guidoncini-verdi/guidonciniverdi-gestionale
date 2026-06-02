@@ -54,11 +54,15 @@ Benvenuto <strong>{{ current_user.username }}</strong>!
 </p>
 
 {% if current_user.livello != "admin" %}
-<div class="w-50 mx-auto">
+<div class="mx-5 mb-5 w-25 mx-auto">
   <canvas id="contatore_iscritti"></canvas>
 </div>
 {% endif %}
-
+{% if current_user.livello == "iabr" %}
+<div class="w-50 mx-auto">
+  <canvas id="bar_storico"></canvas>
+</div>
+{% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -88,6 +92,34 @@ Benvenuto <strong>{{ current_user.username }}</strong>!
     options: {
     responsive: true,
     maintainAspectRatio: false
+    }
+  });
+
+
+  const barchart = document.getElementById('bar_storico');
+
+  new Chart(barchart, {
+    type: 'bar',
+    data: {
+    labels: {{ dati_iscrizioni["storico"]["labels"] | safe }},
+    datasets: {{ dati_iscrizioni["storico"]["datasets"] | safe }}
+},
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top'
+        }
+      },
+      scales: {
+        x: {
+          stacked: true
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true
+        }
+      }
     }
   });
 </script>

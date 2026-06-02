@@ -186,7 +186,7 @@
             {% if i[0]["stato"] in ["da_abilitare", "failed_user"] %}
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("abilita", id_iscrizione=i[0]["id"]) }}">Abilita!</a>
             {% endif %}
-            {% if i[0]["stato"] not in ["in_abilitazione", "failed_post"] %}
+            {% if i[0]["stato"] not in ["in_abilitazione", "failed_post", "eliminato"] %}
             <a type="button" class="btn btn-outline-primary" href="{{ url_for("edit_iscrizione", id_iscrizione=i[0]["id"]) }}">Modifica</a>
             {% endif %}
             {% if i[0]["stato"] in ["da_abilitare", "failed_user"] %}
