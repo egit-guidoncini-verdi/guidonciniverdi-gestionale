@@ -81,8 +81,8 @@ class User(db.Model, UserMixin):
     livello = db.Column(db.String(255), nullable=False)
     telegram_id = db.Column(db.String(255), nullable=True)
 
-class IscrizioniEG(db.Model):
-    __tablename__ = "iscrizioniEG"
+class IscrizioneEG(db.Model):
+    __tablename__ = "iscrizioni_eg"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.String(255), nullable=False)
@@ -109,7 +109,7 @@ class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
-    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     username = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -119,7 +119,7 @@ class WordpressPost(db.Model):
     __tablename__ = "wordpress_post"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
-    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id"), nullable=False)
     wordpress_user_id = db.Column(db.Integer, db.ForeignKey("wordpress_user.id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     tipo = db.Column(db.String(255), nullable=False)
@@ -130,8 +130,18 @@ class RelazioniPuglia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.JSON, nullable=False)
-    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioniEG.id"), nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id"), nullable=False)
     dati = db.Column(db.JSON, nullable=False)
+
+class MailMassiva(db.Model):
+    __tablename__ = "mail_massive"
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.DateTime, nullable=False)
+    stato = db.Column(db.String(255), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
+    destinatari = db.Column(db.JSON, nullable=False)
+    titolo = db.Column(db.String(255), nullable=False)
+    testo = db.Column(db.UnicodeText, nullable=False)
 
 class CodaMail(db.Model):
     __tablename__ = "coda_mail"
@@ -206,12 +216,6 @@ def init_db():
     try:
         db.session.add(User(username="admin", password=generate_password_hash("password"), mail="example@mail.com", livello="admin", telegram_id=""))
         print("Utente 'admin' creato con password: 'password'")
-        db.session.add(SysOption(key="AnnoCorrente", value=str(datetime.today().year)))
-        db.session.add(SysOption(key="TemplatePost", value="8183"))
-        db.session.add(Demone(key="send_notifiche", value=True))
-        db.session.add(Demone(key="send_mail", value=True))
-        db.session.add(Demone(key="send_telegram", value=True))
-        db.session.add(Demone(key="job_wordpress", value=True))
         db.session.commit()
         print("Operazione terminata correttamente!")
     except Exception as e:
@@ -265,17 +269,21 @@ def index():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").count()
+    dati_iscrizioni = {"da_abilitare": 0, "abilitate": 0, "eliminate": 0}
+    stato = False
     if current_user.livello == "iabz":
-        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(zona=current_user.zona).count()
+        totale_iscritti = IscrizioneEG.query.filter_by(zona=current_user.zona).count()
+        dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(zona=current_user.zona).count()
+        dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(zona=current_user.zona).count()
+        dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
     if current_user.livello == "iabr":
-        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione=current_user.regione).count()
+        totale_iscritti = IscrizioneEG.query.filter_by(regione=current_user.regione).count()
+        dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(regione=current_user.regione).count()
+        dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(regione=current_user.regione).count()
+        dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
         stato = StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
-    if current_user.livello == "admin":
-        non_abilitate = IscrizioniEG.query.filter_by(stato="da_abilitare").filter_by(regione="piemonte").count()
-        stato = StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione="piemonte").first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first()
-    return render_template("dashboard.html", stato=stato, non_abilitate=non_abilitate)
+    return render_template("dashboard.html", stato=stato, dati_iscrizioni=dati_iscrizioni)
 
 @app.route("/gestione_regione", methods=["GET", "POST"])
 @login_required
@@ -309,7 +317,7 @@ def iscrizioni():
     if current_user.livello == "iabz":
         limita = True
     iscritti = []
-    tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione)
+    tmp_iscritti=IscrizioneEG.query.filter_by(regione=current_user.regione)
     for i in tmp_iscritti:
         tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
         tmp_zona = Zona.query.filter_by(id=i.zona).first()
@@ -318,7 +326,7 @@ def iscrizioni():
         iscritti.append((i,tmp_gruppo,tmp_zona))
     if current_user.livello == "admin":
         iscritti = []
-        tmp_iscritti=IscrizioniEG.query.all()
+        tmp_iscritti=IscrizioneEG.query.all()
         for i in tmp_iscritti:
             tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
             tmp_zona = Zona.query.filter_by(id=i.zona).first()
@@ -332,7 +340,7 @@ def report():
     if current_user.livello == "iabz":
         limita = True
     iscritti = []
-    tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione)
+    tmp_iscritti=IscrizioneEG.query.filter_by(regione=current_user.regione)
     for i in tmp_iscritti:
         if limita and i.zona != current_user.zona:
             continue
@@ -385,7 +393,7 @@ def report():
 @app.route("/dettagli/<id_iscrizione>")
 @login_required
 def dettagli(id_iscrizione):
-    tmp_iscrizione = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    tmp_iscrizione = IscrizioneEG.query.filter_by(id=int(id_iscrizione)).first()
     tmp_gruppo = Gruppo.query.filter_by(id=tmp_iscrizione.gruppo).first()
     tmp_zona = Zona.query.filter_by(id=tmp_iscrizione.zona).first()
     try:
@@ -401,7 +409,7 @@ def dettagli(id_iscrizione):
 @app.route("/elimina/<id_iscrizione>")
 @login_required
 def elimina(id_iscrizione):
-    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    iscrizione=IscrizioneEG.query.filter_by(id=int(id_iscrizione)).first()
     try:
         if iscrizione.stato == "abilitato":
             flash("L'utente è già stato abilitato!", "warning")
@@ -418,7 +426,7 @@ def elimina(id_iscrizione):
 def elimina_def(id_iscrizione):
     if current_user.livello != "admin":
         return redirect(url_for("dashboard"))
-    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    iscrizione=IscrizioneEG.query.filter_by(id=int(id_iscrizione)).first()
     try:
         if iscrizione.stato == "abilitato":
             flash("L'utente è già stato abilitato!", "warning")
@@ -435,7 +443,7 @@ def elimina_def(id_iscrizione):
 @app.route("/ripristina/<id_iscrizione>")
 @login_required
 def ripristina(id_iscrizione):
-    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    iscrizione=IscrizioneEG.query.filter_by(id=int(id_iscrizione)).first()
     try:
         if iscrizione.stato == "abilitato":
             flash("L'utente è già stato abilitato!", "warning")
@@ -452,7 +460,7 @@ def ripristina(id_iscrizione):
 def edit_iscrizione(id_iscrizione):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    iscrizione=IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    iscrizione=IscrizioneEG.query.filter_by(id=int(id_iscrizione)).first()
     try:
         if iscrizione.stato == "abilitato":
             flash("L'utente è già stato abilitato!", "warning")
@@ -502,7 +510,7 @@ def edit_iscrizione(id_iscrizione):
 def export_iscrizione(id_iscrizione):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    i = IscrizioniEG.query.filter_by(id=int(id_iscrizione)).first()
+    i = IscrizioneEG.query.filter_by(id=int(id_iscrizione)).first()
     tmp_gruppo = Gruppo.query.filter_by(id=i.gruppo).first()
     tmp_zona = Zona.query.filter_by(id=i.zona).first()
     tmp_iscritto = {"nome": i.nome, "gruppo": tmp_gruppo.gruppo, "zona": tmp_zona.zona, "specialita": i.specialita, "tipo": i.tipo, "link": i.link}
@@ -524,7 +532,7 @@ def export_iscrizione(id_iscrizione):
 def abilita(id_iscrizione):
     if not StatusPercorso.query.filter_by(regione=current_user.regione).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).first().abilitazioni:
         return redirect(url_for("iscrizioni"))
-    tmp_iscrizione = IscrizioniEG.query.filter_by(id=id_iscrizione).first()
+    tmp_iscrizione = IscrizioneEG.query.filter_by(id=id_iscrizione).first()
     tmp_gruppo = Gruppo.query.filter_by(id=tmp_iscrizione.gruppo).first()
     tmp_zona = Zona.query.filter_by(id=tmp_iscrizione.zona).first()
     tmp_regione = Regione.query.filter_by(id=tmp_iscrizione.regione).first()
@@ -575,7 +583,7 @@ def send_mail(id_mail):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
     testo_mail = TestiMail.query.filter_by(id=id_mail).first()
-    tmp_iscritti=IscrizioniEG.query.all()
+    tmp_iscritti=IscrizioneEG.query.all()
     tmp_destinatari = []
     tmp_copia = []
     for i in tmp_iscritti:
@@ -872,7 +880,7 @@ def iscriviti(regione):
             flash("Il gruppo selezionato non è corretto. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
         try:
-            iscrizione = IscrizioniEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=Regione.query.filter_by(regione=regione).first().id, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"], link="")
+            iscrizione = IscrizioneEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=Regione.query.filter_by(regione=regione).first().id, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"], link="")
             db.session.add(iscrizione)
             db.session.commit()
         except Exception as e:
@@ -918,7 +926,7 @@ def iscriviti_success():
 @login_required
 def rel_puglia_file():
     iscritti = []
-    tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
+    tmp_iscritti=IscrizioneEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
     for i in tmp_iscritti:
         try:
             stato_rel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(i.id)).first().stato
@@ -962,9 +970,9 @@ def rel_puglia_file():
 def rel_puglia_rep():
     iscritti = []
     if current_user.livello == "iabz":
-        tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato").filter_by(zona=current_user.zona)
+        tmp_iscritti=IscrizioneEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato").filter_by(zona=current_user.zona)
     else:
-        tmp_iscritti=IscrizioniEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
+        tmp_iscritti=IscrizioneEG.query.filter_by(regione=current_user.regione).filter_by(stato="abilitato")
     for i in tmp_iscritti:
         try:
             rel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(i.id)).first()
@@ -1002,7 +1010,7 @@ def rel_puglia_rep():
 
 @app.route("/relazione_puglia/<id_sq>", methods=["GET", "POST"])
 def relazione_puglia(id_sq):
-    sq = IscrizioniEG.query.filter_by(id=int(id_sq)).first()
+    sq = IscrizioneEG.query.filter_by(id=int(id_sq)).first()
     try:
         tryrel = RelazioniPuglia.query.filter_by(iscrizioni_id=int(id_sq)).first()
         if tryrel.iscrizioni_id == sq.id and tryrel.stato:

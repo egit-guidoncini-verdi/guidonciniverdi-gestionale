@@ -70,8 +70,8 @@ class User(Base):
     livello = Column(String(255), nullable=False)
     telegram_id = Column(String(255), nullable=True)
 
-class IscrizioniEG(Base):
-    __tablename__ = "iscrizioniEG"
+class IscrizioneEG(Base):
+    __tablename__ = "iscrizioni_eg"
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
     stato = Column(String(255), nullable=False)
@@ -98,7 +98,7 @@ class WordpressUser(Base):
     __tablename__ = "wordpress_user"
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
-    iscrizioni_id = Column(Integer, ForeignKey("iscrizioniEG.id"), nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id"), nullable=False)
     wordpress_id = Column(Integer, nullable=False)
     username = Column(String(255), nullable=False)
     password = Column(String(255), nullable=False)
@@ -108,7 +108,7 @@ class WordpressPost(Base):
     __tablename__ = "wordpress_post"
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
-    iscrizioni_id = Column(Integer, ForeignKey("iscrizioniEG.id"), nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id"), nullable=False)
     wordpress_user_id = Column(Integer, ForeignKey("wordpress_user.id"), nullable=False)
     wordpress_id = Column(Integer, nullable=False)
     tipo = Column(String(255), nullable=False)
@@ -119,7 +119,7 @@ class RelazioniPuglia(Base):
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
     stato = Column(JSON, nullable=False)
-    iscrizioni_id = Column(Integer, ForeignKey("iscrizioniEG.id"), nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id"), nullable=False)
     dati = Column(JSON, nullable=False)
 
 class CodaMail(Base):
@@ -246,16 +246,16 @@ def send_notifiche():
                 tmp_utenti = session.query(User).filter_by(livello="iabr").all()
                 tmp_utenti.extend(session.query(User).filter_by(livello="pattuglia").all())
                 for i in tmp_utenti:
-                    non_abilitate = session.query(IscrizioniEG).filter_by(stato="da_abilitare").filter_by(regione=i.regione).count()
-                    abilitate = session.query(IscrizioniEG).filter_by(stato="abilitato").filter_by(regione=i.regione).count()
+                    non_abilitate = session.query(IscrizioneEG).filter_by(stato="da_abilitare").filter_by(regione=i.regione).count()
+                    abilitate = session.query(IscrizioneEG).filter_by(stato="abilitato").filter_by(regione=i.regione).count()
                     testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
                     if non_abilitate > 0:
                         manda_telegram(i.telegram_id, f"Report {i.regione.capitalize()}", testo_telegram)
 
                 tmp_utenti = session.query(User).filter_by(livello="iabz").all()
                 for i in tmp_utenti:
-                    non_abilitate = session.query(IscrizioniEG).filter_by(stato="da_abilitare").filter_by(zona=i.zona).count()
-                    abilitate = session.query(IscrizioniEG).filter_by(stato="abilitato").filter_by(zona=i.zona).count()
+                    non_abilitate = session.query(IscrizioneEG).filter_by(stato="da_abilitare").filter_by(zona=i.zona).count()
+                    abilitate = session.query(IscrizioneEG).filter_by(stato="abilitato").filter_by(zona=i.zona).count()
                     testo_telegram = f"Da abilitare: {non_abilitate}\nAbilitate: {abilitate}"
                     if non_abilitate > 0:
                         manda_telegram(i.telegram_id, f"Report {i.zona}", testo_telegram)
@@ -367,7 +367,7 @@ def job_wordpress():
         token = base64.b64encode(creds.encode())
         header = {"Authorization": f"Basic {token.decode('utf-8')}"}
         session = Session()
-        tmp_iscrizioni = session.query(IscrizioniEG).filter_by(stato="in_abilitazione")
+        tmp_iscrizioni = session.query(IscrizioneEG).filter_by(stato="in_abilitazione")
         for i in tmp_iscrizioni:
             i.stato = "da_abilitare"
         tmp_jobs = session.query(JobWordpress).filter_by(stato="SENDING")
@@ -384,7 +384,7 @@ def job_wordpress():
                 session.commit()
                 
                 if tmp_job.dati["tipo"] == "crea_sq":
-                    tmp_iscrizione = session.query(IscrizioniEG).filter_by(id=tmp_job.dati["iscrizione"]).first()
+                    tmp_iscrizione = session.query(IscrizioneEG).filter_by(id=tmp_job.dati["iscrizione"]).first()
                     tmp_iscrizione.stato = "in_abilitazione"
                     session.commit()
                     tmp_passwd = genera_password_sq()

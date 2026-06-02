@@ -8,8 +8,6 @@
 
 {% block titolo %}
 
-<h1 class="text-center my-2"><strong>Gestionale Guidoncini Verdi</strong></h1>
-
 {% endblock %}
 
 {% block corpo %}
@@ -48,11 +46,49 @@ Benvenuto <strong>{{ current_user.username }}</strong>!
 <a type="button" class="btn btn-warning mt-2" href="{{ url_for("iscrivi") }}">Iscrivi una Squadriglia</a>
 {% endif %}
 {% endif %}
-<br>
-<strong>Iscrizioni da abilitare:</strong> <span class="badge text-bg-success">{{ non_abilitate }}</span>
+{% if current_user.livello == "iabz" %}
 <br>
 <a type="button" class="btn btn-warning mt-2" href="{{ url_for("iscrizioni") }}">Vai alle Iscrizioni</a>
 {% endif %}
+{% endif %}
 </p>
+
+{% if current_user.livello != "admin" %}
+<div class="w-50 mx-auto">
+  <canvas id="contatore_iscritti"></canvas>
 </div>
+{% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById('contatore_iscritti');
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            'Eliminate',
+            'Abilitate',
+            'Da Abilitare'
+        ],
+        datasets: [{
+            label: 'Iscrizioni',
+            data: [{{ dati_iscrizioni["eliminate"] }}, {{ dati_iscrizioni["abilitate"] }}, {{ dati_iscrizioni["da_abilitare"] }}],
+            backgroundColor: [
+            'rgb(220, 53, 69)',
+            'rgb(25, 135, 84)',
+            'rgb(255, 193, 7)'
+            ],
+            hoverOffset: 4
+        }]
+        },
+    options: {
+    responsive: true,
+    maintainAspectRatio: false
+    }
+  });
+</script>
 {% endblock %}
