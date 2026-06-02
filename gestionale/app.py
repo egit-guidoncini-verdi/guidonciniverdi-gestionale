@@ -689,7 +689,7 @@ def edit_mail(id_mail):
         testo_mail.indirizzi = tmp_testo_mail["indirizzi"].split(",")
         testo_mail.indirizzi_copia = tmp_testo_mail["indirizzi_copia"].split(",")
         testo_mail.titolo = tmp_testo_mail["titolo"]
-        testo_mail.testo = request.form["testo"]
+        testo_mail.testo = request.form["testo"].replace("</p><p>", "<br>").replace("<p>", "").replace("</p>", "")
         db.session.commit()
         return redirect(url_for("mail"))
     return render_template("edit_testo_mail.html", testo_mail=tmp_testo_mail)
@@ -706,7 +706,7 @@ def login():
                 flash("Username o Password errati!", "warning")
         else:
             flash("Utente inesistente!", "warning")
-    return render_template("login.html")
+    return render_template("login.html", anno=SysOption.query.filter_by(key="AnnoCorrente").first().value)
 
 @app.route("/logout")
 @login_required
