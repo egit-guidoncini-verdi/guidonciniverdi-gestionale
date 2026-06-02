@@ -9,6 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import text
 from sqlalchemy.dialects import mysql
+from datetime import datetime
 
 # revision identifiers, used by Alembic.
 revision = '52aec5b28f88'
@@ -27,7 +28,7 @@ def upgrade():
     sa.Column('destinatari', sa.JSON(), nullable=False),
     sa.Column('titolo', sa.String(length=255), nullable=False),
     sa.Column('testo', sa.UnicodeText(), nullable=False),
-    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], ),
+    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], name='fk_mail_massive_regioni_id'),
     sa.PrimaryKeyConstraint('id')
     )
 
@@ -85,6 +86,17 @@ def upgrade():
                 "value": result_anno_corrente[0]
             }
         )
+    else:
+        conn.execute(
+            text("""
+                INSERT INTO system_option (`key`, `value`)
+                VALUES (:key, :value)
+            """),
+            {
+                "key": "AnnoCorrente",
+                "value": str(datetime.today().year)
+            }
+        )
 
     if result_template_post is not None:
         conn.execute(
@@ -97,51 +109,19 @@ def upgrade():
                 "value": result_template_post[0]
             }
         )
+    else:
+        conn.execute(
+            text("""
+                INSERT INTO system_option (`key`, `value`)
+                VALUES (:key, :value)
+            """),
+            {
+                "key": "TemplatePost",
+                "value": "8183"
+            }
+        )
 
     op.rename_table('iscrizioniEG', 'iscrizioni_eg')
-
-    op.drop_constraint(
-        '1',
-        'relazioni_puglia',
-        type_='foreignkey'
-    )
-
-    op.create_foreign_key(
-        'fk_relazioni_puglia_iscrizioni_id',
-        'relazioni_puglia',
-        'iscrizioni_eg',
-        ['iscrizioni_id'],
-        ['id']
-    )
-
-    op.drop_constraint(
-        '1',
-        'wordpress_post',
-        type_='foreignkey'
-    )
-
-    op.create_foreign_key(
-        'fk_wordpress_post_iscrizioni_id',
-        'wordpress_post',
-        'iscrizioni_eg',
-        ['iscrizioni_id'],
-        ['id']
-    )
-
-    op.drop_constraint(
-        '1',
-        'wordpress_user',
-        type_='foreignkey'
-    )
-
-    op.create_foreign_key(
-        'fk_wordpress_user_iscrizioni_id',
-        'wordpress_user',
-        'iscrizioni_eg',
-        ['iscrizioni_id'],
-        ['id']
-    )
-
     # ### end Alembic commands ###
 
 
@@ -153,46 +133,4 @@ def downgrade():
     conn.execute(text("TRUNCATE TABLE demoni;"))
 
     op.rename_table('iscrizioni_eg', 'iscrizioniEG')
-
-    op.drop_constraint(
-        'fk_relazioni_puglia_iscrizioni_id',
-        'relazioni_puglia',
-        type_='foreignkey'
-    )
-
-    op.create_foreign_key(
-        '1',
-        'relazioni_puglia',
-        'iscrizioniEG',
-        ['iscrizioni_id'],
-        ['id']
-    )
-
-    op.drop_constraint(
-        'fk_wordpress_post_iscrizioni_id',
-        'wordpress_post',
-        type_='foreignkey'
-    )
-
-    op.create_foreign_key(
-        '1',
-        'wordpress_post',
-        'iscrizioniEG',
-        ['iscrizioni_id'],
-        ['id']
-    )
-
-    op.drop_constraint(
-        'fk_wordpress_user_iscrizioni_id',
-        'wordpress_user',
-        type_='foreignkey'
-    )
-
-    op.create_foreign_key(
-        '1',
-        'wordpress_user',
-        'iscrizioniEG',
-        ['iscrizioni_id'],
-        ['id']
-    )
     # ### end Alembic commands ###

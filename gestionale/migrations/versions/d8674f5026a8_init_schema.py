@@ -49,7 +49,7 @@ def upgrade():
     sa.Column('indirizzi_copia', sa.JSON(), nullable=False),
     sa.Column('titolo', sa.String(length=255), nullable=False),
     sa.Column('testo', sa.UnicodeText(), nullable=False),
-    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], ),
+    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], name='fk_coda_mail_regioni_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('status_percorso',
@@ -60,14 +60,14 @@ def upgrade():
     sa.Column('regione', sa.Integer(), nullable=True),
     sa.Column('data_apertura', sa.DateTime(), nullable=True),
     sa.Column('data_chiusura', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], ),
+    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], name='fk_status_percorso_regioni_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('zone',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('zona', sa.String(length=255), nullable=False),
     sa.Column('regione', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], ),
+    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], name='fk_zone_regioni_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('gruppi',
@@ -75,8 +75,8 @@ def upgrade():
     sa.Column('gruppo', sa.String(length=255), nullable=True),
     sa.Column('zona', sa.Integer(), nullable=False),
     sa.Column('regione', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], ),
-    sa.ForeignKeyConstraint(['zona'], ['zone.id'], ),
+    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], name='fk_gruppi_regioni_id'),
+    sa.ForeignKeyConstraint(['zona'], ['zone.id'], name='fk_gruppi_zone_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
@@ -88,8 +88,8 @@ def upgrade():
     sa.Column('zona', sa.Integer(), nullable=True),
     sa.Column('livello', sa.String(length=255), nullable=False),
     sa.Column('telegram_id', sa.String(length=255), nullable=True),
-    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], ),
-    sa.ForeignKeyConstraint(['zona'], ['zone.id'], ),
+    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], name='fk_user_regioni_id'),
+    sa.ForeignKeyConstraint(['zona'], ['zone.id'], name='fk_user_zone_id'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username')
     )
@@ -113,8 +113,9 @@ def upgrade():
     sa.Column('cell_capo2', sa.String(length=255), nullable=False),
     sa.Column('sesso', sa.String(length=2), nullable=False),
     sa.Column('link', sa.Text(), nullable=False),
-    sa.ForeignKeyConstraint(['gruppo'], ['gruppi.id'], ),
-    sa.ForeignKeyConstraint(['zona'], ['zone.id'], ),
+    sa.ForeignKeyConstraint(['gruppo'], ['gruppi.id'], name='fk_iscrizioni_eg_gruppi_id'),
+    sa.ForeignKeyConstraint(['zona'], ['zone.id'], name='fk_iscrizioni_eg_zone_id'),
+    sa.ForeignKeyConstraint(['regione'], ['regioni.id'], name='fk_iscrizioni_eg_regioni_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('relazioni_puglia',
@@ -123,7 +124,7 @@ def upgrade():
     sa.Column('stato', sa.JSON(), nullable=False),
     sa.Column('iscrizioni_id', sa.Integer(), nullable=False),
     sa.Column('dati', sa.JSON(), nullable=False),
-    sa.ForeignKeyConstraint(['iscrizioni_id'], ['iscrizioniEG.id'], ),
+    sa.ForeignKeyConstraint(['iscrizioni_id'], ['iscrizioniEG.id'], name='fk_relazioni_puglia_iscrizioni_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('wordpress_user',
@@ -134,7 +135,7 @@ def upgrade():
     sa.Column('username', sa.String(length=255), nullable=False),
     sa.Column('password', sa.String(length=255), nullable=False),
     sa.Column('meta', sa.JSON(), nullable=False),
-    sa.ForeignKeyConstraint(['iscrizioni_id'], ['iscrizioniEG.id'], ),
+    sa.ForeignKeyConstraint(['iscrizioni_id'], ['iscrizioniEG.id'], name='fk_wordpress_user_iscrizioni_id'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('wordpress_post',
@@ -145,8 +146,8 @@ def upgrade():
     sa.Column('wordpress_id', sa.Integer(), nullable=False),
     sa.Column('tipo', sa.String(length=255), nullable=False),
     sa.Column('meta', sa.JSON(), nullable=False),
-    sa.ForeignKeyConstraint(['iscrizioni_id'], ['iscrizioniEG.id'], ),
-    sa.ForeignKeyConstraint(['wordpress_user_id'], ['wordpress_user.id'], ),
+    sa.ForeignKeyConstraint(['iscrizioni_id'], ['iscrizioniEG.id'], name='fk_wordpress_post_iscrizioni_id'),
+    sa.ForeignKeyConstraint(['wordpress_user_id'], ['wordpress_user.id'], name='fk_wordpress_post_wordpress_user_id'),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
