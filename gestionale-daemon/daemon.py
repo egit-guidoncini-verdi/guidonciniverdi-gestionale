@@ -36,7 +36,6 @@ smtp_port = os.environ["MAIL_PORT"]
 
 drivers = {
     "sqlite": "sqlite:///",
-    "postgresql": "postgresql://",
     "mariadb": "mysql+pymysql://",
 }
 
@@ -78,8 +77,8 @@ class IscrizioneEG(Base):
     nome = Column(String(255), nullable=False)
     mail = Column(String(255), nullable=False)
     regione = Column(Integer, nullable=False)
-    zona = Column(Integer, ForeignKey("zone.id"), nullable=False)
-    gruppo = Column(Integer, ForeignKey("gruppi.id"), nullable=False)
+    zona = Column(Integer, ForeignKey("zone.id", name="fk_iscrizioni_eg_zone_id"), nullable=False)
+    gruppo = Column(Integer, ForeignKey("gruppi.id", name="fk_iscrizioni_eg_gruppi_id"), nullable=False)
     specialita = Column(String(255), nullable=False)
     # tipo indica se conquista o conferma => True se conferma
     tipo = Column(String(255), nullable=False)
@@ -93,6 +92,7 @@ class IscrizioneEG(Base):
     cell_capo2 = Column(String(255), nullable=False)
     sesso = Column(String(2), nullable=False)
     link = Column(Text, nullable=False)
+    anno_percorso = Column(db.Integer, ForeignKey("status_percorso.id", name="fk_iscrizioni_eg_status_percorso_id"), nullable=True)
 
 class WordpressUser(Base):
     __tablename__ = "wordpress_user"

@@ -37,7 +37,6 @@ specialita = [
 
 drivers = {
     "sqlite": "sqlite:///",
-    "postgresql": "postgresql://",
     "mariadb": "mysql+pymysql://",
 }
 
@@ -76,8 +75,8 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
     mail = db.Column(db.String(255), nullable=False)
-    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=True)
-    zona = db.Column(db.Integer, db.ForeignKey("zone.id"), nullable=True)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id", name="fk_user_regioni_id"), nullable=True)
+    zona = db.Column(db.Integer, db.ForeignKey("zone.id", name="fk_user_zone_id"), nullable=True)
     livello = db.Column(db.String(255), nullable=False)
     telegram_id = db.Column(db.String(255), nullable=True)
 
@@ -88,9 +87,9 @@ class IscrizioneEG(db.Model):
     stato = db.Column(db.String(255), nullable=False)
     nome = db.Column(db.String(255), nullable=False)
     mail = db.Column(db.String(255), nullable=False)
-    regione = db.Column(db.Integer, nullable=False)
-    zona = db.Column(db.Integer, db.ForeignKey("zone.id"), nullable=False)
-    gruppo = db.Column(db.Integer, db.ForeignKey("gruppi.id"), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id", name="fk_iscrizioni_eg_regioni_id"), nullable=False)
+    zona = db.Column(db.Integer, db.ForeignKey("zone.id", name="fk_iscrizioni_eg_zone_id"), nullable=False)
+    gruppo = db.Column(db.Integer, db.ForeignKey("gruppi.id", name="fk_iscrizioni_eg_gruppi_id"), nullable=False)
     specialita = db.Column(db.String(255), nullable=False)
     # tipo indica se conquista o conferma => True se conferma
     tipo = db.Column(db.String(255), nullable=False)
@@ -104,12 +103,13 @@ class IscrizioneEG(db.Model):
     cell_capo2 = db.Column(db.String(255), nullable=False)
     sesso = db.Column(db.String(2), nullable=False)
     link = db.Column(db.Text, nullable=False)
+    anno_percorso = db.Column(db.Integer, db.ForeignKey("status_percorso.id", name="fk_iscrizioni_eg_status_percorso_id"), nullable=True)
 
 class WordpressUser(db.Model):
     __tablename__ = "wordpress_user"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
-    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id"), nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id", name="fk_wordpress_user_iscrizioni_id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     username = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -119,8 +119,8 @@ class WordpressPost(db.Model):
     __tablename__ = "wordpress_post"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
-    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id"), nullable=False)
-    wordpress_user_id = db.Column(db.Integer, db.ForeignKey("wordpress_user.id"), nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id", name="fk_wordpress_post_iscrizioni_id"), nullable=False)
+    wordpress_user_id = db.Column(db.Integer, db.ForeignKey("wordpress_user.id", name="fk_wordpress_post_wordpress_user_id"), nullable=False)
     wordpress_id = db.Column(db.Integer, nullable=False)
     tipo = db.Column(db.String(255), nullable=False)
     meta = db.Column(db.JSON, nullable=False)
@@ -130,7 +130,7 @@ class RelazioniPuglia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.JSON, nullable=False)
-    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id"), nullable=False)
+    iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id", name="fk_relazioni_puglia_iscrizioni_id"), nullable=False)
     dati = db.Column(db.JSON, nullable=False)
 
 class MailMassiva(db.Model):
@@ -138,7 +138,7 @@ class MailMassiva(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.String(255), nullable=False)
-    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id", name="fk_mail_massive_regioni_id"), nullable=False)
     destinatari = db.Column(db.JSON, nullable=False)
     titolo = db.Column(db.String(255), nullable=False)
     testo = db.Column(db.UnicodeText, nullable=False)
@@ -148,7 +148,7 @@ class CodaMail(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
     stato = db.Column(db.String(255), nullable=False)
-    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id", name="fk_coda_mail_regioni_id"), nullable=False)
     indirizzi = db.Column(db.JSON, nullable=False)
     indirizzi_copia = db.Column(db.JSON, nullable=False)
     titolo = db.Column(db.String(255), nullable=False)
@@ -176,7 +176,7 @@ class StatusPercorso(db.Model):
     anno = db.Column(db.String(4), nullable=True)
     iscrizioni = db.Column(db.JSON, nullable=False)
     abilitazioni = db.Column(db.JSON, nullable=False)
-    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=True)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id", name="fk_status_percorso_regioni_id"), nullable=True)
     data_apertura = db.Column(db.DateTime, nullable=True)
     data_chiusura = db.Column(db.DateTime, nullable=True)
 
@@ -190,14 +190,14 @@ class Zona(db.Model):
     __tablename__ = "zone"
     id = db.Column(db.Integer, primary_key=True)
     zona = db.Column(db.String(255), nullable=False)
-    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id", name="fk_zone_regioni_id"), nullable=False)
 
 class Gruppo(db.Model):
     __tablename__ = "gruppi"
     id = db.Column(db.Integer, primary_key=True)
     gruppo = db.Column(db.String(255), nullable=True)
-    zona = db.Column(db.Integer, db.ForeignKey("zone.id"), nullable=False)
-    regione = db.Column(db.Integer, db.ForeignKey("regioni.id"), nullable=False)
+    zona = db.Column(db.Integer, db.ForeignKey("zone.id", name="fk_gruppi_zone_id"), nullable=False)
+    regione = db.Column(db.Integer, db.ForeignKey("regioni.id", name="fk_gruppi_regioni_id"), nullable=False)
 
 class Demone(db.Model):
     __tablename__ = "demoni"
