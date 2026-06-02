@@ -300,7 +300,7 @@ def dashboard():
         dati_iscrizioni["abilitate"] = IscrizioneEG.query.filter_by(stato="abilitato").filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id).count()
         dati_iscrizioni["eliminate"] = IscrizioneEG.query.filter_by(stato="eliminato").filter_by(regione=current_user.regione).filter_by(anno_percorso=stato.id).count()
         dati_iscrizioni["da_abilitare"] = totale_iscritti - (dati_iscrizioni["abilitate"] + dati_iscrizioni["eliminate"])
-    return render_template("dashboard.html", stato=stato, dati_iscrizioni=dati_iscrizioni)
+    return render_template("dashboard.html", stato=stato, regione=Regione.query.filter_by(id=current_user.regione).first().regione, dati_iscrizioni=dati_iscrizioni)
 
 @app.route("/gestione_regione", methods=["GET", "POST"])
 @login_required
@@ -601,28 +601,8 @@ def mail():
 def send_mail(id_mail):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
-    tmp_iscritti=IscrizioneEG.query.all()
-    tmp_destinatari = []
-    tmp_copia = []
-    for i in tmp_iscritti:
-        if i.stato == "eliminato":
-            continue
-        if testo_mail.destinatari["sq"] and i.stato == "da_abilitare":
-            tmp_destinatari.append(i.mail)
-            tmp_copia.append(i.mail_capo1)
-            tmp_copia.append(i.mail_capo2)
-        if testo_mail.destinatari["sq_abilitate"] and i.stato == "abilitato":
-            tmp_destinatari.append(i.mail)
-            tmp_copia.append(i.mail_capo1)
-            tmp_copia.append(i.mail_capo2)
-        if testo_mail.destinatari["capi"] and i.stato == "abilitato":
-            tmp_destinatari.append(i.mail_capo1)
-            tmp_destinatari.append(i.mail_capo2)
-    destinatari = list(set(tmp_destinatari))
-    destinatari_copia = list(set(tmp_copia))
-    manda_mail(destinatari, destinatari_copia, testo_mail.titolo, testo_mail.testo)
-    testo_mail.stato = True
+    mail = CodaMail.query.filter_by(id=id_mail).first()
+    mail.stato = "PENDING"
     db.session.commit()
     return redirect(url_for("mail"))
 
