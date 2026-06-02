@@ -64,8 +64,8 @@ class User(Base):
     username = Column(String(255), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
     mail = Column(String(255), nullable=False)
-    regione = Column(Integer, ForeignKey("regioni.id"), nullable=True)
-    zona = Column(Integer, ForeignKey("zone.id"), nullable=True)
+    regione = Column(Integer, ForeignKey("regioni.id", name="fk_user_regioni_id"), nullable=True)
+    zona = Column(Integer, ForeignKey("zone.id", name="fk_user_zone_id"), nullable=True)
     livello = Column(String(255), nullable=False)
     telegram_id = Column(String(255), nullable=True)
 
@@ -76,7 +76,7 @@ class IscrizioneEG(Base):
     stato = Column(String(255), nullable=False)
     nome = Column(String(255), nullable=False)
     mail = Column(String(255), nullable=False)
-    regione = Column(Integer, nullable=False)
+    regione = Column(Integer,ForeignKey("regioni.id", name="fk_iscrizioni_eg_regioni_id"), nullable=False)
     zona = Column(Integer, ForeignKey("zone.id", name="fk_iscrizioni_eg_zone_id"), nullable=False)
     gruppo = Column(Integer, ForeignKey("gruppi.id", name="fk_iscrizioni_eg_gruppi_id"), nullable=False)
     specialita = Column(String(255), nullable=False)
@@ -92,13 +92,13 @@ class IscrizioneEG(Base):
     cell_capo2 = Column(String(255), nullable=False)
     sesso = Column(String(2), nullable=False)
     link = Column(Text, nullable=False)
-    anno_percorso = Column(db.Integer, ForeignKey("status_percorso.id", name="fk_iscrizioni_eg_status_percorso_id"), nullable=True)
+    anno_percorso = Column(Integer, ForeignKey("status_percorso.id", name="fk_iscrizioni_eg_status_percorso_id"), nullable=True)
 
 class WordpressUser(Base):
     __tablename__ = "wordpress_user"
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
-    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id"), nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id", name="fk_wordpress_user_iscrizioni_id"), nullable=False)
     wordpress_id = Column(Integer, nullable=False)
     username = Column(String(255), nullable=False)
     password = Column(String(255), nullable=False)
@@ -108,8 +108,8 @@ class WordpressPost(Base):
     __tablename__ = "wordpress_post"
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
-    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id"), nullable=False)
-    wordpress_user_id = Column(Integer, ForeignKey("wordpress_user.id"), nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id", name="fk_wordpress_post_iscrizioni_id"), nullable=False)
+    wordpress_user_id = Column(Integer, ForeignKey("wordpress_user.id", name="fk_wordpress_post_wordpress_user_id"), nullable=False)
     wordpress_id = Column(Integer, nullable=False)
     tipo = Column(String(255), nullable=False)
     meta = Column(JSON, nullable=False)
@@ -118,16 +118,26 @@ class RelazioniPuglia(Base):
     __tablename__ = "relazioni_puglia"
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
-    stato = Column(JSON, nullable=False)
-    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id"), nullable=False)
+    stato = Column(Boolean, nullable=False)
+    iscrizioni_id = Column(Integer, ForeignKey("iscrizioni_eg.id", name="fk_relazioni_puglia_iscrizioni_id"), nullable=False)
     dati = Column(JSON, nullable=False)
+
+class MailMassiva(Base):
+    __tablename__ = "mail_massive"
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    stato = Column(String(255), nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id", name="fk_mail_massive_regioni_id"), nullable=False)
+    destinatari = Column(JSON, nullable=False)
+    titolo = Column(String(255), nullable=False)
+    testo = Column(UnicodeText, nullable=False)
 
 class CodaMail(Base):
     __tablename__ = "coda_mail"
     id = Column(Integer, primary_key=True)
     data = Column(DateTime, nullable=False)
     stato = Column(String(255), nullable=False)
-    regione = Column(Integer, ForeignKey("regioni.id"), nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id", name="fk_coda_mail_regioni_id"), nullable=False)
     indirizzi = Column(JSON, nullable=False)
     indirizzi_copia = Column(JSON, nullable=False)
     titolo = Column(String(255), nullable=False)
@@ -155,7 +165,7 @@ class StatusPercorso(Base):
     anno = Column(String(4), nullable=True)
     iscrizioni = Column(JSON, nullable=False)
     abilitazioni = Column(JSON, nullable=False)
-    regione = Column(Integer, ForeignKey("regioni.id"), nullable=True)
+    regione = Column(Integer, ForeignKey("regioni.id", name="fk_status_percorso_regioni_id"), nullable=True)
     data_apertura = Column(DateTime, nullable=True)
     data_chiusura = Column(DateTime, nullable=True)
 
@@ -169,14 +179,14 @@ class Zona(Base):
     __tablename__ = "zone"
     id = Column(Integer, primary_key=True)
     zona = Column(String(255), nullable=False)
-    regione = Column(Integer, ForeignKey("regioni.id"), nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id", name="fk_zone_regioni_id"), nullable=False)
 
 class Gruppo(Base):
     __tablename__ = "gruppi"
     id = Column(Integer, primary_key=True)
     gruppo = Column(String(255), nullable=True)
-    zona = Column(Integer, ForeignKey("zone.id"), nullable=False)
-    regione = Column(Integer, ForeignKey("regioni.id"), nullable=False)
+    zona = Column(Integer, ForeignKey("zone.id", name="fk_gruppi_zone_id"), nullable=False)
+    regione = Column(Integer, ForeignKey("regioni.id", name="fk_gruppi_regioni_id"), nullable=False)
 
 class Demone(Base):
     __tablename__ = "demoni"
@@ -197,11 +207,13 @@ demone_notifiche = True
 demone_wordpress = True
 
 def manda_mail(indirizzi, copia, titolo, testo, regione):
+    session = Session()
     session.add(CodaMail(data=datetime.now(), stato="PENDING", regione=regione, indirizzi=indirizzi, indirizzi_copia=copia, titolo=f"Guidoncini Verdi {session.query(SysOption).filter_by(key='AnnoCorrente').first().value} - {titolo}", testo=testo))
     session.commit()
     return True
 
 def manda_telegram(chat_id, titolo, testo):
+    session = Session()
     session.add(CodaTelegram(data=datetime.now(), stato="PENDING", chat_id=chat_id, titolo=f"Guidoncini Verdi {session.query(SysOption).filter_by(key='AnnoCorrente').first().value} - {titolo}", testo=testo))
     session.commit()
     return True

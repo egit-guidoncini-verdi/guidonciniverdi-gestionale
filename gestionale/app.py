@@ -129,7 +129,7 @@ class RelazioniPuglia(db.Model):
     __tablename__ = "relazioni_puglia"
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.DateTime, nullable=False)
-    stato = db.Column(db.JSON, nullable=False)
+    stato = db.Column(db.Boolean, nullable=False)
     iscrizioni_id = db.Column(db.Integer, db.ForeignKey("iscrizioni_eg.id", name="fk_relazioni_puglia_iscrizioni_id"), nullable=False)
     dati = db.Column(db.JSON, nullable=False)
 
@@ -880,7 +880,7 @@ def iscriviti(regione):
             flash("Il gruppo selezionato non è corretto. Riprovaci!", "warning")
             return redirect(url_for("iscriviti", regione=regione))
         try:
-            iscrizione = IscrizioneEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=Regione.query.filter_by(regione=regione).first().id, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"], link="")
+            iscrizione = IscrizioneEG(data=datetime.now(), stato="da_abilitare", nome=request.form["nome_squadriglia"].capitalize(), sesso=request.form["tipo_sq"], mail=request.form["mail_squadriglia"], regione=Regione.query.filter_by(regione=regione).first().id, zona=Zona.query.filter_by(zona=request.form["zona"].lower()).first().id, gruppo=Gruppo.query.filter_by(gruppo=request.form["gruppo"].lower()).first().id, specialita=request.form["specialita"], tipo=request.form["conquista_conferma"], nome_capo_sq=request.form["nome_capo_squadriglia"], nome_capo1=request.form["nome_capo_rep1"], mail_capo1=request.form["mail_rep1"], cell_capo1=request.form["numero_rep1"], nome_capo2=request.form["nome_capo_rep2"], mail_capo2=request.form["mail_rep2"], cell_capo2=request.form["numero_rep2"], link="", anno_percorso=StatusPercorso.query.filter_by(regione=Regione.query.filter_by(regione=regione).first().id).filter_by(anno=SysOption.query.filter_by(key="AnnoCorrente").first().value).id)
             db.session.add(iscrizione)
             db.session.commit()
         except Exception as e:
