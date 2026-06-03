@@ -621,8 +621,8 @@ def send_mail(id_mail):
 def delete_mail(id_mail):
     if (current_user.livello != "iabr") and (current_user.livello != "admin"):
         return redirect(url_for("dashboard"))
-    testo_mail = TestiMail.query.filter_by(id=id_mail).first()
-    db.session.delete(testo_mail)
+    mail = CodaMail.query.filter_by(id=id_mail).first()
+    db.session.delete(mail)
     db.session.commit()
     return redirect(url_for("mail"))
 
@@ -1074,15 +1074,15 @@ def relazione_delete(id_sq):
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template("errore_generico.html"), 404
+    return render_template("errore_generico.html", anno=SysOption.query.filter_by(key="AnnoCorrente").first().value), 404
 
 @app.errorhandler(405)
 def internal_error(e):
-    return render_template("errore_generico.html"), 405
+    return render_template("errore_generico.html", anno=SysOption.query.filter_by(key="AnnoCorrente").first().value), 405
 
 @app.errorhandler(500)
 def internal_error(e):
-    return render_template("errore_generico.html"), 500
+    return render_template("errore_generico.html", anno=SysOption.query.filter_by(key="AnnoCorrente").first().value), 500
 
 if __name__ == "__main__":
     app.run(port=8000, host="0.0.0.0")

@@ -52,7 +52,7 @@
             {% endif %}
             </a>
             {% if i.stato in ['PENDING','DRAFT','FAILED'] %}
-            <a type="button" class="btn btn-outline-danger" href="{{ url_for("delete_mail", id_mail=i.id) }}">Elimina</a>
+            <a type="button" class="btn btn-outline-danger" href="{{ url_for("delete_mail", id_mail=i.id) }}" onclick="return confirm('Sei sicuro di voler eliminare questa mail?');">Elimina</a>
             {% endif %}
           </div>
           </td>
